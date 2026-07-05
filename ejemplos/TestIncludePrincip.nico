@@ -1,0 +1,11 @@
+PROGRAMA xxxxx
+INCLUIR "TestIncludeFunciones.nico"
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $func1 = 0, $func2 = 0
+    ASIGNAR EN $func1 = suma(20, 30)
+    MOSTRAR("El resultado de la suma es de: $func1") SALTO
+
+    ASIGNAR EN $funcion2 = multiplicar(6, 8)
+    MOSTRAR("El resultado de la multiplicación es de: $func2") SALTO
+FIN PRINCIPAL
+FINAL

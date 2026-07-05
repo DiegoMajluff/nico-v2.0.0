@@ -1,0 +1,28 @@
+PROGRAMA test_tecla_espacio
+VARIABLE ENTERA $t = 0
+
+BLOQUE PRINCIPAL
+ESCRIBIR("\n=== TEST: Presiona ESPACIO para salir ===") SALTO
+ESCRIBIR("(Flechas y teclas también funcionan)") SALTO
+
+MIENTRAS(1 IGUAL 1) HACER
+    LEERTECLA($t)
+    SI($t DIFERENTE 0) ENTONCES
+        ESCRIBIR ("Valor en $t: ")
+        ESCRIBIR ("$t")
+        ESCRIBIR (" | ")
+    FIN SI
+
+    SI($t IGUAL 32) ENTONCES
+        ESCRIBIR("\n✅ ¡ESPACIO DETECTADO! Saliendo...") SALTO
+        SALTAR A fin
+    FIN SI
+    
+    ESPERAR(30, MILISEGUNDOS) 
+FIN MIENTRAS
+
+ETIQUETA fin
+ESCRIBIR("Programa finalizado correctamente.") SALTO
+ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

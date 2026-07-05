@@ -1,0 +1,38 @@
+PROGRAMA TestDosArgumentos
+    // Esta función suma 'b' veces 1 a 'a', usando recursión con 2 argumentos
+    FUNCION ENTERA suma_rec($a, $b)
+        VARIABLE ENTERA $res = 0
+        
+        SI($b IGUAL 0) ENTONCES
+            RESULTADO EN $res = $a
+        SINO
+            VARIABLE ENTERA $temp = 0
+            // Llamada recursiva con dos argumentos: una variable y una expresión
+            CALCULAR EN $temp = suma_rec($a, $b - 1)
+            RESULTADO EN $res = $temp + 1
+        FIN SI
+        
+        RETORNAR $res
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE ENTERA $r = 0
+        ESCRIBIR("=== PRUEBA DE RECURSIÓN CON DOS ARGUMENTOS ===") SALTO
+        
+        ESCRIBIR("suma_rec(10, 5)  (Esperado: 15)") SALTO
+        CALCULAR EN $r = suma_rec(10, 5)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("") SALTO
+
+        ESCRIBIR("suma_rec(10, 125)  (Esperado: 135)") SALTO
+        CALCULAR EN $r = suma_rec(10, 125)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("") SALTO
+
+        // Ahora probemos con una expresión en el primer argumento también
+        ESCRIBIR("suma_rec(10 - 2, 5)  (Esperado: 13)") SALTO
+        CALCULAR EN $r = suma_rec(10 - 2, 5)
+        ESCRIBIR("Resultado: $r") SALTO
+        
+    FIN PRINCIPAL
+FINAL

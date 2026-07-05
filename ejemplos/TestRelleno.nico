@@ -1,0 +1,29 @@
+PROGRAMA prueba_relleno
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $cx, $cy
+    
+    ANCHOTERMINAL($cx)
+    ALTOTERMINAL($cy)
+    LIMPIARPANTALLA
+    
+    // Fondo degradado simulado
+    RELLENARRECTANGULO(1, 1, $cx, $cy/2, "░")
+    RELLENARRECTANGULO(1, $cy/2, $cx, $cy, "▒")
+    
+    // Caja central sólida
+    RELLENARRECTANGULO(10, 5, 30, 15, " ")
+    DIBUJARLINEA(10, 5, 30, 5, "═")
+    DIBUJARLINEA(10, 15, 30, 15, "═")
+    DIBUJARLINEA(10, 5, 10, 15, "║")
+    DIBUJARLINEA(30, 5, 30, 15, "║")
+    
+    CURSOR(9, 12)
+    OCULTARCURSOR
+    MOSTRAR("🟦 Fondo activo!!") SALTO 
+    ESPERAR(3000, MILISEGUNDOS)
+    MOSTRARCURSOR
+    CURSOR(2, 1)
+    LIMPIARPANTALLA
+FIN PRINCIPAL
+FINAL

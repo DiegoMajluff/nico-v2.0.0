@@ -1,0 +1,36 @@
+PROGRAMA TestFlujo
+    VARIABLE ENTERA $n = 0
+    VARIABLE ENTERA $x = 0
+BLOQUE PRINCIPAL
+    // 1. PARA
+    ESCRIBIR("--- PARA ---") SALTO
+    PARA ($i = 1 HASTA 3) HACER
+        ESCRIBIR("i = $i") SALTO
+    FIN PARA
+
+    // 2. MIENTRAS (while-do)
+    ESCRIBIR("--- MIENTRAS ---") SALTO
+    MIENTRAS ($x MENOR 3) HACER
+        ESCRIBIR("x = $x") SALTO
+        CALCULAR EN $x = $x + 1
+    FIN MIENTRAS
+
+    // 3. CORTE en bucle
+    ESCRIBIR("--- CORTE ---") SALTO
+    PARA ($k = 1 HASTA 10) HACER
+        SI ($k IGUAL 4) ENTONCES
+            CORTE
+        FIN SI
+        ESCRIBIR("k = $k") SALTO
+    FIN PARA
+
+    // 4. REALIZAR / MIENTRAS (do-while)
+    ESCRIBIR("--- REALIZAR ---") SALTO
+    REALIZAR
+        CALCULAR EN $n = $n + 1
+        ESCRIBIR("n = $n") SALTO
+    MIENTRAS ($n MENOR 3)
+
+    ESCRIBIR("--- FIN ---")
+FIN PRINCIPAL
+FINAL

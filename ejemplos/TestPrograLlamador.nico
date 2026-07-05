@@ -1,0 +1,22 @@
+PROGRAMA "TestPrograLlamador.nico"
+VARIABLE TEXTO $txt = "Texto enviado a la función VACIA"
+VARIABLE LOGICA $eval = FALSO
+
+INCLUIR "ejemplos/TestPrograFunciones.nico" // Ruta para Linux
+//INCLUIR "ejemplos\TestPrograFunciones.nico" // Ruta para Windows
+
+VARIABLE DECIMAL $pi = 3.14
+
+BLOQUE PRINCIPAL
+
+    VARIABLE ENTERA $funcion1 = 0, $funcion2 = 0
+    ASIGNAR EN $funcion1 = dividir(25, 5)
+    MOSTRAR("La división es: $funcion1") SALTO
+    ASIGNAR EN $funcion2 = multiplicar(6, 8)
+    MOSTRAR("La multiplicación es: $funcion2") SALTO
+    MOSTRAR("El número PI es: $pi") SALTO
+    LLAMAR A mostrar($txt)
+    ASIGNAR EN $eval = evaluar(VERDADERO, VERDADERO)
+    MOSTRAR("La evaluación es: $eval")
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,40 @@
+// Ejemplo 05: Persistencia y funciones de texto
+PROGRAMA ArchivosYTexto
+    VARIABLE TEXTO $frase = "nico interprete educativo"
+    VARIABLE TEXTO $texto = ""
+    VARIABLE TEXTO $leido = ""
+    VARIABLE ARCHIVO $archivo 
+    VARIABLE ENTERA $longitud = 0
+BLOQUE PRINCIPAL
+    
+    // 1. Crear y escribir
+    ABRIRARCHIVO($archivo, "registro_nico.txt", ESCRITURA) 
+    ESCRIBIRARCHIVO($archivo, "Registro de prueba Nico v2.0.0")
+    ESCRIBIRARCHIVO($archivo, "Segunda línea de datos")
+    CERRARARCHIVO($archivo)
+    ESCRIBIR("\nArchivo escrito correctamente.") SALTO
+
+    // 2. Leer
+    ABRIRARCHIVO($archivo, "registro_nico.txt", LECTURA)
+    LEERARCHIVO($archivo, $leido)
+    ESCRIBIR("Primera línea: ")
+    ESCRIBIR("$leido") SALTO
+    LEERARCHIVO($archivo, $leido)
+    ESCRIBIR("Segunda línea: ")
+    ESCRIBIR("$leido") SALTO
+    CERRARARCHIVO($archivo)
+
+    // 3. Transformación de texto
+    ESCRIBIR("Original: ") 
+    ESCRIBIR("$frase") SALTO
+    ESCRIBIR("MAYUSCULAS: ") 
+    MAYUSCULAS($frase)
+    ESCRIBIR("$frase") SALTO
+    ESCRIBIR("MINUSCULAS: ") 
+    MINUSCULAS($frase)
+    ESCRIBIR("$frase") SALTO
+    ESCRIBIR("Longitud: ") 
+    ASIGNAR EN $longitud = LONGITUDTEXTO($frase)
+    ESCRIBIR("$longitud\n") SALTO
+FIN PRINCIPAL
+FINAL

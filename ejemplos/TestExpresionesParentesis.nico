@@ -1,0 +1,36 @@
+PROGRAMA test_expresiones_brackets_nico
+
+BLOQUE PRINCIPAL
+    CONSTANTE ENTERA $a = 10
+    CONSTANTE DECIMAL $b = 5.5
+    CONSTANTE DECIMAL $c = 2.25
+    
+    ESCRIBIR("\n=== PRUEBA DE EXPRESIONES \[ \] ===") SALTO
+    
+    // 1. Entero exacto (con fix → [12.00] | sin fix → [12])
+    ESCRIBIR("1. [5 + 7]") SALTO
+    
+    // 2. Decimal simple
+    ESCRIBIR("2. [$a + $b] (esperado: [15.50])") SALTO
+    
+    // 3. Operación compleja
+    ESCRIBIR("3. [($a * 2) - $c] (esperado: [17.75])") SALTO
+    
+    // 4. Con DECIMALES(0) → debe forzar formato entero
+    ESCRIBIR("4. [$b * 2], DECIMALES(0)", DECIMALES(0)) SALTO
+    
+    // 5. Con DECIMALES(4) → precisión alta
+    ESCRIBIR("5. [$c / 3], DECIMALES(4)", DECIMALES(4)) SALTO
+    
+    // 6. Valor matemáticamente entero por redondeo
+    ESCRIBIR("6. [3.14159 + 6.85841] (esperado: [10.00])") SALTO
+    
+    // 7. Resultado negativo
+    ESCRIBIR("7. [$a - 20] (esperado: [-10.00])") SALTO
+    
+    // 8. División exacta vs inexacta
+    ESCRIBIR("8. [10 / 4] y [12 / 4] (esperado: [2.50] y [3.00])") SALTO
+    
+    ESCRIBIR("=== FIN DE PRUEBAS ===\n") SALTO
+FIN PRINCIPAL
+FINAL

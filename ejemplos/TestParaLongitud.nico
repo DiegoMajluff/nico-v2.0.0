@@ -1,0 +1,8 @@
+PROGRAMA TestParaLongitud
+    LISTA TEXTO $frutas[3] = {"Manzana", "Pera", "Uva"}
+BLOQUE PRINCIPAL
+    PARA ($i DESDE 0 HASTA LONGITUDLISTA($frutas) - 1) HACER
+        MOSTRAR("Índice $i: $frutas[$i]") SALTO
+    FIN PARA
+FIN PRINCIPAL
+FINAL

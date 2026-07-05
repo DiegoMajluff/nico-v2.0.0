@@ -1,0 +1,51 @@
+PROGRAMA TestFuncionCompleta
+
+   VARIABLE TEXTO $entrada = ""
+   VARIABLE ENTERA $res = 0
+
+FUNCION ENTERA probar_todo()
+
+   VARIABLE TEXTO $msg = "", $entrada = "", $txt = "Texto original" 
+   VARIABLE ARCHIVO $archivo
+   // 1. Texto y Estilo
+   COLORTEXTO(rojo)
+   ESCRIBIR("\[FUNCION\] 1. Estilo ROJO activado") SALTO
+   RESETCOLOR
+   COPIARTEXTO($msg, "Texto original")
+   MAYUSCULAS($msg)
+   ESCRIBIR("Transformado a: $msg") SALTO
+
+   // 2. Archivos
+   ABRIRARCHIVO($archivo, "test_desde_funcion.txt", ESCRITURA)
+   ESCRIBIRARCHIVO($archivo, "Escrito desde FUNCION")
+   CERRARARCHIVO($archivo)
+   ESCRIBIR("\[FUNCION\] 2. Archivo creado y cerrado OK") SALTO
+
+   // 3. Entrada (pausará hasta que presiones ENTER)
+   ESCRIBIR("\[FUNCION\] 3. Escribe algo y presiona ENTER:") SALTO
+   LEER($entrada)
+   ESCRIBIR("Recibido: $entrada") SALTO
+
+   // 4. Control/Sistema
+   ESCRIBIR("\[FUNCION\] 4. Esperando 1 segundo...") SALTO
+   ESPERAR(1, SEGUNDOS)
+   ESCRIBIR("\[FUNCION\] 5. Comando sistema ejecutado") SALTO
+   SISTEMA("echo Hola Mundo") 
+   ESCRIBIR("") SALTO
+
+   // 5. GPIO (Stub en Linux, solo verifica parsing)
+   CONFIGURARPIN(17, SALIDA)
+   ESCRIBIR("\[FUNCION\] 6. GPIO parseado sin errores") SALTO
+
+   RETORNAR 100
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+   ESCRIBIR("") SALTO
+   ASIGNAR EN $res = probar_todo()
+   COLORTEXTO(verde)
+   ESCRIBIR("\[PRINCIPAL\] Retorno de función: $res en color verde") SALTO
+   RESETCOLOR
+   ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

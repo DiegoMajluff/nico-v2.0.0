@@ -1,0 +1,22 @@
+PROGRAMA TestFlujoCaracter
+    VARIABLE CARACTER $c = ''
+    VARIABLE TEXTO $t = ""
+    VARIABLE TEXTO $nombre = "Diego"
+    VARIABLE TEXTO $concatena = ""
+BLOQUE PRINCIPAL
+    // Paso 1: Asignación numérica → CARACTER
+    CALCULAR EN $c = 65
+    ESCRIBIR("")SALTO
+    ESCRIBIR("1. CARACTER tras = 65: ")
+    ESCRIBIR("$c") SALTO 
+
+    // Paso 2: COPIARTEXTO entre TEXTO globales
+    COPIARTEXTO($t, $nombre)
+    ESCRIBIR("2. TEXTO tras COPIARTEXTO: $t") SALTO  // ← Interpolación global
+
+    // Paso 3: CONCATENARTEXTO con literal
+    CONCATENARTEXTO($concatena, "Hola Mundo")
+    ESCRIBIR("3. TEXTO tras CONCATENARTEXTO: $concatena") SALTO
+    ESCRIBIR("")SALTO
+FIN PRINCIPAL
+FINAL

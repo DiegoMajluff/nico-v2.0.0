@@ -1,0 +1,30 @@
+PROGRAMA TestSinosi
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $x = 2
+    ESCRIBIR("") SALTO
+
+    SI($x IGUAL 1) ENTONCES
+        ESCRIBIR("ERROR: No debe entrar aquí") SALTO
+    SINOSI($x IGUAL 2) ENTONCES
+        ESCRIBIR("✅ SINOSI ejecutado correctamente") SALTO
+    SINO
+        ESCRIBIR("ERROR: No debe llegar al SINO") SALTO
+    FIN SI
+
+    SI(1) ENTONCES
+        SI(0) ENTONCES
+            ESCRIBIR("ERROR: Anidado no debe ejecutarse") SALTO
+        FIN SI
+        ESCRIBIR("✅ Anidamiento cerrado correctamente") SALTO
+    FIN SI
+
+    SI(3 MAYOR 5) ENTONCES
+        ESCRIBIR("ERROR") SALTO
+    SINO SI(10 IGUAL 10) ENTONCES
+        ESCRIBIR("✅ SINO SI con espacio funciona") SALTO
+    FIN SI
+
+    ESCRIBIR("🎉 Todas las pruebas de flujo pasaron.\n") SALTO
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,113 @@
+PROGRAMA TestSegunCasosAnidados
+
+VARIABLE ENTERA $ext = 0
+VARIABLE ENTERA $int = 0
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n=== TEST SEGUN CASO ANIDADO ===") SALTO
+
+    // 1. Externo=1, Interno=1 → Debe entrar en 1.1
+    ASIGNAR EN $ext = 1
+    ASIGNAR EN $int = 1
+    ESCRIBIR("Test 1 (Ext=1, Int=1):")
+    SEGUN CASO ($ext)
+        CASO 1
+            SEGUN CASO ($int)
+                CASO 1
+                    ESCRIBIR(" -> \[1.1\] OK") SALTO
+                    CORTE
+                CASO 2
+                    ESCRIBIR(" -> \[1.2\] Error") SALTO
+                    CORTE
+                POR DEFECTO
+                    ESCRIBIR(" -> \[1.Def\] Error") SALTO
+                    CORTE  
+            FIN SEGUN
+            CORTE
+        CASO 2
+            ESCRIBIR(" -> \[2.x\] Error") SALTO
+            CORTE
+        POR DEFECTO
+            ESCRIBIR(" -> \[Ext.Def\] Error") SALTO
+            CORTE 
+    FIN SEGUN
+
+    // 2. Externo=2, Interno=2 → Debe entrar en 2.2
+    CALCULAR EN $ext = 2
+    CALCULAR EN $int = 2
+    ESCRIBIR("Test 2 (Ext=2, Int=2):")
+    SEGUN CASO ($ext)
+        CASO 1
+            ESCRIBIR(" -> \[1.x\] Error") SALTO
+            CORTE
+        CASO 2
+            SEGUN CASO ($int)
+                CASO 1
+                    ESCRIBIR(" -> \[2.1\] Error") SALTO
+                    CORTE
+                CASO 2
+                    ESCRIBIR(" -> \[2.2\] OK") SALTO
+                    CORTE
+                POR DEFECTO
+                    ESCRIBIR(" -> \[2.Def\] Error") SALTO
+                    CORTE
+            FIN SEGUN
+            CORTE
+        POR DEFECTO
+            ESCRIBIR(" -> \[Ext.Def\] Error") SALTO
+            CORTE
+    FIN SEGUN
+
+    // 3. Externo=Default, Interno=1 → Debe entrar en Def.1
+    ASIGNAR EN $ext = 99
+    ASIGNAR EN $int = 1
+    ESCRIBIR("Test 3 (Ext=99, Int=1):")
+    SEGUN CASO ($ext)
+        CASO 1
+            ESCRIBIR(" -> \[1.x\] Error") SALTO
+            CORTE
+        CASO 2
+            ESCRIBIR(" -> \[2.x\] Error") SALTO
+            CORTE
+        POR DEFECTO
+            SEGUN CASO ($int)
+                CASO 1
+                    ESCRIBIR(" -> \[Def.1\] OK") SALTO
+                    CORTE
+                POR DEFECTO
+                    ESCRIBIR(" -> \[Def.Def\] Error") SALTO
+                    CORTE
+            FIN SEGUN
+        CORTE
+    FIN SEGUN
+
+    // 4. Externo=2, Interno=Default → Debe entrar en 2.Def
+    ASIGNAR EN $ext = 2
+    ASIGNAR EN $int = 5
+    ESCRIBIR("Test 4 (Ext=2, Int=5):")
+   
+    SEGUN CASO ($ext)
+        CASO 1
+            ESCRIBIR(" -> \[1.x\] Error") SALTO
+            CORTE
+        CASO 2
+            SEGUN CASO ($int)
+                CASO 1
+                    ESCRIBIR(" -> \[2.1\] Error") SALTO
+                    CORTE
+                CASO 2
+                    ESCRIBIR(" -> \[2.2\] Error") SALTO
+                    CORTE
+                POR DEFECTO
+                    ESCRIBIR(" -> \[2.Def\] OK") SALTO
+                    CORTE
+            FIN SEGUN
+            CORTE
+        POR DEFECTO
+            ESCRIBIR(" -> \[Ext.Def\] Error") SALTO
+            CORTE
+    FIN SEGUN
+
+    ESCRIBIR("=== FIN TEST ===\n") SALTO
+FIN PRINCIPAL
+FINAL

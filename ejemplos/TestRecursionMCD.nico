@@ -1,0 +1,26 @@
+PROGRAMA RecursionMCD
+FUNCION ENTERA calcular_mcd($a, $b)
+    VARIABLE ENTERA $res = 0
+    SI($b IGUAL 0) ENTONCES
+        RESULTADO EN $res = $a
+    SINO
+        VARIABLE ENTERA $resto = 0
+        CALCULAR EN $resto = MODULO($a, $b)
+        RESULTADO EN $res = calcular_mcd($b, $resto)
+    FIN SI
+    RETORNAR $res
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $num1 = 48
+    VARIABLE ENTERA $num2 = 18
+    VARIABLE ENTERA $mcd = 0
+    ESCRIBIR("\n=== RECURSIÓN: MCD (ALGORITMO DE EUCLIDES) ===") SALTO
+    CALCULAR EN $mcd = calcular_mcd($num1, $num2)
+    ESCRIBIR("MCD($num1, $num2) = $mcd (Esperado: 6)") SALTO
+        
+    // Prueba extra
+    CALCULAR EN $mcd = calcular_mcd(105, 42)
+    ESCRIBIR("MCD(105, 42) = $mcd (Esperado: 21)\n") SALTO
+FIN PRINCIPAL
+FINAL

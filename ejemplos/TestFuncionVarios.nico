@@ -1,0 +1,21 @@
+PROGRAMA TestFuncionCompleta
+
+VARIABLE TEXTO $msg = ""
+VARIABLE TEXTO $entrada = ""
+VARIABLE ENTERA $res = 0
+FUNCION ENTERA probar_todo()
+   COPIARTEXTO($msg, "Texto original")
+   MAYUSCULAS($msg)
+   ESCRIBIR("\nTransformado a: $msg\n") SALTO
+   ESCRIBIR("Escribí un texto breve: ")
+   LEER($entrada)
+   ESCRIBIR("\nRecibido: $entrada\n") SALTO
+   RETORNAR 1
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+   ESCRIBIR("\n")
+   ASIGNAR EN $res = probar_todo()
+   ESCRIBIR("\[PRINCIPAL\] Retorno: $res\n") SALTO
+FIN PRINCIPAL
+FINAL

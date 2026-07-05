@@ -1,0 +1,7 @@
+PROGRAMA TestInline
+    VARIABLE DECIMAL $a = 1.0, $resultado
+BLOQUE PRINCIPAL
+    CALCULAR EN $resultado = 10.0 * COSENO($a) + 5.0
+    MOSTRAR("\nResultado inline: $resultado\n", DECIMALES(2)) SALTO
+FIN PRINCIPAL
+FINAL

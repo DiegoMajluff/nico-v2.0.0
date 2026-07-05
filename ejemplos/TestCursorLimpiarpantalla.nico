@@ -1,0 +1,19 @@
+PROGRAMA TestCursor
+
+    VARIABLE CARACTER $var = 'A'
+    VARIABLE ENTERA $suma = 0
+
+BLOQUE PRINCIPAL
+    LIMPIARPANTALLA
+    CURSOR(5, 10)
+    ESCRIBIR("Hola en fila 5, columna 10") SALTO
+
+    POSICIONAR(10, 20)
+    ESCRIBIR("Hola en fila 10, columna 20") SALTO
+
+    ESPERAR(1000, MILISEGUNDOS)
+    ESCRIBIR("Ingresá un caracter y presioná ENTER para finalizar: ")
+    LEERCARACTER($var) 
+    ESCRIBIR("") SALTO 
+FIN PRINCIPAL
+FINAL

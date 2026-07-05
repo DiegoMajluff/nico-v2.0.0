@@ -1,0 +1,20 @@
+PROGRAMA TestSaltarControlado
+
+    VARIABLE ENTERA $contador = 0
+    VARIABLE ENTERA $limite = 10
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ETIQUETA inicio
+
+    MOSTRAR ("Iteración: $contador") SALTO
+    CALCULAR EN $contador = $contador + 1
+
+    SI ($contador MENOR $limite) ENTONCES
+        SALTAR A inicio
+    FIN SI
+
+    MOSTRAR ("Fin del bucle.") SALTO
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

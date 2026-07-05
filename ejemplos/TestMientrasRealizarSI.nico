@@ -1,0 +1,31 @@
+PROGRAMA test_mientras_realizar_si
+    VARIABLE ENTERA $i = 0
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    MIENTRAS($i MENOR 20) HACER  
+        ESCRIBIR("Contador en MIENTRAS: $i") SALTO
+        CALCULAR EN $i = $i + 1
+        ESPERAR(100, MILISEGUNDOS)
+    FIN MIENTRAS
+
+    ASIGNAR EN $i = 0
+    ESCRIBIR("") SALTO
+    ESPERAR(1000, MILISEGUNDOS)
+
+    REALIZAR
+        ESCRIBIR("Contador en REALIZAR: $i") SALTO
+        ESPERAR(100, MILISEGUNDOS)
+        CALCULAR EN $i = $i + 1
+    MIENTRAS($i MENOR 20) 
+    ESCRIBIR("") SALTO
+    ESCRIBIR("Fuera de los bucles") SALTO
+    ESPERAR(1000, MILISEGUNDOS)
+    ESCRIBIR("") SALTO
+    SI($i MENOR IGUAL 20) ENTONCES
+        ESCRIBIR("La variable \$i es MAYOR O IGUAL A: $i") SALTO
+    SINO
+        ESCRIBIR("La variable \$i es: $i") SALTO
+    FIN SI
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

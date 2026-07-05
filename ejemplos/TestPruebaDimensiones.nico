@@ -1,0 +1,54 @@
+PROGRAMA prueba_dimensiones
+
+FUNCION ENTERA animar_caja($velocidad)
+    VARIABLE ENTERA $f, $c, $fin, $tecla
+    
+    OCULTARCURSOR
+    ASIGNAR EN $fin = 0
+    ASIGNAR EN $f = 3
+    ASIGNAR EN $c = 5
+    
+    MIENTRAS($fin IGUAL 0) HACER
+        // ✅ CURSOR con variables dinámicas
+        CURSOR($f, $c)
+        MOSTRAR("🟦")
+        
+        // Movimiento básico
+        ASIGNAR EN $c = $c + 1
+        SI($c IGUAL 70) ENTONCES 
+            ASIGNAR EN $c = 5 
+        FIN SI
+        SI($c IGUAL 5) ENTONCES 
+            ASIGNAR EN $f = $f + 1 
+        FIN SI
+        SI($f IGUAL 15) ENTONCES 
+            ASIGNAR EN $fin = 1 
+        FIN SI
+        
+        LEERTECLA($tecla)
+        SI($tecla IGUAL 27) ENTONCES 
+            ASIGNAR EN $fin = 1 
+        FIN SI
+        
+        ESPERAR($velocidad, MILISEGUNDOS)
+    FIN MIENTRAS
+    MOSTRARCURSOR
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $ancho, $alto, $dummy
+    ANCHOTERMINAL($ancho)
+    ALTOTERMINAL($alto)
+    
+    LIMPIARPANTALLA
+    MOSTRAR("📐 Terminal: $ancho, x $alto | Ejecutando en FUNCION...") SALTO
+    MOSTRAR("⏱️ Presioná ESC para salir")
+    
+    // ✅ Llamada a función con scopes locales aislados
+    ASIGNAR EN $dummy = animar_caja(30)
+    
+    CURSOR(18, 1)
+    MOSTRAR("✅ Función finalizada. Variables locales liberadas.\n") SALTO
+FIN PRINCIPAL
+FINAL

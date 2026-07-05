@@ -1,0 +1,48 @@
+PROGRAMA TestRealizarMientras5Niveles
+
+VARIABLE ENTERA $n1 = 1
+VARIABLE ENTERA $n2 = 1
+VARIABLE ENTERA $n3 = 1
+VARIABLE ENTERA $n4 = 1
+VARIABLE ENTERA $n5 = 1
+
+BLOQUE PRINCIPAL
+ESCRIBIR ("\n=== Inicio REALIZAR-MIENTRAS (5 niveles) ===") SALTO
+
+REALIZAR
+  ESCRIBIR ("Nivel 1: $n1") SALTO
+  
+  REALIZAR
+    ESCRIBIR ("  Nivel 2: $n2") SALTO
+    
+    REALIZAR
+      ESCRIBIR ("    Nivel 3: $n3") SALTO
+      
+      REALIZAR
+        ESCRIBIR ("      Nivel 4: $n4") SALTO
+        
+        REALIZAR
+          ESCRIBIR ("        Nivel 5: $n5") SALTO
+          CALCULAR EN $n5 = $n5 + 1
+        MIENTRAS ($n5 MENOR IGUAL 2)
+        
+        CALCULAR EN $n5 = 1
+        CALCULAR EN $n4 = $n4 + 1
+      MIENTRAS ($n4 MENOR IGUAL 2)
+      
+      CALCULAR EN $n4 = 1
+      CALCULAR EN $n3 = $n3 + 1
+    MIENTRAS ($n3 MENOR IGUAL 2)
+    
+    CALCULAR EN $n3 = 1
+    CALCULAR EN $n2 = $n2 + 1
+  MIENTRAS ($n2 MENOR IGUAL 2)
+  
+  CALCULAR EN $n2 = 1
+  CALCULAR EN $n1 = $n1 + 1
+MIENTRAS ($n1 MENOR IGUAL 2)
+
+ESCRIBIR ("=== Fin REALIZAR-MIENTRAS (5 niveles) ===") SALTO
+ESCRIBIR ("Total iteraciones nivel 5: 32 (2^5)\n") SALTO
+FIN PRINCIPAL
+FINAL

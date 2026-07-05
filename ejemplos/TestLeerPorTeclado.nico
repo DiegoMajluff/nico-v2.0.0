@@ -1,0 +1,20 @@
+PROGRAMA TestLeerConPrompt
+
+    VARIABLE ENTERA $numero = 0
+    VARIABLE TEXTO $nombre = ""
+    VARIABLE TEXTO $letra = ""
+    
+BLOQUE PRINCIPAL
+    LIMPIARPANTALLA
+
+    ESCRIBIR("Ingrese su nombre: ")
+    LEER($nombre)
+    ESCRIBIR("Ingrese su número: ")
+    LEER($numero)
+    ESCRIBIR("Ingrese una letra: ") 
+    LEER($letra)
+
+    ESCRIBIR("Hola $nombre, tu número es [$numero + 10], letra: $letra\n") SALTO
+
+FIN PRINCIPAL
+FINAL

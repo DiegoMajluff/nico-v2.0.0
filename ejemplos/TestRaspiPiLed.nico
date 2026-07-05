@@ -1,0 +1,21 @@
+PROGRAMA TestGPIO
+
+VARIABLE ENTERA $contador = 0
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ESCRIBIR ("Probando comandos GPIO...") SALTO
+    
+    CONFIGURARPIN(17, SALIDA)
+    REALIZAR
+        ESTADOPIN(17, SI)
+        ESCRIBIR("Pin 17 activado") SALTO
+        ESPERAR(250, MILISEGUNDOS)
+        ESTADOPIN(17, NO)
+        ESCRIBIR("Pin 17 desactivado") SALTO
+        ESPERAR(250, MILISEGUNDOS)
+        CALCULAR EN $contador = $contador + 1  
+    MIENTRAS ($contador MENOR 20)   
+    ESCRIBIR("Test completado ✓\n") SALTO
+FIN PRINCIPAL
+FINAL

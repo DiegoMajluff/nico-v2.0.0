@@ -1,0 +1,22 @@
+PROGRAMA RecursionFactorial
+    FUNCION ENTERA factorial($n)
+        VARIABLE ENTERA $res = 0
+        SI($n IGUAL 0 O $n IGUAL 1) ENTONCES
+            RESULTADO EN $res = 1
+        SINO
+            VARIABLE ENTERA $ant = 0
+            CALCULAR EN $ant = factorial($n - 1)
+            RESULTADO EN $res = $n * $ant
+        FIN SI
+        RETORNAR $res
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE ENTERA $num = 12
+        VARIABLE ENTERA $fact = 0
+        ESCRIBIR("\n=== EJEMPLO DE RECURSIÓN: FACTORIAL ===") SALTO
+        CALCULAR EN $fact = factorial($num)
+        ESCRIBIR("Factorial de $num = $fact") SALTO
+        ESCRIBIR("(12! = 479001600)\n") SALTO
+    FIN PRINCIPAL
+FINAL

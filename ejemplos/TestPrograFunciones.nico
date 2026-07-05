@@ -1,0 +1,25 @@
+PROGRAMA progra_funciones
+
+FUNCION ENTERA dividir($a, $b)
+    VARIABLE ENTERA $div = 0
+    CALCULAR EN $div = $a / $b
+    RETORNAR $div
+FIN FUNCION
+
+FUNCION ENTERA multiplicar($a, $b)
+    VARIABLE ENTERA $mul = 0
+    CALCULAR EN $mul = $a * $b
+    RETORNAR $mul
+FIN FUNCION
+
+FUNCION mostrar($texto)
+    MOSTRAR("El texto recibido es: $texto") SALTO
+FIN FUNCION
+
+FUNCION LOGICA evaluar($a, $b)
+    RETORNAR $a Y $b
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,175 @@
+PROGRAMA TestAckermannOptimizado
+    LISTA ENTERA $cache[1000000] = {0}
+
+    FUNCION ENTERA iniciar_cache()
+        VARIABLE ENTERA $i = 0
+        MIENTRAS($i MENOR 1000000) HACER 
+            $cache[$i] = 0
+            CALCULAR EN $i = $i + 1
+        FIN MIENTRAS
+        RETORNAR 0
+    FIN FUNCION
+
+    FUNCION ENTERA ackermann_mem($m, $n)
+        VARIABLE ENTERA $res = 0
+        VARIABLE ENTERA $temp = 0
+        VARIABLE ENTERA $m_menos_1 = 0
+        VARIABLE ENTERA $indice = 0
+        VARIABLE ENTERA $valor_cache = 0
+        
+        // --- ATAJOS MATEMÁTICOS PARA EVITAR RECURSIÓN PROFUNDA ---
+        SI($m IGUAL 1) ENTONCES
+            RETORNAR $n + 2
+        FIN SI
+        SI($m IGUAL 2) ENTONCES
+            RETORNAR (2 * $n) + 3
+        FIN SI
+        SI($m IGUAL 3) ENTONCES
+            VARIABLE ENTERA $potencia = 1
+            VARIABLE ENTERA $exponente = $n + 3
+            VARIABLE ENTERA $j = 0
+            MIENTRAS($j MENOR $exponente) HACER
+                CALCULAR EN $potencia = $potencia * 2
+                CALCULAR EN $j = $j + 1
+            FIN MIENTRAS
+            RETORNAR $potencia - 3
+        FIN SI
+        // --------------------------------------------------------
+
+        // Mapeo seguro en caché para m >= 4
+        CALCULAR EN $indice = ($m * 100000) + $n
+        ASIGNAR EN $valor_cache = $cache[$indice]
+        
+        SI($valor_cache IGUAL 0) ENTONCES
+            SI($m IGUAL 0) ENTONCES
+                RESULTADO EN $res = $n + 1
+            SINO
+                SI($n IGUAL 0) ENTONCES
+                    RESULTADO EN $res = ackermann_mem($m - 1, 1)
+                SINO
+                    CALCULAR EN $temp = ackermann_mem($m, $n - 1)
+                    CALCULAR EN $m_menos_1 = $m - 1
+                    RESULTADO EN $res = ackermann_mem($m_menos_1, $temp)
+                FIN SI
+            FIN SI
+            
+            $cache[$indice] = $res
+        SINO
+            RESULTADO EN $res = $valor_cache
+        FIN SI
+        
+        RETORNAR $res
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE ENTERA $r = 0, $llamada
+        ESCRIBIR("=== ACKERMANN OPTIMIZADO (2) ===") SALTO
+        
+        ASIGNAR EN $llamada = iniciar_cache()
+        
+        ESCRIBIR("A(3, 3) = ") 
+        CALCULAR EN $r = ackermann_mem(3, 3)
+        ESCRIBIR("$r (Esperado: 61)") SALTO
+        
+        ESCRIBIR("A(3, 4) = ")
+        CALCULAR EN $r = ackermann_mem(3, 4)
+        ESCRIBIR("$r (Esperado: 125)") SALTO
+        
+        ESCRIBIR("A(3, 11) = ")
+        CALCULAR EN $r = ackermann_mem(3, 11)
+        ESCRIBIR("$r (Esperado: 16381)") SALTO
+
+        ESCRIBIR("A(3, 12) = ")
+        CALCULAR EN $r = ackermann_mem(3, 12)
+        ESCRIBIR("$r (Esperado: 32765)") SALTO
+
+        ESCRIBIR("A(3, 13) = ")
+        CALCULAR EN $r = ackermann_mem(3, 13)
+        ESCRIBIR("$r (Esperado: 65533)") SALTO
+
+        ESCRIBIR("A(3, 14) = ")
+        CALCULAR EN $r = ackermann_mem(3, 14)
+        ESCRIBIR("$r (Esperado: 131069)") SALTO
+
+        ESCRIBIR("A(3, 15) = ")
+        CALCULAR EN $r = ackermann_mem(3, 15)
+        ESCRIBIR("$r (Esperado: 262141)") SALTO
+
+        ESCRIBIR("A(3, 16) = ")
+        CALCULAR EN $r = ackermann_mem(3, 16)
+        ESCRIBIR("$r (Esperado: 524285)") SALTO
+
+        ESCRIBIR("A(3, 17) = ")
+        CALCULAR EN $r = ackermann_mem(3, 17)
+        ESCRIBIR("$r (Esperado: 1048573)") SALTO
+
+        ESCRIBIR("A(3, 18) = ")
+        CALCULAR EN $r = ackermann_mem(3, 18)
+        ESCRIBIR("$r (Esperado: 2097149)") SALTO
+
+        ESCRIBIR("A(3, 19) = ")
+        CALCULAR EN $r = ackermann_mem(3, 19)
+        ESCRIBIR("$r (Esperado: 4194301)") SALTO
+
+        ESCRIBIR("A(3, 20) = ")
+        CALCULAR EN $r = ackermann_mem(3, 20)
+        ESCRIBIR("$r (Esperado: 8388605)") SALTO
+
+        ESCRIBIR("A(3, 28) = ")
+        CALCULAR EN $r = ackermann_mem(3, 28)
+        ESCRIBIR("$r (Esperado: 2147483645)") SALTO
+
+        ESCRIBIR("A(3, 29) = ")
+        CALCULAR EN $r = ackermann_mem(3, 29)
+        ESCRIBIR("$r (Esperado: 4294967293)") SALTO
+
+        ESCRIBIR("A(3, 30) = ")
+        CALCULAR EN $r = ackermann_mem(3, 30)
+        ESCRIBIR("$r (Esperado: 8589934589)") SALTO
+
+        ESCRIBIR("A(3, 60) = ")
+        CALCULAR EN $r = ackermann_mem(3, 60)
+        ESCRIBIR("$r (Esperado: 9223372036854775808)") SALTO
+
+        ESCRIBIR("A(3, 61) = ")
+        CALCULAR EN $r = ackermann_mem(3, 61)
+        ESCRIBIR("$r (Esperado: 18446744073709551616)") SALTO
+
+        ESCRIBIR("A(3, 62) = ")
+        CALCULAR EN $r = ackermann_mem(3, 62)
+        ESCRIBIR("$r (Esperado: 36893488147419103232)") SALTO
+
+        ESCRIBIR("A(3, 63) = ")
+        CALCULAR EN $r = ackermann_mem(3, 63)
+        ESCRIBIR("$r (Esperado: 73786976294838206464)") SALTO
+
+        ESCRIBIR("A(3, 64) = ")
+        CALCULAR EN $r = ackermann_mem(3, 64)
+        ESCRIBIR("$r (Esperado: 147573952589676412928)") SALTO
+
+        ESCRIBIR("A(3, 65) = ")
+        CALCULAR EN $r = ackermann_mem(3, 65)
+        ESCRIBIR("$r (Esperado: 295147905179352825856)") SALTO
+
+        ESCRIBIR("A(4, 0) = ")
+        CALCULAR EN $r = ackermann_mem(4, 0)
+        ESCRIBIR("$r (Esperado: 13)") SALTO
+
+        ESCRIBIR("A(4, 1) = ")
+        CALCULAR EN $r = ackermann_mem(4, 1)
+        ESCRIBIR("$r (Esperado: 65533)") SALTO
+
+        ESCRIBIR("A(4, 2) = ")
+        CALCULAR EN $r = ackermann_mem(4, 2)
+        ESCRIBIR("$r (Esperado: inf)") SALTO
+
+        ESCRIBIR("A(3, 16380) [MÁXIMO ESCALA DE HARDWARE] = ")
+        CALCULAR EN $r = ackermann_mem(3, 16380)
+        ESCRIBIR("Calculado con exito (Esperado: Numero de 4932 digitos)") SALTO
+
+        ESCRIBIR("A(3, 16381) [DESBORDE ESPERADO DE LA CPU] = ")
+        CALCULAR EN $r = ackermann_mem(3, 16381)
+        ESCRIBIR("$r (Esperado: inf)") SALTO
+
+    FIN PRINCIPAL
+FINAL

@@ -1,0 +1,45 @@
+PROGRAMA TestBits
+VARIABLE ENTERA SIN SIGNO $x = 0
+BLOQUE PRINCIPAL
+    ESCRIBIR ("\n=== Operaciones Bit-a-Bit ===") SALTO
+    
+    // Rotaciones
+    CALCULAR EN $x = ROTARIZQUIERDA (255, 4)
+    ESCRIBIR ("ROTARIZQUIERDA(255, 4) = $x") SALTO
+    
+    CALCULAR EN $x = ROTARDERECHA (255, 4)
+    ESCRIBIR ("ROTARDERECHA(255, 4) = $x") SALTO
+    
+    // Desplazamientos
+    CALCULAR EN $x = DESPLAZARIZQUIERDA (1, 8)
+    ESCRIBIR ("DESPLAZARIZQUIERDA(1, 8) = $x") SALTO
+    
+    CALCULAR EN $x = DESPLAZARDERECHA (256, 4)
+    ESCRIBIR ("DESPLAZARDERECHA(256, 4) = $x") SALTO
+    
+    // Operaciones lógicas
+    CALCULAR EN $x = BITY (255, 15)
+    ESCRIBIR ("BITY(255, 15) = $x") SALTO
+    
+    CALCULAR EN $x = BITO (240, 15)
+    ESCRIBIR ("BITO(240, 15) = $x") SALTO
+    
+    CALCULAR EN $x = BITXOR (255, 128)
+    ESCRIBIR ("BITXOR(255, 128) = $x") SALTO
+    
+    CALCULAR EN $x = BITNO (255)
+    ESCRIBIR ("BITNO(255) = $x") SALTO
+    
+    // Manipulación de bits
+    CALCULAR EN $x = LEERBIT (255, 3)
+    ESCRIBIR ("LEERBIT(255, 3) = $x") SALTO
+    
+    CALCULAR EN $x = ACTIVARBIT (0, 5)
+    ESCRIBIR ("ACTIVARBIT(0, 5) = $x") SALTO
+    
+    CALCULAR EN $x = DESACTIVARBIT (255, 5)
+    ESCRIBIR ("DESACTIVARBIT(255, 5) = $x") SALTO
+    
+    ESCRIBIR ("Test de bits completado ✓\n") SALTO
+FIN PRINCIPAL
+FINAL

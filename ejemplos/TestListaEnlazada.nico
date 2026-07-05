@@ -1,0 +1,71 @@
+PROGRAMA ListaEnlazadaSimulada
+// Simulamos un máximo de 100 nodos. 
+// El índice 0 significa "NULL" o "vacío". Los nodos válidos son 1 a 100.
+LISTA ENTERA $datos[100] = {0}
+LISTA ENTERA $siguiente[100] = {0}
+    
+VARIABLE ENTERA $cabeza = 0      // Apunta al primer nodo (0 = lista vacía)
+VARIABLE ENTERA $nodo_libre = 1  // Próximo índice disponible para crear un nodo
+
+// Crea un nuevo nodo y devuelve su índice
+FUNCION ENTERA crear_nodo($valor)
+    VARIABLE ENTERA $nuevo_idx = 0
+        
+    // Verificamos que haya espacio
+    SI($nodo_libre MENOR 100) ENTONCES
+        CALCULAR EN $nuevo_idx = $nodo_libre
+        $datos[$nuevo_idx] = $valor
+        $siguiente[$nuevo_idx] = 0 // Por defecto, no apunta a nada
+            
+        CALCULAR EN $nodo_libre = $nodo_libre + 1
+        RETORNAR $nuevo_idx
+     SINO
+        ESCRIBIR("Error: Memoria llena (max 100 nodos)") SALTO
+        RETORNAR 0
+    FIN SI
+FIN FUNCION
+
+// Inserta un valor al principio de la lista
+FUNCION ENTERA insertar_al_inicio($valor)
+    VARIABLE ENTERA $nuevo_idx = 0
+    CALCULAR EN $nuevo_idx = crear_nodo($valor)
+        
+    SI($nuevo_idx DIFERENTE 0) ENTONCES
+        $siguiente[$nuevo_idx] = $cabeza
+        ASIGNAR EN $cabeza = $nuevo_idx
+    FIN SI
+    RETORNAR 0
+FIN FUNCION
+
+// Recorre e imprime la lista
+FUNCION ENTERA recorrer_lista()
+    VARIABLE ENTERA $actual = 0
+    CALCULAR EN $actual = $cabeza
+        
+    ESCRIBIR("Contenido de la lista: ") SALTO
+        
+    MIENTRAS($actual DIFERENTE 0) HACER
+        MOSTRAR("$datos[$actual] -> ")
+        CALCULAR EN $actual = $siguiente[$actual]
+    FIN MIENTRAS
+        
+    ESCRIBIR("NULL") SALTO
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n=== LISTA ENLAZADA (SIMULACIÓN CON ARREGLOS) ===") SALTO
+    VARIABLE ENTERA $llamada = 0
+    ASIGNAR EN $llamada = insertar_al_inicio(30)
+    ASIGNAR EN $llamada = insertar_al_inicio(20)
+    ASIGNAR EN $llamada = insertar_al_inicio(10)
+        
+    ASIGNAR EN $llamada = recorrer_lista()
+        
+    ESCRIBIR("") SALTO
+    ESCRIBIR("Insertando 40 al inicio...") SALTO
+    ASIGNAR EN $llamada = insertar_al_inicio(40)
+    ASIGNAR EN $llamada = recorrer_lista()
+    ESCRIBIR("") SALTO    
+FIN PRINCIPAL
+FINAL

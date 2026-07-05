@@ -1,0 +1,16 @@
+PROGRAMA test
+
+BLOQUE PRINCIPAL
+    SI("diego" IGUAL "diego") ENTONCES
+        ESCRIBIR("Son iguales") SALTO
+    FIN SI
+    SI("diego" MENOR "diegoalejandro") ENTONCES
+        ESCRIBIR("Es menor") SALTO
+    FIN SI
+    SI("diego" MAYOR IGUAL "die") ENTONCES
+        ESCRIBIR("Es MAYOR o IGUAL") SALTO
+    FIN SI
+
+FIN PRINCIPAL
+FINAL
+

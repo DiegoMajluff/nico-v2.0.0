@@ -1,0 +1,226 @@
+//Tanto ASIGNAR EN, como RESULTADO EN y CALCULAR EN son alias. En este código
+//de ejemplo se puede apreciar su aplicación. Lo mismo sucede con ESCRIBIR y
+//MOSTRAR, ambos son alias.
+PROGRAMA TestFuncionesMatematicas
+
+    // DECLARACIONES
+    VARIABLE DECIMAL $resultado = 0
+    VARIABLE DECIMAL $pi = 0
+    VARIABLE DECIMAL $e = 0
+    VARIABLE DECIMAL $angulo = 0
+    VARIABLE DECIMAL $base = 0
+    VARIABLE DECIMAL $expo = 0
+    VARIABLE DECIMAL $num1 = 0
+    VARIABLE DECIMAL $num2 = 0
+
+BLOQUE PRINCIPAL
+
+    // CONSTANTES MATEMÁTICAS
+    ESCRIBIR("") SALTO
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   CONSTANTES MATEMÁTICAS               ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+    
+    ASIGNAR EN $pi = NUMEROPI ()
+    ESCRIBIR("NUMEROPI() = $pi") SALTO
+    
+    ASIGNAR EN $e = NUMEROEULER ()
+    ESCRIBIR("NUMEROEULER() = $e") SALTO
+    
+    ASIGNAR EN $resultado = RAIZDEUNMEDIO ()
+    ESCRIBIR("RAIZDEUNMEDIO() = $resultado") SALTO
+    
+    ASIGNAR EN $resultado = LOGNATURALDE2 ()
+    ESCRIBIR("LOGNATURALDE2() = $resultado") SALTO
+    
+    ASIGNAR EN $resultado = LOGNATURALDE10 ()
+    ESCRIBIR("LOGNATURALDE10() = $resultado") SALTO
+    
+    ESCRIBIR ("") SALTO
+
+    // FUNCIONES BÁSICAS
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FUNCIONES BÁSICAS                    ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR ("") SALTO
+    
+    RESULTADO EN $resultado = RAIZ(16)
+    ESCRIBIR("RAIZ(16) = $resultado") SALTO
+    
+    RESULTADO EN $resultado = RAIZCUBICA(27)
+    ESCRIBIR("RAIZCUBICA(27) = $resultado") SALTO
+    
+    ASIGNAR EN $base = 2
+    ASIGNAR EN $expo = 8
+    RESULTADO EN $resultado = POTENCIA($base, $expo)
+    ESCRIBIR("POTENCIA(2, 8) = $resultado") SALTO
+    
+    ASIGNAR EN $resultado = MODULO(17, 5)
+    ESCRIBIR("MODULO(17, 5) = $resultado") SALTO
+    
+    ASIGNAR EN $resultado = ABSOLUTO(-42)
+    ESCRIBIR("ABSOLUTO(-42) = $resultado") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // FUNCIONES TRIGONOMÉTRICAS
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FUNCIONES TRIGONOMÉTRICAS            ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+    
+    ASIGNAR EN $angulo = 0
+    CALCULAR EN $resultado = SENO($angulo)
+    ESCRIBIR("SENO(0) = $resultado") SALTO
+    
+    ASIGNAR EN $angulo = 1.5708
+    CALCULAR EN $resultado = SENO($angulo)
+    ESCRIBIR("SENO(1.5708) ≈ $resultado (esperado: 1)") SALTO
+    
+    ASIGNAR EN $angulo = 0
+    CALCULAR EN $resultado = COSENO($angulo)
+    ESCRIBIR("COSENO(0) = $resultado") SALTO
+    
+    ASIGNAR EN $angulo = 3.1416
+    CALCULAR EN $resultado = COSENO($angulo)
+    ESCRIBIR("COSENO(3.1416) ≈ $resultado (esperado: -1)") SALTO
+    
+    ASIGNAR EN $angulo = 0
+    CALCULAR EN $resultado = TANGENTE($angulo)
+    ESCRIBIR("TANGENTE(0) = $resultado") SALTO
+    
+    ASIGNAR EN $angulo = 0
+    CALCULAR EN $resultado = ARCOSENO($angulo)
+    ESCRIBIR("ARCOSENO(0) = $resultado") SALTO
+    
+    ASIGNAR EN $angulo = 1
+    CALCULAR EN $resultado = ARCOCOSENO($angulo)
+    ESCRIBIR("ARCOCOSENO(1) = $resultado") SALTO
+    
+    ASIGNAR EN $angulo = 0
+    CALCULAR EN $resultado = ARCOTANGENTE($angulo)
+    ESCRIBIR("ARCOTANGENTE(0) = $resultado") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // FUNCIONES LOGARÍTMICAS
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FUNCIONES LOGARÍTMICAS               ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+    
+    RESULTADO EN $resultado = LOGNATURAL(2.7183)
+    ESCRIBIR("LOGNATURAL(2.7183) ≈ $resultado (esperado: 1)") SALTO
+    
+    RESULTADO EN $resultado = LOGBASE10(100)
+    ESCRIBIR("LOGBASE10(100) = $resultado") SALTO
+    
+    RESULTADO EN $resultado = LOGBASE2(256)
+    ESCRIBIR("LOGBASE2(256) = $resultado") SALTO
+    
+    ASIGNAR EN $base = 10
+    RESULTADO EN $resultado = LOGARITMO(1000, $base)
+    ESCRIBIR("LOGARITMO(1000, 10) = $resultado") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // FUNCIONES EXPONENCIALES
+    MOSTRAR("╔════════════════════════════════════════╗") SALTO
+    MOSTRAR("║   FUNCIONES EXPONENCIALES              ║") SALTO
+    MOSTRAR("╚════════════════════════════════════════╝") SALTO
+    MOSTRAR("") SALTO
+    
+    ASIGNAR EN $resultado = EXPONENCIAL(1)
+    ESCRIBIR("EXPONENCIAL(1) ≈ $resultado (esperado: e)") SALTO
+    
+    ASIGNAR EN $resultado = DOSALAX(3)
+    ESCRIBIR("DOSALAX(3) = $resultado (2^3 = 8)") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // FUNCIONES DE REDONDEO
+    MOSTRAR("╔════════════════════════════════════════╗") SALTO
+    MOSTRAR("║   FUNCIONES DE REDONDEO                ║") SALTO
+    MOSTRAR("╚════════════════════════════════════════╝") SALTO
+    MOSTRAR("") SALTO
+    
+    ASIGNAR EN $resultado = REDONDEAR(ARRIBA, 3.14)
+    ESCRIBIR("REDONDEAR(ARRIBA, 3.14) = $resultado") SALTO
+    
+    ASIGNAR EN $resultado = REDONDEAR(ABAJO, 3.99)
+    ESCRIBIR("REDONDEAR(ABAJO, 3.99) = $resultado") SALTO
+    
+    ASIGNAR EN $resultado = REDONDEAR(ENTERO, 3.5)
+    ESCRIBIR("REDONDEAR(ENTERO, 3.5) = $resultado") SALTO
+    
+    ASIGNAR EN $resultado = QUITARDECIMAL(3.99)
+    ESCRIBIR("QUITARDECIMAL(3.99) = $resultado") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // FUNCIONES DE COMPARACIÓN
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FUNCIONES DE COMPARACIÓN             ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+    
+    CALCULAR EN $num1 = 42
+    CALCULAR EN $num2 = 58
+    CALCULAR EN $resultado = MAXIMO($num1, $num2)
+    ESCRIBIR("MAXIMO(42, 58) = $resultado") SALTO
+    
+    CALCULAR EN $resultado = MINIMO($num1, $num2)
+    ESCRIBIR("MINIMO(42, 58) = $resultado") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // OPERADORES ARITMÉTICOS
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   OPERADORES ARITMÉTICOS               ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+    
+    ASIGNAR EN $num1 = 10
+    CALCULAR EN $num2 = 3
+    RESULTADO EN $resultado = $num1 + $num2
+    ESCRIBIR("10 + 3 = $resultado") SALTO
+    
+    CALCULAR EN $resultado = $num1 - $num2
+    ESCRIBIR("10 - 3 = $resultado") SALTO
+    
+    CALCULAR EN $resultado = $num1 * $num2
+    ESCRIBIR("10 * 3 = $resultado") SALTO
+    
+    CALCULAR EN $resultado = $num1 / $num2
+    ESCRIBIR("10 / 3 = $resultado") SALTO
+    
+    CALCULAR EN $resultado = $num1 ^ $num2
+    ESCRIBIR("10 ^ 3 = $resultado") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // EXPRESIONES COMPLEJAS
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   EXPRESIONES COMPLEJAS                ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+    
+    CALCULAR EN $resultado = (SENO(1.5708) + COSENO(0)) * 10
+    ESCRIBIR("(SENO(1.5708) + COSENO(0)) * 10 = $resultado") SALTO
+    
+    CALCULAR EN $resultado = RAIZ(POTENCIA(3, 2) + POTENCIA(4, 2))
+    ESCRIBIR("RAIZ(3^2 + 4^2) = $resultado (Pitágoras)") SALTO
+    
+    CALCULAR EN $resultado = LOGARITMO(LOGARITMO(10000, 10), 10)
+    ESCRIBIR("LOGARITMO(LOGARITMO(10000, 10), 10) = $resultado", DECIMALES(4)) SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // FIN DEL TEST
+    ESCRIBIR ("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR ("║   FIN DEL TEST DE FUNCIONES            ║") SALTO
+    ESCRIBIR ("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

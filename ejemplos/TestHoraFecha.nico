@@ -1,0 +1,15 @@
+PROGRAMA TestFechaHora
+
+BLOQUE PRINCIPAL
+    VARIABLE TEXTO $hora
+    VARIABLE TEXTO $fecha
+    
+    HORAACTUAL($hora)
+    FECHAACTUAL($fecha)
+    ESCRIBIR("") SALTO
+    ESCRIBIR("🕒 Hora actual: $hora") SALTO
+    ESCRIBIR("📅 Fecha actual: $fecha\n") SALTO
+    ESCRIBIR("Log: \[$fecha - $hora\] Programa ejecutado correctamente.") SALTO
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

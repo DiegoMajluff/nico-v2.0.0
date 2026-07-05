@@ -1,0 +1,82 @@
+PROGRAMA nivel_bits
+
+    VARIABLE ENTERA SIN SIGNO $id, $tipo, $prioridad, $cifrado, $descifrado
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   OPERACIONES A NIVEL DE BIT           ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+
+    // ✅ Flags de estado (8 flags en 1 byte)
+    ESCRIBIR("=== 1. MANIPULACIÓN DE FLAGS ===") SALTO
+    VARIABLE ENTERA SIN SIGNO $flags = 0, $leerbit = 0
+    
+    // Activar flag 3 (bit 3 = valor 8)
+    CALCULAR EN $flags = ACTIVARBIT($flags, 3)
+    ESCRIBIR("Activar bit 3: $flags") SALTO
+    
+    // Verificar si flag 3 está activo
+    ASIGNAR EN $leerbit = LEERBIT($flags, 3)
+    SI($leerbit IGUAL 1) ENTONCES
+        ESCRIBIR("✓ Flag 3 está activo") SALTO
+    FIN SI
+    
+    // Desactivar flag 3
+    CALCULAR EN $flags = DESACTIVARBIT($flags, 3)
+    ESCRIBIR("Desactivar bit 3: $flags") SALTO
+    ESCRIBIR("") SALTO
+
+    // ✅ Máscaras para extraer campos de un valor empaquetado
+    ESCRIBIR("=== 2. EXTRACCIÓN DE CAMPOS EMPAQUETADOS ===") SALTO
+    ESCRIBIR("Valor 16-bit: \[5 bits ID\]\[6 bits tipo\]\[5 bits prioridad\]") SALTO
+    // 0b101101111010101 = 0x5BD5 = 23509
+    VARIABLE ENTERA SIN SIGNO $empaquetado = 0x5BD5
+    ESCRIBIR("Valor empaquetado: $empaquetado (0x5BD5)") SALTO
+    
+    CALCULAR EN $id = DESPLAZARDERECHA($empaquetado, 11)
+    ESCRIBIR("ID (bits 15-11): $id") SALTO
+    
+    CALCULAR EN $tipo = BITY(DESPLAZARDERECHA($empaquetado, 5), 63)
+    ESCRIBIR("Tipo (bits 10-5): $tipo") SALTO
+    
+    CALCULAR EN $prioridad = BITY($empaquetado, 31)
+    ESCRIBIR("Prioridad (bits 4-0): $prioridad") SALTO
+    ESCRIBIR("") SALTO
+
+    // ✅ Criptografía básica: XOR para cifrado simétrico simple
+    ESCRIBIR("=== 3. CIFRADO XOR SIMÉTRICO ===") SALTO
+    VARIABLE ENTERA SIN SIGNO $mensaje = 0x48656C6C6F
+    ESCRIBIR("Mensaje original: $mensaje (0x48656C6C6F = 'Hello')") SALTO
+    
+    VARIABLE ENTERA SIN SIGNO $clave = 0x1A2B3C4D5E
+    ESCRIBIR("Clave secreta: $clave (0x1A2B3C4D5E)") SALTO
+    
+    CALCULAR EN $cifrado = BITXOR($mensaje, $clave)
+    ESCRIBIR("Mensaje cifrado: $cifrado") SALTO
+    
+    CALCULAR EN $descifrado = BITXOR($cifrado, $clave)
+    ESCRIBIR("Mensaje descifrado: $descifrado (debe ser igual al original)") SALTO
+    
+    SI($descifrado IGUAL $mensaje) ENTONCES
+        ESCRIBIR("✓ Cifrado/descifrado XOR exitoso") SALTO
+    FIN SI
+    ESCRIBIR("") SALTO
+
+    // ✅ Optimización: multiplicar/dividir por potencias de 2
+    ESCRIBIR("=== 4. OPTIMIZACIÓN CON DESPLAZAMIENTOS ===") SALTO
+    VARIABLE ENTERA SIN SIGNO $x = 10
+    ESCRIBIR("Valor original: $x") SALTO
+    
+    CALCULAR EN $x = DESPLAZARIZQUIERDA($x, 3)
+    ESCRIBIR("x * 8 (desplazar izquierda 3): $x") SALTO
+    
+    CALCULAR EN $x = DESPLAZARDERECHA($x, 3)
+    ESCRIBIR("x / 8 (desplazar derecha 3): $x") SALTO
+    ESCRIBIR("") SALTO
+
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FIN DEL TEST DE NIVEL BIT            ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝\n") SALTO
+FIN PRINCIPAL
+FINAL

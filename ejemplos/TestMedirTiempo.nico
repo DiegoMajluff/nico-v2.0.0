@@ -1,0 +1,17 @@
+PROGRAMA MedirTiempo
+    VARIABLE DECIMAL $inicio, $fin, $duracion
+BLOQUE PRINCIPAL
+    TIEMPOMS($inicio)  // Capturar timestamp inicial
+    
+    // Código a perfilar
+    VARIABLE ENTERA $suma = 0
+    PARA($i DESDE 1 HASTA 10000) HACER
+        CALCULAR EN $suma = $suma + $i
+    FIN PARA
+    
+    TIEMPOMS($fin)  // Capturar timestamp final
+    CALCULAR EN $duracion = ($fin - $inicio) / 1000.0  // Convertir ms → segundos
+    
+    ESCRIBIR("\nOperación completada en $duracion segundos\n") SALTO
+FIN PRINCIPAL
+FINAL

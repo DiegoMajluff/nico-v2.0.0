@@ -1,0 +1,15 @@
+PROGRAMA TestMatrizLocal
+    MATRIZ TEXTO $global[1][1] = {{"SOY_GLOBAL"}}
+FUNCION ENTERA llamar_funcion()
+    MATRIZ TEXTO $local[2][2] = {{"Hola","Chau"},{"Diego","Mundo"}}
+    MOSTRAR("Dentro función: local[0][0]=$local[0][0], local[1][1]=$local[1][1]") SALTO
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $llamada = 0
+    MOSTRAR("\nGlobal inicial: $global[0][0]") SALTO
+    ASIGNAR EN $llamada = llamar_funcion()
+    MOSTRAR("Global después: $global[0][0]\n") SALTO
+FIN PRINCIPAL
+FINAL

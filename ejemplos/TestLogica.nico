@@ -1,0 +1,42 @@
+PROGRAMA TestLogica
+    VARIABLE LOGICA $activo = VERDADERO, $inactivo = FALSO, $resultado
+BLOQUE PRINCIPAL
+    MOSTRAR("=== Test Tipo LOGICA ===") SALTO
+    
+    MOSTRAR("activo = ") 
+    MOSTRAR("$activo") SALTO
+    
+    MOSTRAR("inactivo = ")
+    MOSTRAR("$inactivo") SALTO
+    
+    MOSTRAR("\n--- Operaciones lógicas ---") SALTO
+    
+    $resultado = $activo Y $inactivo
+    MOSTRAR("activo Y inactivo = ")
+    MOSTRAR("$resultado") SALTO
+    
+    $resultado = $activo O $inactivo
+    MOSTRAR("activo O inactivo = ")
+    MOSTRAR("$resultado") SALTO
+    
+    $resultado = NO $activo
+    MOSTRAR("NO activo = ")
+    MOSTRAR("$resultado") SALTO
+    
+    MOSTRAR("\n--- Uso en condiciones ---") SALTO
+    
+    SI($activo) ENTONCES
+        MOSTRAR("✅ activo es VERDADERO") SALTO
+    SINO
+        MOSTRAR("❌ activo es FALSO") SALTO
+    FIN SI
+    
+    SI($inactivo) ENTONCES
+        MOSTRAR("❌ inactivo es VERDADERO") SALTO
+    SINO
+        MOSTRAR("✅ inactivo es FALSO") SALTO
+    FIN SI
+    
+    MOSTRAR("\n✅ Test finalizado") SALTO
+FIN PRINCIPAL
+FINAL

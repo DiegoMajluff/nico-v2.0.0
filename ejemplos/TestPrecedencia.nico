@@ -1,0 +1,29 @@
+PROGRAMA test_precedencia
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n=== TEST DE PRECEDENCIA ===") SALTO
+    
+    // 1. Básico: * antes que +
+    ESCRIBIR("1. 4 + 5 * 2 = [4 + (5 * 2)] (esperado: \[14\])") SALTO
+    
+    // 2. / antes que -
+    ESCRIBIR("2. 10 - 8 / 2 = [10 - (8 / 2)] (esperado: \[6\])") SALTO
+    
+    // 3. Paréntesis fuerzan orden
+    ESCRIBIR("3. (4 + 5) * 2 = [(4 + 5) * 2] (esperado: \[18\])") SALTO
+    
+    // 4. Combinación compleja
+    ESCRIBIR("4. 2 + 3 * 4 - 6 / 2 = [2 + (3 * 4) - (6 / 2)] (esperado: \[11\])") SALTO
+    
+    // 5. Potencia ^
+    ESCRIBIR("5. 2 ^ 3 + 1 = [(2 ^ 3) + 1] (esperado: \[9\])") SALTO
+    
+    // 6. Módulo %
+    ESCRIBIR("6. 10 % 3 + 2 = [(10 % 3) + 2] (esperado: \[3\])") SALTO
+    
+    // 7. Con variables
+    CONSTANTE ENTERA $a = 5, $b = 3, $c = 2
+    ESCRIBIR("7. $a + $b * $c = [$a + ($b * $c)] (esperado: \[11\])") SALTO
+    
+    ESCRIBIR("=== FIN ===\n") SALTO
+FIN PRINCIPAL
+FINAL

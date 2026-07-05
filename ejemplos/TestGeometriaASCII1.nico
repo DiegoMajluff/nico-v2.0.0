@@ -1,0 +1,92 @@
+PROGRAMA prueba_geometria_ascii
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $ancho, $alto, $cx, $cy, $fin, $tecla
+    VARIABLE CARACTER $pixel = '#'
+    VARIABLE DECIMAL $radio = 8.0, $angulo, $x, $y, $factor_y
+    VARIABLE DECIMAL $cos_val, $sin_val, $rx, $ry
+    VARIABLE ENTERA $px, $py
+    
+    ANCHOTERMINAL($ancho)
+    ALTOTERMINAL($alto)
+    CALCULAR EN $cx = $ancho / 2
+    CALCULAR EN $cy = $alto / 2
+    
+    // Factor de corrección aspect ratio terminal
+    ASIGNAR EN $factor_y = 0.5
+    
+    LIMPIARPANTALLA
+    OCULTARCURSOR
+    
+    // === MARCO ===
+    DIBUJARLINEA(2, 2, $ancho-1, 2, "═")
+    DIBUJARLINEA(2, $alto-2, $ancho-1, $alto-2, "═")
+    DIBUJARLINEA(2, 2, 2, $alto-2, "║")
+    DIBUJARLINEA($ancho-1, 2, $ancho-1, $alto-2, "║")
+    
+    // === CÍRCULO SIN CORREGIR (referencia) ===
+    CURSOR(3, 5)
+    MOSTRAR("Sin correccion:")
+    DIBUJARCIRCULO($cx - 12, $cy, 8, $pixel)
+    
+    // === CÍRCULO CON CORRECCIÓN ASPECT RATIO ===
+    CURSOR(3, $ancho - 25)
+    MOSTRAR("Con correccion Y*0.5:")
+    
+    ASIGNAR EN $angulo = 0.0
+    MIENTRAS($angulo MENOR 6.283185) HACER
+        // Paso 1: Calcular trigonométricas con asignación explícita
+        ASIGNAR EN $cos_val = COSENO($angulo)
+        ASIGNAR EN $sin_val = SENO($angulo)
+        
+        // Paso 2: Calcular radios ajustados
+        CALCULAR EN $rx = $radio * $cos_val
+        CALCULAR EN $ry = ($radio * $factor_y) * $sin_val
+        
+        // Paso 3: Calcular coordenadas finales
+        CALCULAR EN $x = ($cx + 12) + $rx
+        CALCULAR EN $y = $cy + $ry
+        
+        // Paso 4: Redondear a enteros de terminal
+        ASIGNAR EN $px = REDONDEAR(ARRIBA, $x)
+        ASIGNAR EN $py = REDONDEAR(ARRIBA, $y)
+        
+        // Paso 5: Validar límites con sintaxis Nico
+        SI(($px MAYOR IGUAL 3) Y ($px MENOR IGUAL $ancho - 3) Y ($py MAYOR IGUAL 3) Y ($py MENOR IGUAL $alto - 3)) ENTONCES
+            CURSOR($py, $px)
+            ESCRIBIR("$pixel")
+        FIN SI
+        
+        // Paso 6: Avanzar ángulo
+        CALCULAR EN $angulo = $angulo + 0.08
+    FIN MIENTRAS
+    
+    // === ETIQUETA CENTRAL ===
+    CURSOR($cy, $cx - 6)
+    COLORTEXTO(azul)
+    TEXTONEGRITA
+    MOSTRAR("Nico v1.1")
+    RESETCOLOR
+    RESETTEXTO
+    
+    // === INSTRUCCIONES ===
+    CURSOR($alto - 1, 3)
+    COLORTEXTO(verde)
+    MOSTRAR("ESC = Salir | Factor Y: 0.5")
+    RESETCOLOR
+    
+    // === BUCLE DE ESPERA ===
+    MIENTRAS($fin IGUAL 0) HACER
+        LEERTECLA($tecla)
+        SI($tecla IGUAL 27) ENTONCES
+            ASIGNAR EN $fin = 1
+        FIN SI
+        ESPERAR(20, MILISEGUNDOS)
+    FIN MIENTRAS
+    
+    // === RESTAURAR ===
+    CURSOR($alto, 1)
+    MOSTRARCURSOR
+    
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,26 @@
+PROGRAMA TestShadowingMatriz
+    MATRIZ TEXTO $m[2][2] = {{"GlobalA", "GlobalB"}, {"GlobalC", "GlobalD"}}
+    LISTA ENTERA $lista[2] = {150, 300} 
+FUNCION ENTERA probar_local()
+    // Mismo nombre "$m", pero scope local
+    MATRIZ TEXTO $m[2][2] = {{"LocalA", "LocalB"}, {"LocalC", "LocalD"}}
+    LISTA ENTERA $lista[2] = {15, 20}
+    MOSTRAR("Local inicial: $m[0][0], $m[1][1]") SALTO
+    VARIABLE ENTERA $llamada = 0
+    ASIGNAR EN $llamada = 100
+    // Modificar la local (no debe afectar a la global)
+    $m[0][0] = "MODIFICADA"
+    COPIARTEXTO($m[1][1], "LOCAL_OK")
+    MOSTRAR("Local final: $m[0][0], $m[1][1], $llamada") SALTO
+    
+    RETORNAR $lista[1]
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    MOSTRAR("\nGlobal inicial: $m[0][0], $m[1][1]") SALTO
+    VARIABLE ENTERA $llamada = 0
+    ASIGNAR EN $llamada = probar_local()
+    MOSTRAR("Global después: $m[0][0], $m[1][1], Retorno: $llamada, Lista global: $lista[1]\n") SALTO
+FIN PRINCIPAL
+FINAL
+

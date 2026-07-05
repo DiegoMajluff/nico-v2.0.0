@@ -1,0 +1,147 @@
+PROGRAMA TestCadenas
+
+    VARIABLE ENTERA $longitud = 0
+    VARIABLE ENTERA $numero = 0
+    VARIABLE ENTERA $posicion = 0
+    VARIABLE DECIMAL $decimal = 0.0
+    VARIABLE TEXTO EXTENSO $nombre = "Diego"
+    VARIABLE TEXTO EXTENSO $apellido = "Majluff"
+    VARIABLE TEXTO $completo = ""
+    VARIABLE TEXTO $subtexto = ""
+    VARIABLE TEXTO $numero_texto = ""
+    VARIABLE TEXTO $texto1 = "hola"
+    VARIABLE TEXTO $texto2 = "hola"
+    VARIABLE TEXTO $texto3 = "adios"
+    VARIABLE TEXTO $vacio = ""
+    VARIABLE TEXTO EXTENSO $con_espacios = "   hola mundo   "
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   TEST DE FUNCIONES DE CADENAS         ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+
+    // LONGITUDTEXTO
+    ESCRIBIR("=== LONGITUDTEXTO ===") SALTO
+    ASIGNAR EN $longitud = LONGITUDTEXTO ($nombre)
+    ESCRIBIR("Longitud de $nombre: $longitud") SALTO
+    ESCRIBIR("") SALTO
+
+    // COPIARTEXTO
+    ESCRIBIR("=== COPIARTEXTO ===") SALTO
+    COPIARTEXTO ($completo, $nombre)
+    ESCRIBIR("Despues de COPIARTEXTO: $completo") SALTO
+    ESCRIBIR("") SALTO
+
+    // CONCATENARTEXTO
+    ESCRIBIR("=== CONCATENARTEXTO ===") SALTO
+    CONCATENARTEXTO ($completo, " ")
+    CONCATENARTEXTO ($completo, $apellido)
+    ESCRIBIR("Despues de CONCATENARTEXTO: $completo") SALTO
+    ESCRIBIR("") SALTO
+
+    // MAYUSCULAS / MINUSCULAS
+    ESCRIBIR("=== MAYUSCULAS / MINUSCULAS ===") SALTO
+    MAYUSCULAS ($completo)
+    ESCRIBIR("En mayusculas: $completo") SALTO
+    MINUSCULAS ($completo)
+    ESCRIBIR("En minusculas: $completo") SALTO
+    ESCRIBIR("") SALTO
+
+    // BUSCARTEXTO
+    ESCRIBIR("=== BUSCARTEXTO ===") SALTO
+    ASIGNAR EN $posicion = BUSCARTEXTO ($completo, "majluff")
+    ESCRIBIR("Posicion de 'majluff': $posicion") SALTO
+    ESCRIBIR("") SALTO
+
+    // BUSCARCARACTER
+    ESCRIBIR("=== BUSCARCARACTER ===") SALTO
+    ASIGNAR EN $posicion = BUSCARCARACTER ($nombre, 'i')
+    ESCRIBIR("Posicion de 'i' en '$nombre': $posicion") SALTO
+    ESCRIBIR("") SALTO
+
+    // COMPARARTEXTO
+    ESCRIBIR("=== COMPARARTEXTO ===") SALTO
+    ASIGNAR EN $numero = COMPARARTEXTO ($texto1, $texto2)
+    ESCRIBIR("COMPARARTEXTO('hola', 'hola') = $numero (0=iguales)") SALTO
+    ASIGNAR EN $numero = COMPARARTEXTO ($texto1, $texto3)
+    ESCRIBIR("COMPARARTEXTO('hola', 'adios') = $numero (!=0=diferentes)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEXTOVACIO
+    ESCRIBIR("=== TEXTOVACIO ===") SALTO
+    ASIGNAR EN $numero = TEXTOVACIO ($vacio)
+    ESCRIBIR("TEXTOVACIO('') = $numero (1=vacio)") SALTO
+    ASIGNAR EN $numero = TEXTOVACIO ($nombre)
+    ESCRIBIR("TEXTOVACIO('$nombre') = $numero (0=no vacio)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEXTOAENTERO / ENTEROATEXTO
+    ESCRIBIR("=== TEXTOAENTERO / ENTEROATEXTO ===") SALTO
+    COPIARTEXTO ($numero_texto, "123")
+    ASIGNAR EN $numero = TEXTOAENTERO ($numero_texto)
+    ESCRIBIR("TEXTOAENTERO('123') = $numero") SALTO
+    CALCULAR EN $numero = $numero + 10
+    ENTEROATEXTO ($numero, $numero_texto)
+    ESCRIBIR("ENTEROATEXTO(133, \$numero_texto) = '$numero_texto'") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEXTOADECIMAL / DECIMALATEXTO
+    ESCRIBIR ("=== TEXTOADECIMAL / DECIMALATEXTO ===") SALTO
+    COPIARTEXTO($numero_texto, "3.14")
+    ASIGNAR EN $decimal = TEXTOADECIMAL ($numero_texto)
+    ESCRIBIR("TEXTOADECIMAL('3.14') = $decimal") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEXTOACARACTER / CARACTERATEXTO
+    ESCRIBIR("=== TEXTOACARACTER / CARACTERATEXTO ===") SALTO
+    ASIGNAR EN $numero = TEXTOACARACTER ($nombre)
+    ESCRIBIR("TEXTOACARACTER('$nombre') = $numero (ASCII de 'D')") SALTO
+    CARACTERATEXTO ('A', $subtexto)
+    ESCRIBIR("CARACTERATEXTO('A', \$subtexto) = '$subtexto'") SALTO
+    ESCRIBIR("") SALTO
+
+    // RECORTARTEXTO
+    ESCRIBIR("=== RECORTARTEXTO ===") SALTO
+    ESCRIBIR("Antes: '$con_espacios'") SALTO
+    RECORTARTEXTO ($con_espacios)
+    ESCRIBIR("Despues: '$con_espacios'") SALTO
+    ESCRIBIR("") SALTO
+
+    // REEMPLAZARTEXTO
+    ESCRIBIR("=== REEMPLAZARTEXTO ===") SALTO
+    COPIARTEXTO ($completo, "hola mundo")
+    ESCRIBIR("Antes: $completo") SALTO
+    REEMPLAZARTEXTO ($completo, "mundo", "Nico")
+    ESCRIBIR("Despues: $completo") SALTO
+    ESCRIBIR("") SALTO
+
+    // REPETIRTEXTO
+    ESCRIBIR("=== REPETIRTEXTO ===") SALTO
+    REPETIRTEXTO ("ABC", 3, $subtexto)
+    ESCRIBIR("REPETIRTEXTO('ABC', 3) = '$subtexto'") SALTO
+    ESCRIBIR("") SALTO
+
+    // EXTRAERTEXTO
+    ESCRIBIR("=== EXTRAERTEXTO ===") SALTO
+    COPIARTEXTO ($completo, "Hola Mundo")
+    EXTRAERTEXTO ($completo, 0, 4, $subtexto)
+    ESCRIBIR("EXTRAERTEXTO('Hola Mundo', 0, 4) = '$subtexto'") SALTO
+    ESCRIBIR("") SALTO
+
+    // DIVIDIRTEXTO
+    ESCRIBIR("=== DIVIDIRTEXTO ===") SALTO
+    COPIARTEXTO ($completo, "uno,dos,tres,cuatro")
+    DIVIDIRTEXTO ($completo, ',', 0, $subtexto)
+    ESCRIBIR("Parte 0: $subtexto") SALTO
+    DIVIDIRTEXTO ($completo, ',', 2, $subtexto)
+    ESCRIBIR("Parte 2: $subtexto") SALTO
+    ESCRIBIR("") SALTO
+
+    // FIN DEL TEST
+    ESCRIBIR("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FIN DEL TEST DE CADENAS              ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════╝") SALTO
+
+FIN PRINCIPAL
+FINAL

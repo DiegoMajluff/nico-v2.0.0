@@ -1,0 +1,104 @@
+// 🎮 Juego Minimalista v2.1 - Spawn Seguro + Clamp
+// Controles: A (97) / D (100) para mover. ESC (27) para salir.
+
+PROGRAMA JuegoMinimalista
+    VARIABLE ENTERA $x = 40, $y = 22, $tecla = 0
+    VARIABLE ENTERA $ox = 40, $oy = 3, $ow = 3, $oh = 2
+    VARIABLE ENTERA $colisiona = 0, $puntos = 0, $vel = 1
+    VARIABLE ENTERA $ancho = 80, $alto = 24
+BLOQUE PRINCIPAL
+    ANCHOTERMINAL($ancho)
+    ALTOTERMINAL($alto)
+    LIMPIARPANTALLA
+    OCULTARCURSOR
+
+    MIENTRAS(1) HACER
+        LEERTECLA($tecla)
+        
+        // Movimiento jugador
+        SI($tecla IGUAL 97) ENTONCES 
+            SI($x MAYOR 1) ENTONCES 
+                ASIGNAR EN $x = $x - 1 
+            FIN SI 
+        FIN SI
+        SI($tecla IGUAL 100) ENTONCES 
+            SI($x MENOR $ancho - 1) ENTONCES
+                ASIGNAR EN $x = $x + 1 
+            FIN SI 
+        FIN SI
+        SI($tecla IGUAL 27) ENTONCES 
+            CORTE 
+        FIN SI
+        
+        // Caída obstáculo
+        ASIGNAR EN $oy = $oy + $vel
+        // ✅ SPAWN FIJADO: respeta $ow y limita a terminal real
+        SI($oy MAYOR IGUAL $alto - $oh) ENTONCES
+            ASIGNAR EN $oy = 3
+            ASIGNAR EN $ox = 1 + ( ($puntos * 7) MOD ($ancho - $ow - 1) )
+            SI($ox MENOR 1) ENTONCES
+                ASIGNAR EN $ox = 1 
+            FIN SI
+            SI($ox MAYOR $ancho - $ow) ENTONCES
+                ASIGNAR EN $ox = $ancho - $ow 
+            FIN SI
+            ASIGNAR EN $puntos = $puntos + 1
+            SI($puntos MOD 10 IGUAL 0) ENTONCES
+                ASIGNAR EN $vel = $vel + 1 
+            FIN SI
+        FIN SI
+        
+        // 🔥 Colisión
+        ASIGNAR EN $colisiona = 0
+        COLISIONRECTANGULOS($x, $y, 1, 1, $ox, $oy, $ow, $oh, $colisiona)
+        // DEBUG TEMPORAL
+        CURSOR(3, 1)
+        ESCRIBIR("DEBUG: J[$x,$y] O[$ox,$oy] W[$ow,$oh] COL:$colisiona")
+        
+        SI($colisiona IGUAL 1) ENTONCES 
+            CORTE 
+        FIN SI
+        
+        // 🎨 Render + Debug mejorado
+        LIMPIARPANTALLA
+        CURSOR(1, 1) 
+        ESCRIBIR("🎮 Ptos: $puntos | Vel: $vel | A/D: mover | ESC: salir")
+        CURSOR(2, 1) 
+        ESCRIBIR("Debug: J($x,$y) O($ox,$oy) C:$colisiona | AnchoTerm: $ancho")
+        
+        COLORTEXTO(azul)
+        CURSOR($y, $x) 
+        MOSTRAR("█")
+        RESETCOLOR
+        
+        COLORTEXTO(rojo)
+        PARA($fy DESDE 0 HASTA $oh - 1) HACER
+            PARA($fx DESDE 0 HASTA $ow - 1) HACER
+                CURSOR($oy + $fy, $ox + $fx) 
+                MOSTRAR("█")
+            FIN PARA
+        FIN PARA
+        RESETCOLOR
+        
+        ESPERAR(50, MILISEGUNDOS)
+    FIN MIENTRAS
+    
+    MOSTRARCURSOR
+    CURSOR($alto/2, $ancho/2 - 6) 
+    COLORTEXTO(rojo) 
+    TEXTONEGRITA 
+    ESCRIBIR("💥 GAME OVER") 
+    RESETCOLOR 
+    RESETTEXTO
+    CURSOR($alto/2 + 2, $ancho/2 - 8) 
+    ESCRIBIR("Puntos: $puntos")
+    CURSOR($alto/2 + 4, $ancho/2 - 12) 
+    COLORTEXTO(amarillo) 
+    ESCRIBIR("Presioná cualquier tecla") 
+    RESETCOLOR
+    LEERTECLA($tecla)
+    LIMPIARPANTALLA
+    CURSOR($alto, 1) 
+    ESCRIBIR("\n✅ Fin del juego. Gracias por jugar con Nico!\n")
+FIN PRINCIPAL
+FINAL

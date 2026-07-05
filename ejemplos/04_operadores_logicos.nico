@@ -1,0 +1,30 @@
+// Ejemplo 04: Lógica booleana y evaluación con cortocircuito
+PROGRAMA LogicaBooleana
+
+    VARIABLE ENTERA $edad = 22
+    VARIABLE ENTERA $tiene_carnet = 1
+    VARIABLE ENTERA $puntos = 8
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    // Y (AND): Ambas deben ser verdaderas
+    SI (($edad MAYOR IGUAL 18) Y ($tiene_carnet IGUAL 1)) ENTONCES
+        ESCRIBIR("Puedes conducir legalmente.") SALTO
+    FIN SI
+
+    // O (OR): Basta con una verdadera
+    SI (($puntos MENOR 5) O ($edad MENOR 18)) ENTONCES
+        ESCRIBIR("Revisión de perfil requerida.") SALTO
+    SINO
+        ESCRIBIR("Perfil conductor verificado.") SALTO
+    FIN SI
+
+    // Anidamiento
+    SI ($edad MENOR 30) ENTONCES
+        SI ($puntos MAYOR IGUAL 6) ENTONCES
+            ESCRIBIR("Conductor joven y seguro.") SALTO
+        FIN SI
+    FIN SI
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,8 @@
+PROGRAMA TestTextoGlobal
+    MATRIZ TEXTO $m[2][2] = {{"Hola", "Mundo"}, {"Nico", "Lang"}}
+    VARIABLE TEXTO $texto = "Hola mundo desde variable"
+BLOQUE PRINCIPAL
+    MOSTRAR("Global: $m[0][0], $m[0][1], $m[1][0], $m[1][1], $texto") SALTO
+    MOSTRAR ("$texto\n")
+FIN PRINCIPAL
+FINAL

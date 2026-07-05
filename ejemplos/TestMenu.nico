@@ -1,0 +1,35 @@
+PROGRAMA test_menu
+
+VARIABLE ENTERA $opcion = 0
+
+BLOQUE PRINCIPAL
+    
+    MIENTRAS(1 IGUAL 1) HACER
+        ESCRIBIR("\n=== Menú de opciones ===") SALTO
+        ESCRIBIR("1 - Ingresar a Juegos") SALTO
+        ESCRIBIR("2 - Acceso al área de comidas") SALTO
+        ESCRIBIR("3 - Baños y servicios sanitarios") SALTO
+        ESCRIBIR("4 - Consultas sobre transportes") SALTO
+        ESCRIBIR("5 - Salir del menú") SALTO
+        ESCRIBIR("Ingrese su opción: ") 
+        LEER($opcion)
+
+        SI($opcion IGUAL 1) ENTONCES
+            ESCRIBIR("1 - Ingresando al área de juegos...") SALTO
+        FIN SI
+        SI($opcion IGUAL 2) ENTONCES
+            ESCRIBIR("2 - Ingresando al área de comidas...") SALTO
+        FIN SI
+        SI($opcion IGUAL 3) ENTONCES
+            ESCRIBIR("3 - Ingresando al área de baños y servicios...") SALTO
+        FIN SI
+        SI($opcion IGUAL 4) ENTONCES
+            ESCRIBIR("Ingresando a consultas sobre transportes...") SALTO
+        FIN SI
+        SI($opcion IGUAL 5) ENTONCES
+            ESCRIBIR("5 - Saliendo del menú...\n") SALTO
+            CORTE
+        FIN SI
+    FIN MIENTRAS
+FIN PRINCIPAL
+FINAL

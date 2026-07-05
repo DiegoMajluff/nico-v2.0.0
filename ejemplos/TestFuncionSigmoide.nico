@@ -1,0 +1,14 @@
+PROGRAMA test_funcion_sigmoide
+    VARIABLE DECIMAL $sigmoide
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ASIGNAR EN $sigmoide = SIGMOIDE(0)
+    MOSTRAR("SIGMOIDE de 0 = $sigmoide") SALTO
+    ASIGNAR EN $sigmoide = SIGMOIDE(-5)
+    MOSTRAR("SIGMOIDE de -5 = $sigmoide") SALTO
+    ASIGNAR EN $sigmoide = SIGMOIDE(5)
+    MOSTRAR("SIGMOIDE de 5 = $sigmoide") SALTO 
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+
+FINAL

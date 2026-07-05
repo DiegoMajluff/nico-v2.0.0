@@ -1,0 +1,46 @@
+PROGRAMA test_expresiones_condicion
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $alto, $ancho, $x=5, $y=5, $fin=0, $dummy, $offset=3
+
+    ANCHOTERMINAL($ancho)
+    ALTOTERMINAL($alto)
+    
+    OCULTARCURSOR
+    LIMPIARPANTALLA
+    MOSTRAR("🧪 Probando expresiones en SI/MIENTRAS") SALTO
+
+    MIENTRAS($fin IGUAL 0) HACER
+        // ✅ Leer tecla EN CADA ITERACIÓN del bucle
+        LEERTECLA($dummy)
+        
+        // Si presionas una tecla, salir
+        SI($dummy MAYOR 0) ENTONCES
+            ASIGNAR EN $fin = 1
+        FIN SI
+        
+        // ✅ Expresiones en condiciones
+        SI($x MENOR $ancho - 5) ENTONCES
+            ASIGNAR EN $x = $x + 1
+        FIN SI
+        
+        SI($y MAYOR 3 + $offset) ENTONCES
+            ASIGNAR EN $y = $y - 1
+        FIN SI
+
+        CURSOR($y, $x) 
+        MOSTRAR("🟦")
+        ESPERAR(50, MILISEGUNDOS)
+        
+        // Salida con expresión compuesta
+        SI(($x IGUAL $ancho - 5) O ($x IGUAL 5)) ENTONCES
+            ASIGNAR EN $fin = 1
+        FIN SI
+
+    FIN MIENTRAS
+
+    CURSOR($alto, 1)
+    MOSTRARCURSOR
+    MOSTRAR("✅ Test finalizado. x = $x  y = $y") SALTO
+FIN PRINCIPAL
+FINAL

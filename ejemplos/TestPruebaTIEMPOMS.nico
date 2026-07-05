@@ -1,0 +1,39 @@
+PROGRAMA prueba_tiempoms
+
+BLOQUE PRINCIPAL
+    VARIABLE DECIMAL $inicio, $actual, $delta
+    VARIABLE ENTERA $frames, $fin, $tecla
+
+    LIMPIARPANTALLA
+    OCULTARCURSOR
+    TIEMPOMS($inicio)
+    ASIGNAR EN $frames = 0
+    ASIGNAR EN $fin = 0
+    MOSTRAR("🎮 Game Loop activo. Presioná ESC para salir...") SALTO 
+
+    MIENTRAS($fin IGUAL 0) HACER
+        TIEMPOMS($actual)
+        CALCULAR EN $delta = ($actual - $inicio) / 1000.0
+
+        CURSOR(3, 1)
+        MOSTRAR("⏱️ Tiempo: $delta s | Frames: $frames     ") SALTO
+
+        // Simular carga de render/lógica
+        PARA($i DESDE 1 HASTA 5000) HACER
+            CALCULAR EN $frames = $frames + 1
+        FIN PARA
+
+        LEERTECLA($tecla)
+        SI($tecla IGUAL 27) ENTONCES
+            ASIGNAR EN $fin = 1
+        FIN SI
+
+        // ~60 FPS target
+        ESPERAR(16, MILISEGUNDOS)
+    FIN MIENTRAS
+
+    CURSOR(5, 1)
+    MOSTRARCURSOR
+    MOSTRAR("✅ Finalizado en $delta s. Frames totales: $frames\n") SALTO
+FIN PRINCIPAL
+FINAL

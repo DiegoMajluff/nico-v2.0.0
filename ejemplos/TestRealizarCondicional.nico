@@ -1,0 +1,16 @@
+PROGRAMA TestRealizarMientras
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $i
+    ASIGNAR EN $i = 0
+    ESCRIBIR("") SALTO
+    // REALIZAR-MIENTRAS con paréntesis anidados
+    REALIZAR
+        ESCRIBIR("Realizar-Mientras i=") 
+        ESCRIBIR("$i") SALTO
+        CALCULAR EN $i = $i + 1
+    MIENTRAS ((($i MENOR 5) Y ($i MAYOR IGUAL 0)) O ($i IGUAL 0))
+    
+    ESCRIBIR("✅ Realizar-Mientras finalizado.\n") SALTO
+FIN PRINCIPAL
+FINAL

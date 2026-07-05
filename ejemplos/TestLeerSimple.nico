@@ -1,0 +1,10 @@
+PROGRAMA test_leer_simple
+
+VARIABLE ENTERA $entrada
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("\nIngresá tu edad: ")
+    LEER($entrada)
+    ESCRIBIR("Tu edad es: $entrada años.\n") SALTO
+FIN PRINCIPAL
+FINAL

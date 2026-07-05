@@ -1,0 +1,26 @@
+PROGRAMA test_texto_extenso
+    VARIABLE TEXTO EXTENSO $corto
+
+FUNCION ENTERA TextoLargo()
+    VARIABLE TEXTO EXTENSO $txtfuncion = "Variable TEXTO EXTENSO declarada localmente en función"
+    ESCRIBIR("$txtfuncion") SALTO
+    RETORNAR 1
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    // Variante corta 
+    ASIGNAR EN $corto = "Texto corto en $corto"
+    
+    // Variante larga 
+    VARIABLE TEXTO EXTENSO $largo
+    VARIABLE ENTERA $dummy
+    ASIGNAR EN $largo = "Texto largo desde variable $largo, este texto puede ser muy largo y crecer dinámicamente sin límite fijo. "
+    ASIGNAR EN $largo = $largo + "¡Concatenación exitosa!"
+    ESCRIBIR("") SALTO
+    ESCRIBIR("1 - $corto") SALTO
+    ESCRIBIR("2 - $largo") SALTO
+    ESCRIBIR("") SALTO
+    ASIGNAR EN $dummy = TextoLargo()
+    ESCRIBIR("Hola") SALTO
+FIN PRINCIPAL
+FINAL

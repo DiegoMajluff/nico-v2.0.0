@@ -1,0 +1,78 @@
+PROGRAMA TestSaltos
+
+    VARIABLE ENTERA $opcion = 2
+
+BLOQUE PRINCIPAL
+    // TEST 1: SALTO BÁSICO
+    ESCRIBIR("") SALTO
+    MOSTRAR ("=== TEST 1: SALTO BÁSICO ===") SALTO
+    MOSTRAR ("1. Inicio del programa") SALTO
+
+    SALTAR A etiqueta1
+    MOSTRAR ("2. ESTO NO DEBERÍA VERSE (antes de etiqueta1)") SALTO
+
+    ETIQUETA etiqueta1
+    MOSTRAR ("A. ¡¡Llegué a etiqueta1!!") SALTO
+
+    // TEST 2: SALTO CONDICIONAL (SIMULADO CON SI)
+    MOSTRAR ("") SALTO
+    MOSTRAR ("=== TEST 2: SALTO CONDICIONAL ===") SALTO
+
+    SI ($opcion IGUAL 1) ENTONCES
+        SALTAR A caso1
+    FIN SI
+
+    SI ($opcion IGUAL 2) ENTONCES
+        SALTAR A caso2
+    FIN SI
+
+    SALTAR A casoDefault
+
+    ETIQUETA caso1
+    MOSTRAR ("Caso 1 seleccionado") SALTO
+    SALTAR A finCasos
+
+    ETIQUETA caso2
+    MOSTRAR ("B. Caso 2 seleccionado") SALTO
+    SALTAR A finCasos
+
+    ETIQUETA casoDefault
+    MOSTRAR ("E. Caso por defecto") SALTO
+
+    ETIQUETA finCasos
+    MOSTRAR ("C. Fin de casos") SALTO
+
+    // TEST 3: MÚLTIPLES SALTOS
+    MOSTRAR ("") SALTO
+    MOSTRAR ("=== TEST 3: MÚLTIPLES SALTOS ===") SALTO
+
+    MOSTRAR ("5. Antes del primer salto") SALTO
+    SALTAR A salto2
+
+    ETIQUETA salto1
+    MOSTRAR ("6. Llegué a salto1 (vía salto2)") SALTO
+    SALTAR A salto3
+
+    ETIQUETA salto2
+    MOSTRAR ("D. Llegué a salto2") SALTO
+    SALTAR A salto1
+
+    ETIQUETA salto3
+    MOSTRAR ("8. Llegué a salto3") SALTO
+
+    // TEST 4: CÓDIGO DESPUÉS DE FINAL (NO DEBERÍA EJECUTARSE)
+    MOSTRAR ("") SALTO
+    MOSTRAR ("=== TEST 4: FINAL ===") SALTO
+    MOSTRAR ("9. Última línea antes de FINAL") SALTO
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL
+
+// ← ← ← TODO LO DE ABAJO ES CÓDIGO MUERTO (NO SE EJECUTA)
+ETIQUETA despuesDelFinal:
+MOSTRAR ("10. ESTO NUNCA DEBERÍA VERSE") SALTO
+MOSTRAR ("11. TAMPOCO ESTO") SALTO
+
+ETIQUETA fin:
+SALTAR A despuesDelFinal
+MOSTRAR ("12. NI ESTO") SALTO

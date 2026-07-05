@@ -1,0 +1,28 @@
+// Ejemplo 02: Flujo de control completo
+PROGRAMA ControlFlujo
+    VARIABLE ENTERA $contador = 1
+    VARIABLE ENTERA $limite = 4
+    VARIABLE ENTERA $i = 0
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n--- Bucle MIENTRAS ---") SALTO
+    MIENTRAS ($contador MENOR IGUAL $limite) HACER
+        ESCRIBIR("  Paso: ") 
+        ESCRIBIR("$contador") SALTO
+        CALCULAR EN $contador = $contador + 1
+    FIN MIENTRAS
+
+    ESCRIBIR("--- Condicional SI / SINO ---") SALTO
+    SI ($limite MAYOR 3) ENTONCES
+        ESCRIBIR("El límite es mayor que 3.") SALTO
+    SINO
+        ESCRIBIR("Límite pequeño.") SALTO
+    FIN SI
+
+    ESCRIBIR("--- Bucle PARA ---") SALTO
+    PARA ($i = 0 HASTA 2 PASO 1) HACER
+        ESCRIBIR("Iteración: ") 
+        ESCRIBIR("$i") SALTO
+    FIN PARA
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

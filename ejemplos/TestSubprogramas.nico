@@ -1,0 +1,20 @@
+PROGRAMA TestSubs
+
+    VARIABLE ENTERA $x = 10
+
+SUBPROGRAMA Saludar
+    ESCRIBIR ("¡¡Hola desde el Subprograma!!") SALTO
+    ESCRIBIR ("El valor de \$x es: $x") SALTO
+FIN SUBPROGRAMA
+
+SUBPROGRAMA Sumar
+    RESULTADO EN $x = $x + 5
+FIN SUBPROGRAMA
+
+BLOQUE PRINCIPAL
+    ESCRIBIR ("\nInicio del programa") SALTO
+    LLAMAR A Saludar
+    LLAMAR A Sumar
+    ESCRIBIR ("Después de sumar, \$x es: $x\n") SALTO
+FIN PRINCIPAL
+FINAL

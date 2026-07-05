@@ -1,0 +1,40 @@
+PROGRAMA hola_web
+// 🎨 Demo render web - Sintaxis Nico real con CSS embebido
+// Para la ejecución es necesario estar corriendo el servidor web.
+BLOQUE PRINCIPAL
+    // HTML + CSS embebido en el head
+    ESCRIBIR("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Nico Render</title>") SALTO
+    ESCRIBIR("<style>") SALTO
+    ESCRIBIR("  body { font-family: system-ui, sans-serif; margin: 40px; background: #f0f9ff; color: #333; }") SALTO
+    ESCRIBIR("  h1 { color: #0369a1; border-bottom: 2px solid #7dd3fc; padding-bottom: 10px; }") SALTO
+    ESCRIBIR("  ul { list-style: none; padding: 0; }") SALTO
+    ESCRIBIR("  li { background: #fff; padding: 10px 15px; margin: 8px 0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }") SALTO
+    ESCRIBIR("  li:hover { transform: translateX(4px); transition: transform 0.2s; }") SALTO
+    ESCRIBIR("</style>") SALTO
+    ESCRIBIR("</head><body>") SALTO
+    
+    ESCRIBIR("<h1>👋 Hola desde Nico</h1>") SALTO
+    ESCRIBIR("<p>Lista de frutas:</p>") SALTO
+    ESCRIBIR("<ul>") SALTO
+
+    VARIABLE TEXTO $fruta
+    PARA($i = 0 HASTA 2) HACER
+        SI($i IGUAL 0) ENTONCES
+            ASIGNAR EN $fruta = "Manzanas"
+        FIN SI
+        SI($i IGUAL 1) ENTONCES
+            ASIGNAR EN $fruta = "Peras"
+        FIN SI
+        SI($i IGUAL 2) ENTONCES
+            ASIGNAR EN $fruta = "Uvas"
+        FIN SI
+        ESCRIBIR("<li>") SALTO
+        ESCRIBIR("  $fruta  ") SALTO
+        ESCRIBIR("</li>") SALTO
+    FIN PARA
+    
+    ESCRIBIR("</ul>") SALTO
+    ESCRIBIR("<p style='margin-top:20px;color:#6b7280;font-size:14px'>Generado con Nico v1.1.0 🐍</p>") SALTO
+    ESCRIBIR("</body></html>") SALTO
+FIN PRINCIPAL
+FINAL

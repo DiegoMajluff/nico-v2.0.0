@@ -1,0 +1,24 @@
+PROGRAMA test_texto_parche
+    VARIABLE TEXTO $rol = ""
+BLOQUE PRINCIPAL
+    ESCRIBIR("\nTest de texto con SI\n")
+    MIENTRAS (1 IGUAL 1) HACER
+        ESCRIBIR("Ingresá rol (admin/user/salir): ")
+        LEER($rol)
+        SI($rol IGUAL "salir") ENTONCES 
+            SALTAR A cerrar 
+        FIN SI
+        SI($rol IGUAL "admin") ENTONCES
+            ESCRIBIR("→ Acceso total\n") 
+        FIN SI
+        SI($rol IGUAL "user") ENTONCES
+            ESCRIBIR("→ Acceso básico\n") 
+        FIN SI
+        SI(($rol DIFERENTE "admin") Y ($rol DIFERENTE "user")) ENTONCES
+            ESCRIBIR("→ Rol no reconocido: $rol\n")
+        FIN SI
+    FIN MIENTRAS
+    ETIQUETA cerrar
+    ESCRIBIR("Fin.\n") SALTO
+FIN PRINCIPAL
+FINAL

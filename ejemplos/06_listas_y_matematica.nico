@@ -1,0 +1,35 @@
+// Ejemplo 06: Estructuras de datos y biblioteca matemática
+PROGRAMA ListasYMath
+    LISTA ENTERA $datos[5]
+    VARIABLE ENTERA $i = 0
+    VARIABLE DECIMAL $suma = 0.0
+    VARIABLE DECIMAL $promedio = 0.0
+    VARIABLE DECIMAL $raiz = 0.0
+BLOQUE PRINCIPAL
+
+    // Llenado dinámico
+    MIENTRAS ($i MENOR 5) HACER
+        CALCULAR EN $datos[$i] = ($i * 10) + ALEATORIO(ENTERO, 1, 5)
+        CALCULAR EN $suma = $suma + $datos[$i]
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+    
+    ESCRIBIR("") SALTO
+    ESCRIBIR("Contenido de la lista:") SALTO
+    ASIGNAR EN $i = 0
+    MIENTRAS ($i MENOR 5) HACER
+        ESCRIBIR("\[$i\] = $datos[$i]") SALTO
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+
+    // Cálculos avanzados
+    ESCRIBIR("Suma: ") 
+    ESCRIBIR("$suma") SALTO
+    CALCULAR EN $promedio = $suma / 5.0
+    ESCRIBIR("Promedio: ")
+    ESCRIBIR("$promedio", DECIMALES(2)) SALTO
+    ASIGNAR EN $raiz = RAIZ($suma)
+    ESCRIBIR("Raíz de la suma: ") 
+    ESCRIBIR("$raiz\n", DECIMALES(2)) SALTO
+FIN PRINCIPAL
+FINAL

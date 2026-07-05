@@ -1,0 +1,46 @@
+PROGRAMA TestPasarVariableComoArgumento
+    // Función simple que multiplica por 10
+    FUNCION ENTERA funcion_interna($x)
+        VARIABLE ENTERA $res = 0
+        RESULTADO EN $res = $x * 10
+        RETORNAR $res
+    FIN FUNCION
+
+    // Función recursiva que calcula un valor y lo pasa como argumento
+    FUNCION ENTERA funcion_externa($n)
+        VARIABLE ENTERA $res = 0
+        VARIABLE ENTERA $temp = 0
+        
+        SI($n IGUAL 0) ENTONCES
+            RESULTADO EN $res = 100
+        SINO
+            // 1. Obtenemos un valor recursivamente
+            CALCULAR EN $temp = funcion_externa($n - 1)
+            
+            // 2. DEBUG: Verificamos que $temp tenga el valor correcto
+            SI($n IGUAL 1) ENTONCES
+                ESCRIBIR("DEBUG: Dentro de funcion_externa(1), $temp vale: $temp") SALTO
+            FIN SI
+            
+            // 3. ¡AQUÍ ESTÁ LA CLAVE! Pasamos la variable $temp como argumento
+            RESULTADO EN $res = funcion_interna($temp)
+        FIN SI
+        
+        RETORNAR $res
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE ENTERA $r = 0
+        ESCRIBIR("=== PRUEBA: PASAR VARIABLE LOCAL COMO ARGUMENTO ===") SALTO
+        
+        ESCRIBIR("funcion_externa(1) (Esperado: 1000)") SALTO
+        CALCULAR EN $r = funcion_externa(1)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("") SALTO
+
+        ESCRIBIR("funcion_externa(5) (Esperado: 10000000)") SALTO
+        CALCULAR EN $r = funcion_externa(5)
+        ESCRIBIR("Resultado: $r") SALTO
+        
+    FIN PRINCIPAL
+FINAL

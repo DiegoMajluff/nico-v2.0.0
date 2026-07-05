@@ -1,0 +1,21 @@
+PROGRAMA TestMultiple
+    LISTA ENTERA $a[3] = {10, 20, 30}, $b[2] = {99, 88}, $c[4]
+    LISTA DECIMAL $precios[3] = {10.50, 20.75, 5.99}, $tasas[2] = {0.15, 0.25}, $vacia[4]
+    LISTA ENTERA SIN SIGNO $ids[4] = {100, 200, 300, 400}, $flags[2] = {1, 0}, $vacias[3]
+    LISTA DECIMAL SIN SIGNO $valores[3] = {10.50, 20.75, 5.99}, $impuesto[2] = {0.15, 0.25}, $nula[4]
+    LISTA CARACTER $letras[4] = {'A', 'B', 'C', 'D'}, $vocales[3] = {'a', 'e', 'i'}, $nulas[2]
+    LISTA CARACTER SIN SIGNO $bytes[3] = {'\x41', 'B', 'C'}, $flag[2] = {'Y', 'N'}, $null[4]
+    LISTA TEXTO $frutas[3] = {"Manzana", "Pera", "Uva"}, $void[2]
+BLOQUE PRINCIPAL
+    MOSTRAR("\nListas enteras: a\[1\]=$a[1], b\[0\]=$b[0], c\[0\]=$c[0]") SALTO
+    MOSTRAR("Listas decimales: precios\[1\]=$precios[1], tasas\[0\]=$tasas[0], vacia\[2\]=$vacia[2]", DECIMALES(2, 2, 2)) SALTO
+    MOSTRAR("Listas enteras sin signo: ids\[1\]=$ids[1], flags\[0\]=$flags[0], vacias\[0\]=$vacias[0]") SALTO
+    MOSTRAR("Listas decimales sin signo: valores\[1\]=$valores[1], impuesto\[0\]=$impuesto[0], nula\[2\]=$nula[2]", DECIMALES(2, 2, 2)) SALTO
+    MOSTRAR("Listas caracter: letras\[1\]=$letras[1], vocales\[0\]=$vocales[0], nulas\[0\]=$nulas[0]") SALTO
+    MOSTRAR("Listas caracter sin signo: bytes\[0\]=$bytes[0], flag\[1\]=$flag[1], null\[2\]=$null[2]") SALTO
+    VARIABLE ENTERA $long = 0
+    ASIGNAR EN $long = LONGITUDLISTA($frutas)
+    MOSTRAR("Listas texto: Longitud: $long, frutas\[1\]=$frutas[1], void\[0\]=$void[0]") SALTO
+    MOSTRAR("") SALTO
+FIN PRINCIPAL
+FINAL

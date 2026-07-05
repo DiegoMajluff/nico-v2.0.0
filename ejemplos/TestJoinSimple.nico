@@ -1,0 +1,29 @@
+PROGRAMA TestJoinSimple
+BLOQUE PRINCIPAL
+    CONECTARBD("test_join.db")
+    
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS clientes (id INTEGER PRIMARY KEY, nombre TEXT, pais TEXT)")
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS pedidos (id INTEGER PRIMARY KEY, id_cliente INTEGER, numero TEXT, fecha TEXT)")
+    EJECUTARBD("DELETE FROM pedidos")
+    EJECUTARBD("DELETE FROM clientes")
+    EJECUTARBD("INSERT INTO clientes VALUES (1,'Diego','Argentina'),(2,'Ana','Chile')")
+    EJECUTARBD("INSERT INTO pedidos VALUES (101,1,'PED-001','2026-05-01'),(102,1,'PED-002','2026-05-02'),(103,2,'PED-003','2026-05-03')")
+    ESCRIBIR("") SALTO
+    CONSULTARBD("SELECT c.nombre, p.numero FROM clientes AS c, pedidos AS p WHERE c.id = p.id_cliente", 1)
+    MIENTRAS(SIGUIENTEFILABD()) HACER
+        ESCRIBIR("Cliente: $BDCOL1 | Pedido: $BDCOL2") SALTO
+    FIN MIENTRAS
+    CERRARCONSULTABD
+    ESCRIBIR("") SALTO
+
+    CONSULTARBD("SELECT p.numero, p.fecha, c.nombre FROM pedidos AS p JOIN clientes AS c ON p.id_cliente = c.id WHERE c.pais = 'Argentina'", 1)
+    MIENTRAS(SIGUIENTEFILABD()) HACER
+        ESCRIBIR("Pedido $BDCOL1 del $BDCOL2 - Cliente: $BDCOL3") SALTO
+    FIN MIENTRAS
+    CERRARCONSULTABD
+
+    CERRARBD
+    ESCRIBIR("✅ Test de JOIN completado") SALTO
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

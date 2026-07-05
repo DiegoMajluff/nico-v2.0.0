@@ -1,0 +1,38 @@
+PROGRAMA TestRecursionLineal
+    // Esta función simula el comportamiento de Ackermann(2, n)
+    // Debería devolver: 3 + (n * 2)
+    FUNCION ENTERA test_lineal($n)
+        VARIABLE ENTERA $res = 0
+        VARIABLE ENTERA $temp = 0
+        
+        SI($n IGUAL 0) ENTONCES
+            RESULTADO EN $res = 3
+        SINO
+            CALCULAR EN $temp = test_lineal($n - 1)
+            RESULTADO EN $res = $temp + 2
+        FIN SI
+        
+        RETORNAR $res
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE ENTERA $r = 0
+        
+        ESCRIBIR("=== PRUEBA DE RECURSIÓN LINEAL CON VARIABLE LOCAL ===") SALTO
+        
+        ESCRIBIR("test_lineal(10)  (Esperado: 23)") SALTO
+        CALCULAR EN $r = test_lineal(10)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("") SALTO
+
+        ESCRIBIR("test_lineal(50)  (Esperado: 103)") SALTO
+        CALCULAR EN $r = test_lineal(50)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("") SALTO
+
+        ESCRIBIR("test_lineal(125) (Esperado: 253)") SALTO
+        CALCULAR EN $r = test_lineal(125)
+        ESCRIBIR("Resultado: $r") SALTO
+        
+    FIN PRINCIPAL
+FINAL

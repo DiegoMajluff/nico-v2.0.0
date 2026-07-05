@@ -1,0 +1,11 @@
+PROGRAMA TestCursor
+BLOQUE PRINCIPAL
+    LIMPIARPANTALLA
+    ESCRIBIR("\nInicio") SALTO
+    CURSOR(5, 10)
+    ESCRIBIR("→ Aquí debería estar en fila 5, col 10")
+    ESPERAR(3, SEGUNDOS)
+    ESCRIBIR("\nFin\n") SALTO
+FIN PRINCIPAL
+FINAL
+

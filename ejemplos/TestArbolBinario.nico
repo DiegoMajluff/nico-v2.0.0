@@ -1,0 +1,81 @@
+PROGRAMA ArbolBinarioSimulado
+// Máximo 100 nodos. Índice 0 = NULL.
+LISTA ENTERA $datos[100] = {0}
+LISTA ENTERA $izq[100] = {0}
+LISTA ENTERA $der[100] = {0}
+    
+VARIABLE ENTERA $raiz = 0
+VARIABLE ENTERA $nodo_libre = 1
+
+FUNCION ENTERA crear_nodo_arbol($valor)
+    VARIABLE ENTERA $nuevo_idx = 0
+        
+    SI($nodo_libre MENOR 100) ENTONCES
+        CALCULAR EN $nuevo_idx = $nodo_libre
+        $datos[$nuevo_idx] = $valor
+        $izq[$nuevo_idx] = 0
+        $der[$nuevo_idx] = 0
+        CALCULAR EN $nodo_libre = $nodo_libre + 1
+        RETORNAR $nuevo_idx
+    SINO
+        ESCRIBIR("Error: Memoria del árbol llena") SALTO
+        RETORNAR 0
+    FIN SI
+FIN FUNCION
+
+// Inserción recursiva en Árbol Binario de Búsqueda
+FUNCION ENTERA insertar_rec($nodo_actual, $valor)
+    VARIABLE ENTERA $nuevo_idx = 0
+        
+    // Caso base: si el nodo actual es 0 (NULL), creamos el nodo aquí
+    SI($nodo_actual IGUAL 0) ENTONCES
+        CALCULAR EN $nuevo_idx = crear_nodo_arbol($valor)
+        RETORNAR $nuevo_idx
+    FIN SI
+        
+    // Si el valor es menor, va al subárbol izquierdo
+    SI($valor MENOR $datos[$nodo_actual]) ENTONCES
+        $izq[$nodo_actual] = insertar_rec($izq[$nodo_actual], $valor)
+    SINO
+        // Si es mayor o igual, va al subárbol derecho
+        $der[$nodo_actual] = insertar_rec($der[$nodo_actual], $valor)
+    FIN SI
+        
+    RETORNAR $nodo_actual
+FIN FUNCION
+
+// Función auxiliar para insertar desde el principal
+FUNCION ENTERA insertar($valor)
+    ASIGNAR EN $raiz = insertar_rec($raiz, $valor)
+    RETORNAR 0
+FIN FUNCION
+
+// Recorrido Inorden (Izquierda, Raíz, Derecha) -> Imprime ordenado
+FUNCION ENTERA recorrer_inorden($nodo)
+    VARIABLE ENTERA $llamada
+    SI($nodo DIFERENTE 0) ENTONCES
+        ASIGNAR EN $llamada = recorrer_inorden($izq[$nodo])
+        MOSTRAR("$datos[$nodo] ") SALTO
+        ASIGNAR EN $llamada = recorrer_inorden($der[$nodo])
+    FIN SI
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n=== ÁRBOL BINARIO DE BÚSQUEDA (SIMULACIÓN) ===") SALTO
+    VARIABLE ENTERA $llamada    
+    // Insertamos en orden desordenado a propósito
+    ASIGNAR EN $llamada = insertar(50)
+    ASIGNAR EN $llamada = insertar(30)
+    ASIGNAR EN $llamada = insertar(70)
+    ASIGNAR EN $llamada = insertar(20)
+    ASIGNAR EN $llamada = insertar(40)
+    ASIGNAR EN $llamada = insertar(60)
+    ASIGNAR EN $llamada = insertar(80)
+        
+    ESCRIBIR("Recorrido Inorden (debería estar ordenado de menor a mayor):") SALTO
+    ASIGNAR EN $llamada = recorrer_inorden($raiz)
+    ESCRIBIR("") SALTO
+        
+FIN PRINCIPAL
+FINAL

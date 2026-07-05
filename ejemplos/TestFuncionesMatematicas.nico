@@ -1,0 +1,39 @@
+PROGRAMA TestNuevasFunciones
+
+    VARIABLE DECIMAL $resultado = 0
+    CONSTANTE TEXTO $txtarriba = "=== NUEVAS FUNCIONES MATEMÁTICAS ==="
+    CONSTANTE TEXTO $txtabajo = "=== FIN TEST ==="  
+  
+BLOQUE PRINCIPAL
+ESCRIBIR ("\n$txtarriba") SALTO
+
+    // Constantes
+    ASIGNAR EN $resultado = NUMEROEULER()
+    ESCRIBIR ("NUMEROEULER() = ") 
+    ESCRIBIR ("$resultado", DECIMALES(6)) SALTO
+
+    ASIGNAR EN $resultado = RAIZDEUNMEDIO()
+    ESCRIBIR ("RAIZDEUNMEDIO() = ") 
+    ESCRIBIR ("$resultado", DECIMALES(6)) SALTO
+
+    ASIGNAR EN $resultado = LOGNATURALDE2()
+    ESCRIBIR ("LOGNATURALDE2() = ") 
+    ESCRIBIR ("$resultado", DECIMALES(6)) SALTO
+
+    ASIGNAR EN $resultado = LOGNATURALDE10()
+    ESCRIBIR ("LOGNATURALDE10() = ") 
+    ESCRIBIR ("$resultado", DECIMALES(6)) SALTO
+
+    // Exponenciales
+    ASIGNAR EN $resultado = EXPONENCIAL(1)
+    ESCRIBIR ("EXPONENCIAL(1) = ") 
+    ESCRIBIR ("$resultado", DECIMALES(6)) SALTO
+
+    ASIGNAR EN $resultado = DOSALAX(3)
+    ESCRIBIR ("DOSALAX(3) = ") 
+    ESCRIBIR ("$resultado", DECIMALES(6)) SALTO
+
+    ESCRIBIR ("$txtabajo\n") SALTO
+
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,65 @@
+PROGRAMA "Fibonacci.Memoñizado.Decimal"
+    // ✅ Usamos DECIMAL para la caché, así no trunca los valores grandes
+    LISTA DECIMAL $cache[2000] = {0.0}
+
+    FUNCION DECIMAL iniciar_cache()
+        VARIABLE DECIMAL $i = 0
+        MIENTRAS($i MENOR 2000) HACER
+            $cache[$i] = 0.0
+            CALCULAR EN $i = $i + 1
+        FIN MIENTRAS
+        RETORNAR 0.0
+    FIN FUNCION
+
+    FUNCION DECIMAL fib($n)
+        VARIABLE DECIMAL $res = 0.0
+        VARIABLE DECIMAL $val_cache = 0.0
+        VARIABLE DECIMAL $f1 = 0.0
+        VARIABLE DECIMAL $f2 = 0.0
+
+        // Casos base
+        SI($n IGUAL 0) ENTONCES
+            ASIGNAR EN $res = 0.0
+        SINO 
+            SI($n IGUAL 1) ENTONCES
+                ASIGNAR EN $res = 1.0
+            SINO
+                ASIGNAR EN $val_cache = $cache[$n]
+        
+                SI($val_cache IGUAL 0.0) ENTONCES
+                    CALCULAR EN $f1 = fib($n - 1)
+                    CALCULAR EN $f2 = fib($n - 2)
+                    CALCULAR EN $res = $f1 + $f2
+                    $cache[$n] = $res
+                SINO
+                    ASIGNAR EN $res = $val_cache
+                FIN SI
+            FIN SI
+        FIN SI
+        RETORNAR $res
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE DECIMAL $r = 0.0
+        VARIABLE DECIMAL $llamada
+        ESCRIBIR("\n=== FIBONACCI OPTIMIZADO (DECIMAL / SIN DESBORDAMIENTO) ===") SALTO
+        ASIGNAR EN $llamada = iniciar_cache()
+        
+        ESCRIBIR("Calculando Fibonacci(45)...") SALTO
+        CALCULAR EN $r = fib(45)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("") SALTO
+
+        ESCRIBIR("Calculando Fibonacci(50)...") SALTO
+        CALCULAR EN $r = fib(50)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("(Esperado: 12586269025)") SALTO
+        ESCRIBIR("") SALTO
+        
+        ESCRIBIR("Calculando Fibonacci(70)... (Prueba de estrés de precisión)") SALTO
+        CALCULAR EN $r = fib(70)
+        ESCRIBIR("Resultado: $r") SALTO
+        ESCRIBIR("(Esperado: 190392490709135)") SALTO
+        ESCRIBIR("") SALTO
+    FIN PRINCIPAL
+FINAL

@@ -1,0 +1,181 @@
+// 🧠 Perceptrón Multicapa (XOR) en Nico v2.0.0 
+// Tarea: Aprender la puerta lógica XOR (O Exclusiva)
+// 🤖 Elaborado con asistencia de la IA Qwen (Alibaba Cloud)
+// 📝 Autor: Diego Alejandro Majluff | 2026 | MIT
+PROGRAMA PerceptronXOR
+
+BLOQUE PRINCIPAL
+    // Hiperparámetros
+    VARIABLE DECIMAL $lr = 0.5
+    VARIABLE ENTERA $epochs = 5000
+    VARIABLE ENTERA $epoch = 0
+
+    // Pesos y sesgos capa oculta (2 neuronas)
+    VARIABLE DECIMAL $w11 = 0.3, $w12 = 0.4, $b1 = 0.1
+    VARIABLE DECIMAL $w21 = 0.5, $w22 = -0.2, $b2 = 0.2
+
+    // Pesos y sesgos capa salida (1 neurona)
+    VARIABLE DECIMAL $w31 = 0.6, $w32 = -0.1, $b3 = 0.3
+
+    // Datos de entrenamiento XOR
+    LISTA DECIMAL $X1[4]
+    LISTA DECIMAL $X2[4]
+    LISTA DECIMAL $Y[4]
+    
+    ASIGNAR EN $X1[0] = 0 
+    ASIGNAR EN $X1[1] = 0 
+    ASIGNAR EN $X1[2] = 1 
+    ASIGNAR EN $X1[3] = 1 
+
+    ASIGNAR EN $X2[0] = 0
+    ASIGNAR EN $X2[1] = 1
+    ASIGNAR EN $X2[2] = 0
+    ASIGNAR EN $X2[3] = 1
+
+    ASIGNAR EN $Y[0] = 0
+    ASIGNAR EN $Y[1] = 1
+    ASIGNAR EN $Y[2] = 1
+    ASIGNAR EN $Y[3] = 0
+
+    // Variables auxiliares para forward/backward pass
+    VARIABLE DECIMAL $x1, $x2, $target
+    VARIABLE DECIMAL $z1, $h1, $z2, $h2, $z_out, $pred
+    VARIABLE DECIMAL $err_out, $delta_out, $delta_h1, $delta_h2
+
+    ESCRIBIR("") SALTO
+    MOSTRAR("🧠 Entrenando Perceptrón Multicapa para XOR...") SALTO
+    MOSTRAR("Arquitectura: 2 entradas → 2 ocultas → 1 salida") SALTO
+    ESCRIBIR("") SALTO
+
+    MIENTRAS ($epoch MENOR $epochs) HACER
+        ASIGNAR EN $x1 = $X1[0] 
+        ASIGNAR EN $x2 = $X2[0] 
+        ASIGNAR EN $target = $Y[0]
+        // Forward & Backward muestra 1
+        CALCULAR EN $z1 = ($w11*$x1)+($w12*$x2)+$b1 
+        CALCULAR EN $h1 = SIGMOIDE($z1)
+        CALCULAR EN $z2 = ($w21*$x1)+($w22*$x2)+$b2 
+        CALCULAR EN $h2 = SIGMOIDE($z2)
+        CALCULAR EN $z_out = ($w31*$h1)+($w32*$h2)+$b3 
+        CALCULAR EN $pred = SIGMOIDE($z_out)
+        CALCULAR EN $err_out = $target - $pred
+        CALCULAR EN $delta_out = $pred * (1 - $pred) * $err_out
+        CALCULAR EN $delta_h1 = $h1 * (1 - $h1) * $delta_out * $w31
+        CALCULAR EN $delta_h2 = $h2 * (1 - $h2) * $delta_out * $w32
+        CALCULAR EN $w31 = $w31 + ($lr*$delta_out*$h1)
+        CALCULAR EN $w32 = $w32 + ($lr*$delta_out*$h2)
+        CALCULAR EN $b3 = $b3 + ($lr*$delta_out)
+        CALCULAR EN $w11 = $w11 + ($lr*$delta_h1*$x1) 
+        CALCULAR EN $w12 = $w12 + ($lr*$delta_h1*$x2)
+        CALCULAR EN $b1 = $b1 + ($lr*$delta_h1)
+        CALCULAR EN $w21 = $w21 + ($lr*$delta_h2*$x1)
+        CALCULAR EN $w22 = $w22 + ($lr*$delta_h2*$x2)
+        CALCULAR EN $b2 = $b2 + ($lr*$delta_h2)
+
+        ASIGNAR EN $x1 = $X1[1]
+        ASIGNAR EN $x2 = $X2[1] 
+        ASIGNAR EN $target = $Y[1]
+        CALCULAR EN $z1 = ($w11*$x1)+($w12*$x2)+$b1
+        CALCULAR EN $h1 = SIGMOIDE($z1)
+        CALCULAR EN $z2 = ($w21*$x1)+($w22*$x2)+$b2 
+        CALCULAR EN $h2 = SIGMOIDE($z2)
+        CALCULAR EN $z_out = ($w31*$h1)+($w32*$h2)+$b3
+        CALCULAR EN $pred = SIGMOIDE($z_out)
+        CALCULAR EN $err_out = $target - $pred
+        CALCULAR EN $delta_out = $pred * (1 - $pred) * $err_out
+        CALCULAR EN $delta_h1 = $h1 * (1 - $h1) * $delta_out * $w31
+        CALCULAR EN $delta_h2 = $h2 * (1 - $h2) * $delta_out * $w32
+        CALCULAR EN $w31 = $w31 + ($lr*$delta_out*$h1)
+        CALCULAR EN $w32 = $w32 + ($lr*$delta_out*$h2)
+        CALCULAR EN $b3 = $b3 + ($lr*$delta_out)
+        CALCULAR EN $w11 = $w11 + ($lr*$delta_h1*$x1)
+        CALCULAR EN $w12 = $w12 + ($lr*$delta_h1*$x2)
+        CALCULAR EN $b1 = $b1 + ($lr*$delta_h1)
+        CALCULAR EN $w21 = $w21 + ($lr*$delta_h2*$x1)
+        CALCULAR EN $w22 = $w22 + ($lr*$delta_h2*$x2)
+        CALCULAR EN $b2 = $b2 + ($lr*$delta_h2)
+
+        ASIGNAR EN $x1 = $X1[2]
+        ASIGNAR EN $x2 = $X2[2]
+        ASIGNAR EN $target = $Y[2]
+        CALCULAR EN $z1 = ($w11*$x1)+($w12*$x2)+$b1
+        CALCULAR EN $h1 = SIGMOIDE($z1)
+        CALCULAR EN $z2 = ($w21*$x1)+($w22*$x2)+$b2
+        CALCULAR EN $h2 = SIGMOIDE($z2)
+        CALCULAR EN $z_out = ($w31*$h1)+($w32*$h2)+$b3
+        CALCULAR EN $pred = SIGMOIDE($z_out)
+        CALCULAR EN $err_out = $target - $pred
+        CALCULAR EN $delta_out = $pred * (1 - $pred) * $err_out
+        CALCULAR EN $delta_h1 = $h1 * (1 - $h1) * $delta_out * $w31
+        CALCULAR EN $delta_h2 = $h2 * (1 - $h2) * $delta_out * $w32
+        CALCULAR EN $w31 = $w31 + ($lr*$delta_out*$h1)
+        CALCULAR EN $w32 = $w32 + ($lr*$delta_out*$h2)
+        CALCULAR EN $b3 = $b3 + ($lr*$delta_out)
+        CALCULAR EN $w11 = $w11 + ($lr*$delta_h1*$x1)
+        CALCULAR EN $w12 = $w12 + ($lr*$delta_h1*$x2)
+        CALCULAR EN $b1 = $b1 + ($lr*$delta_h1)
+        CALCULAR EN $w21 = $w21 + ($lr*$delta_h2*$x1)
+        CALCULAR EN $w22 = $w22 + ($lr*$delta_h2*$x2)
+        CALCULAR EN $b2 = $b2 + ($lr*$delta_h2)
+
+        ASIGNAR EN $x1 = $X1[3]
+        ASIGNAR EN $x2 = $X2[3]
+        ASIGNAR EN $target = $Y[3]
+        CALCULAR EN $z1 = ($w11*$x1)+($w12*$x2)+$b1
+        CALCULAR EN $h1 = SIGMOIDE($z1)
+        CALCULAR EN $z2 = ($w21*$x1)+($w22*$x2)+$b2
+        CALCULAR EN $h2 = SIGMOIDE($z2)
+        CALCULAR EN $z_out = ($w31*$h1)+($w32*$h2)+$b3
+        CALCULAR EN $pred = SIGMOIDE($z_out)
+        CALCULAR EN $err_out = $target - $pred
+        CALCULAR EN $delta_out = $pred * (1 - $pred) * $err_out
+        CALCULAR EN $delta_h1 = $h1 * (1 - $h1) * $delta_out * $w31
+        CALCULAR EN $delta_h2 = $h2 * (1 - $h2) * $delta_out * $w32
+        CALCULAR EN $w31 = $w31 + ($lr*$delta_out*$h1)
+        CALCULAR EN $w32 = $w32 + ($lr*$delta_out*$h2)
+        CALCULAR EN $b3 = $b3 + ($lr*$delta_out)
+        CALCULAR EN $w11 = $w11 + ($lr*$delta_h1*$x1)
+        CALCULAR EN $w12 = $w12 + ($lr*$delta_h1*$x2)
+        CALCULAR EN $b1 = $b1 + ($lr*$delta_h1)
+        CALCULAR EN $w21 = $w21 + ($lr*$delta_h2*$x1)
+        CALCULAR EN $w22 = $w22 + ($lr*$delta_h2*$x2)
+        CALCULAR EN $b2 = $b2 + ($lr*$delta_h2)
+
+        CALCULAR EN $epoch = $epoch + 1
+    FIN MIENTRAS
+    
+    ESCRIBIR("") SALTO
+    MOSTRAR("✅ Entrenamiento finalizado en $epoch epochs") SALTO
+    ESCRIBIR("") SALTO
+
+    // Inferencia / Prueba final
+    VARIABLE ENTERA $caso = 0
+    MIENTRAS ($caso MENOR 4) HACER
+        ASIGNAR EN $x1 = $X1[$caso]
+        ASIGNAR EN $x2 = $X2[$caso]
+        ASIGNAR EN $target = $Y[$caso]
+
+        CALCULAR EN $z1 = ($w11*$x1)+($w12*$x2)+$b1
+        CALCULAR EN $h1 = SIGMOIDE($z1)
+        CALCULAR EN $z2 = ($w21*$x1)+($w22*$x2)+$b2
+        CALCULAR EN $h2 = SIGMOIDE($z2)
+        CALCULAR EN $z_out = ($w31*$h1)+($w32*$h2)+$b3
+        CALCULAR EN $pred = SIGMOIDE($z_out)
+        
+        ESCRIBIR("X1=") 
+        ESCRIBIR("$x1") 
+        ESCRIBIR(" X2=") 
+        ESCRIBIR("$x2")
+        ESCRIBIR(" → Sigmoide: $pred → ")
+        SI ($pred MAYOR IGUAL 0.5) ENTONCES 
+            ESCRIBIR("Salida: 1") SALTO
+        SINO 
+            ESCRIBIR("Salida: 0") SALTO
+        FIN SI
+        CALCULAR EN $caso = $caso + 1
+    FIN MIENTRAS
+
+    ESCRIBIR("") SALTO
+    MOSTRAR("📚 Material educativo elaborado con asistencia de Qwen AI.\n") SALTO
+FIN PRINCIPAL
+FINAL

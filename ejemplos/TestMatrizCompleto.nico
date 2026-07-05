@@ -1,0 +1,30 @@
+PROGRAMA TestMatrizCompleto
+    MATRIZ TEXTO $tablero[2][2] = {{"A","B"},{"C","D"}}
+
+FUNCION ENTERA llamar_funcion()
+    MATRIZ TEXTO $local[1][1] = {{"LocalOriginal"}}
+    MOSTRAR("Local inicial: $local[0][0]") SALTO
+    $local[0][0] = "ModificadaEnFuncion"
+    MOSTRAR("Local modificada: $local[0][0]") SALTO
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    MOSTRAR("\nInicial: $tablero[0][0], $tablero[1][1]") SALTO
+    
+    // 1. Asignación directa
+    $tablero[0][0] = "X"
+    MOSTRAR("Directo: $tablero[0][0]") SALTO
+    
+    // 2. COPIARTEXTO
+    COPIARTEXTO($tablero[1][1], "O")
+    MOSTRAR("COPIARTEXTO: $tablero[1][1]") SALTO
+    
+    // 3. ASIGNAR EN (polimórfico)
+    ASIGNAR EN $tablero[0][1] = "Y"
+    MOSTRAR("ASIGNAR EN: $tablero[0][1]") SALTO
+    VARIABLE ENTERA $llamada = 0
+    ASIGNAR EN $llamada = llamar_funcion()
+    MOSTRAR("Global intacta: $tablero[0][0], $tablero[1][1]\n") SALTO
+FIN PRINCIPAL
+FINAL

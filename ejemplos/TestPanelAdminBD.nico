@@ -1,0 +1,19 @@
+PROGRAMA admin_panel
+BLOQUE PRINCIPAL
+    CONECTARBD("agenda.db")
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS contactos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, apellido TEXT, edad INTEGER, direccion TEXT);")
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS productos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, precio REAL, stock INTEGER);")
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY, evento TEXT, fecha TEXT);")
+    
+    ESCRIBIR("") SALTO
+    ESCRIBIR("🌐 Servidor web + Admin Panel iniciado en http://localhost:8080/admin\n")
+    ESCRIBIR("Presioná Ctrl+C para detener.\n")
+   
+    INICIARSERVER(8080)
+
+    // Mantener vivo
+    MIENTRAS(1 IGUAL 1) HACER
+        ESPERAR(5000, MILISEGUNDOS) 
+    FIN MIENTRAS
+FIN PRINCIPAL
+FINAL

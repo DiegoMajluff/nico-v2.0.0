@@ -1,0 +1,20 @@
+PROGRAMA TestSistema
+
+    //VARIABLE ENTERA $x = 0
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $x = 0
+    MOSTRAR ("\n=== TEST DE SISTEMA ===") SALTO
+    MOSTRAR ("Este mensaje se ve ANTES de limpiar la pantalla") SALTO
+    MOSTRAR ("Presioná ENTER para limpiar...") SALTO
+
+    LEER($x)
+
+    //Si es Windows reemplazar por SISTEMA("cls") y comentar la línea
+    SISTEMA("clear")
+
+    MOSTRAR ("¡Pantalla limpia!") SALTO
+    MOSTRAR ("Programa finalizado\n") SALTO
+
+FIN PRINCIPAL
+FINAL

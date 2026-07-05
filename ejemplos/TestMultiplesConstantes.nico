@@ -1,0 +1,13 @@
+PROGRAMA test_declaracion_multiple
+
+
+BLOQUE PRINCIPAL
+    CONSTANTE CARACTER $letra1 = 'A', $letra2 = 'B', $letra3 = 'C'
+    CONSTANTE ENTERA $c = 42, $a = 10, $b = 25
+    CONSTANTE DECIMAL $pi = 3.14, $num1 = 5.70, $num2 = 100.9
+    ESCRIBIR("Constantes enteras: $c - $a - $b") SALTO
+    ESCRIBIR("Constantes decimales: $pi - $num1 - $num2", DECIMALES(2, 2, 2)) SALTO
+    ESCRIBIR("Expresión: [$c + 10]") SALTO
+    ESCRIBIR("Constantes caracter: $letra1 - $letra2 - $letra3") SALTO
+FIN PRINCIPAL
+FINAL

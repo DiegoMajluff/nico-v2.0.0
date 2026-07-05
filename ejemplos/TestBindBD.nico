@@ -1,0 +1,28 @@
+PROGRAMA test_bd_bind
+VARIABLE TEXTO $nombre = "Carlos"
+VARIABLE ENTERA $edad = 40
+VARIABLE ENTERA $min_edad = 25
+
+BLOQUE PRINCIPAL
+   CONECTARBD("bind_test.db")
+   EJECUTARBD("DROP TABLE IF EXISTS usuarios;")
+   EJECUTARBD("CREATE TABLE usuarios (id INTEGER, nombre TEXT, edad INTEGER);")
+   
+   // Inserción con Bind (variables + literales)
+   EJECUTARBD("INSERT INTO usuarios VALUES (1, ?, ?);", $nombre, $edad)
+   EJECUTARBD("INSERT INTO usuarios VALUES (2, 'María', 22);")
+   EJECUTARBD("INSERT INTO usuarios VALUES (3, 'Jorge', 35);")
+   
+   // Consulta con Bind en WHERE
+   ESCRIBIR("--- Usuarios mayores a $min_edad años ---\n")
+   CONSULTARBD("SELECT nombre, edad FROM usuarios WHERE edad > ? ORDER BY edad;", $min_edad)
+   
+   MIENTRAS(SIGUIENTEFILABD()) HACER
+       ESCRIBIR("👤 $BDCOL1 | Edad: $BDCOL2\n")
+   FIN MIENTRAS
+   CERRARCONSULTABD
+   
+   CERRARBD
+   ESCRIBIR("✅ Bind seguro funcionando.\n")
+FIN PRINCIPAL
+FINAL

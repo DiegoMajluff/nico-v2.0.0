@@ -1,0 +1,25 @@
+PROGRAMA test
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    SI(LONGITUDTEXTO("Hola") MENOR IGUAL 2 * 2 Y LONGITUDTEXTO("Bolas") IGUAL 4 + 1) ENTONCES
+        ESCRIBIR("Rama A. OK") SALTO
+    SINO SI(LONGITUDTEXTO("Hola") MAYOR 5) ENTONCES
+        ESCRIBIR("Rama B") SALTO
+    SINO 
+        ESCRIBIR("Rama C") SALTO
+    FIN SI
+    SI(2 + 2 IGUAL 2 * 2 Y 3 + 3 IGUAL 3 + 3 O COSENO(0) IGUAL 1) ENTONCES
+        ESCRIBIR("Condiciones verdaderas. OK") SALTO
+    SINO
+        ESCRIBIR("Condiciones falsas") SALTO
+    FIN SI
+    ESCRIBIR("") SALTO
+    VARIABLE ENTERA $contador = 0
+    MIENTRAS($contador MENOR 2 + 3 Y 6 * 8 DIFERENTE $contador) HACER
+        ESCRIBIR("Contador: $contador") SALTO
+        CALCULAR EN $contador = $contador + 1
+    FIN MIENTRAS
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL 

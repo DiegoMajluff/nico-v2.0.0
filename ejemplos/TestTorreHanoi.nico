@@ -1,0 +1,69 @@
+PROGRAMA TestHanoi
+VARIABLE ENTERA $discos = 3
+VARIABLE ENTERA $total = 0
+VARIABLE ENTERA $esperado = 0
+VARIABLE ENTERA $i = 0
+
+// ============================================================================ 
+// FUNCION: moverHanoi(n, origen, auxiliar, destino) 
+// Imprime los movimientos para resolver la torre de Hanoi 
+// ============================================================================ 
+FUNCION ENTERA moverHanoi($n, $origen, $auxiliar, $destino)
+    VARIABLE ENTERA $movimientos = 0
+    VARIABLE ENTERA $restantes = 0
+
+    // Caso base: solo un disco
+    SI ($n IGUAL 1) ENTONCES
+        ESCRIBIR ("  Mover disco 1 de torre $origen a torre $destino") SALTO
+        RETORNAR 1  // Contador de movimientos
+    FIN SI
+    
+    // Paso 1: Mover n-1 discos de origen a auxiliar (usando destino como temp)
+    CALCULAR EN $movimientos = moverHanoi(($n - 1), $origen, $destino, $auxiliar)
+    
+    // Paso 2: Mover el disco más grande de origen a destino 
+    ESCRIBIR ("  Mover disco $n de torre $origen a torre $destino") SALTO
+    CALCULAR EN $movimientos = $movimientos + 1
+    
+    // Paso 3: Mover n-1 discos de auxiliar a destino (usando origen como temp)
+    CALCULAR EN $restantes = moverHanoi(($n - 1), $auxiliar, $origen, $destino)
+    CALCULAR EN $movimientos = $movimientos + $restantes
+    
+    RETORNAR $movimientos
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    ESCRIBIR ("\n=== TEST TORRE DE HANOI ===") SALTO
+    ESCRIBIR ("") SALTO
+    
+    ESCRIBIR ("Resolviendo con $discos discos:") SALTO
+    ESCRIBIR ("  Torre 1 = Origen") SALTO
+    ESCRIBIR ("  Torre 2 = Auxiliar") SALTO
+    ESCRIBIR ("  Torre 3 = Destino") SALTO
+    ESCRIBIR ("") SALTO
+    
+    CALCULAR EN $total = moverHanoi($discos, 1, 2, 3)
+    
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("Total de movimientos: $total") SALTO
+    
+    // Fórmula: mínimo movimientos = 2^n - 1 
+    CALCULAR EN $esperado = 1
+    MIENTRAS ($i MENOR $discos) HACER
+        CALCULAR EN $esperado = $esperado * 2
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+    CALCULAR EN $esperado = $esperado - 1
+    
+    ESCRIBIR ("Movimientos esperados (2^$discos - 1): $esperado") SALTO
+    
+    SI ($total IGUAL $esperado) ENTONCES
+        ESCRIBIR ("✅ Solución óptima alcanzada") SALTO
+    SINO
+        ESCRIBIR ("⚠️ Verificar solución") SALTO
+    FIN SI
+    
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("=== Test Hanoi Finalizado ===\n") SALTO
+FIN PRINCIPAL
+FINAL

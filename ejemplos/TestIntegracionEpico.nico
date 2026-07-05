@@ -1,0 +1,70 @@
+PROGRAMA TestIntegracionEpico
+    MATRIZ TEXTO $items[2][2] = {{"Espada","Escudo"},{"Arco","Flechas"}}
+    MATRIZ ENTERA $stock[2][2] = {{5, 3}, {8, 20}}
+    MATRIZ DECIMAL $precio[2][2] = {{150.50, 80.00}, {200.00, 1.50}}
+    MATRIZ DECIMAL $totales[2][2]
+
+// El PARA declara $f y $c localmente. No se necesita VARIABLE antes.
+FUNCION ENTERA mostrar_inventario()
+    PARA($f DESDE 0 HASTA 1 PASO 1) HACER
+        PARA($c DESDE 0 HASTA 1 PASO 1) HACER
+            MOSTRAR("  [") 
+            MOSTRAR("$f") 
+            MOSTRAR("][") 
+            MOSTRAR("$c") 
+            MOSTRAR("] $items[$f][$c] | $stock[$f][$c] | $precio[$f][$c]") SALTO
+        FIN PARA
+    FIN PARA
+    RETORNAR 0
+FIN FUNCION
+
+FUNCION ENTERA funcion_local()
+    MATRIZ TEXTO $mat_loc[1][1] = {{"LOCAL"}}
+    MATRIZ ENTERA $stk_loc[1][1] = {{999}}
+    MOSTRAR("  \[Dentro\] Local: $mat_loc[0][0] | $stk_loc[0][0]") SALTO
+    $mat_loc[0][0] = "MODIFICADO"
+    MOSTRAR("  \[Dentro\] Después: $mat_loc[0][0]") SALTO
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    MOSTRAR("=== INVENTARIO INICIAL ===") SALTO
+    VARIABLE ENTERA $llamar = 0
+    ASIGNAR EN $llamar = mostrar_inventario()
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("=== ASIGNACIÓN DIRECTA ===") SALTO
+    $items[0][0] = $items[0][1]
+    $stock[0][0] = 3
+    CALCULAR EN $precio[0][0] = $precio[0][0] * 1.5
+    MOSTRAR("Modificado \[0\]\[0\]: $items[0][0] | Stock: $stock[0][0] | Precio: $precio[0][0]") SALTO
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("=== COPIARTEXTO ===") SALTO
+    COPIARTEXTO($items[1][1], "Flechas de Madera")
+    MOSTRAR("Actualizado: $items[1][1]") SALTO
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("=== PARA ANIDADO + CÁLCULO ===") SALTO
+    // Aquí también dejamos que el PARA declare $f y $c localmente
+    PARA($f DESDE 0 HASTA 1 PASO 1) HACER
+        PARA($c DESDE 0 HASTA 1 PASO 1) HACER
+            CALCULAR EN $totales[$f][$c] = $stock[$f][$c] * $precio[$f][$c]
+            MOSTRAR("  Fila ") 
+            MOSTRAR("$f") 
+            MOSTRAR(" | Col ") 
+            MOSTRAR("$c") 
+            MOSTRAR(" | Valor: $totales[$f][$c]") SALTO
+        FIN PARA
+    FIN PARA
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("=== SCOPES AISLADOS ===") SALTO
+    MOSTRAR("Global ANTES: $items[0][0]") SALTO
+    ASIGNAR EN $llamar = funcion_local()
+    MOSTRAR("Global DESPUÉS: $items[0][0]") SALTO
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("✅ Test completado.\n") SALTO
+FIN PRINCIPAL
+FINAL

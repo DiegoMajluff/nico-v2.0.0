@@ -1,0 +1,46 @@
+PROGRAMA test_completas
+    VARIABLE ENTERA $edad = 0
+    VARIABLE TEXTO $rol = ""
+BLOQUE PRINCIPAL
+   ESCRIBIR("\n=== Test Numérico ===\n")
+   MIENTRAS (1 IGUAL 1) HACER
+        ESCRIBIR("Ingresá edad (0 salir): ")
+        LEER($edad)
+        SI($edad IGUAL 0) ENTONCES 
+            SALTAR A cerrar 
+        FIN SI
+        SI($edad MAYOR 18) ENTONCES
+            ESCRIBIR("→ Mayor de edad\n") 
+        FIN SI
+        SI($edad MENOR 18) ENTONCES
+            ESCRIBIR("→ Menor de edad\n") 
+        FIN SI
+        SI($edad IGUAL 18) ENTONCES
+            ESCRIBIR("→ Exactamente 18\n") 
+        FIN SI
+        SI($edad DIFERENTE 25) ENTONCES
+            ESCRIBIR("→ No es 25\n") 
+        FIN SI
+   FIN MIENTRAS
+   ETIQUETA cerrar
+   ESCRIBIR("\n=== Test Texto ===\n")
+   MIENTRAS (1 IGUAL 1) HACER
+        ESCRIBIR("Ingresá rol (admin/user/salir): ")
+        LEER($rol)
+        SI($rol IGUAL "salir") ENTONCES 
+            SALTAR A cerrar2 
+        FIN SI
+        SI($rol IGUAL "admin") ENTONCES 
+            ESCRIBIR("→ Acceso total\n") 
+        FIN SI
+        SI($rol IGUAL "user") ENTONCES
+            ESCRIBIR("→ Acceso básico\n") 
+        FIN SI
+        SI($rol DIFERENTE "admin" Y $rol DIFERENTE "user") ENTONCES
+            ESCRIBIR("→ Rol no reconocido\n") 
+        FIN SI
+   FIN MIENTRAS
+   ETIQUETA cerrar2
+   ESCRIBIR("Fin de pruebas.\n") SALTO
+FIN PRINCIPAL
+FINAL

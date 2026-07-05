@@ -1,0 +1,34 @@
+PROGRAMA prueba_funcion_leertecla
+
+VARIABLE ENTERA $resultado = 0
+ 
+FUNCION ENTERA leer_teclado_jugador()
+    VARIABLE ENTERA $tecla_local = 0
+    
+    ESCRIBIR("\[FUNCION\] Esperando entrada local ESPACIO o ESCAPE") SALTO
+    MIENTRAS(1 IGUAL 1) HACER
+        LEERTECLA($tecla_local)
+        SI($tecla_local IGUAL 32) ENTONCES
+            ESCRIBIR("\[FUNCION\] Disparo local!") SALTO
+            RETORNAR 1
+        FIN SI
+        SI($tecla_local IGUAL 27) ENTONCES
+            ESCRIBIR("\[FUNCION\] Salida forzada") SALTO
+            RETORNAR 0
+        FIN SI
+        ESPERAR(20, MILISEGUNDOS)
+    FIN MIENTRAS
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ESCRIBIR("=== INICIANDO PRUEBA DE SCOPE LOCAL ===") SALTO
+    ASIGNAR EN $resultado = leer_teclado_jugador()
+    
+    SI($resultado IGUAL 1) ENTONCES
+        ESCRIBIR("✅ Función retornó con éxito") SALTO
+    FIN SI
+    ESCRIBIR("=== FIN PRINCIPAL ===") SALTO
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

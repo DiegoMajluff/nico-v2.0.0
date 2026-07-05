@@ -1,0 +1,23 @@
+PROGRAMA DebugCaracterFixed
+    // "ello" empaquetado en 32-bit little-endian: 0x6F6C6C65
+    VARIABLE ENTERA SIN SIGNO $empaquetado = 0x6F6C6C65
+    VARIABLE ENTERA $byte, $temp, $longtxt
+    VARIABLE TEXTO EXTENSO $char = ""  // TEXTO EXTENSO
+    VARIABLE TEXTO EXTENSO $resultado = ""
+BLOQUE PRINCIPAL
+    ESCRIBIR("Valor original (32-bit): $empaquetado") SALTO
+    
+    ASIGNAR EN $temp = $empaquetado
+    
+    // Extraer y convertir 4 bytes
+    PARA($i DESDE 0 HASTA 3) HACER
+        CALCULAR EN $byte = BITY($temp, 255)
+        CARACTERATEXTO($byte, $char)
+        CONCATENARTEXTO($resultado, $char)
+        CALCULAR EN $temp = DESPLAZARDERECHA($temp, 8)
+    FIN PARA
+    ASIGNAR EN $longtxt = LONGITUDTEXTO($resultado)
+    ESCRIBIR("Texto decodificado: $resultado") SALTO
+    ESCRIBIR("Longitud: $longtxt") SALTO
+FIN PRINCIPAL
+FINAL

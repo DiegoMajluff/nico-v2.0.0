@@ -1,0 +1,61 @@
+PROGRAMA TestShadowingMatrices
+    // === MATRICES GLOBALES ===
+    MATRIZ ENTERA $e[2][2] = {{1, 2}, {3, 4}}
+    MATRIZ DECIMAL $d[2][2] = {{1.5, 2.5}, {3.5, 4.5}}
+    MATRIZ CARACTER $c[2][2] = {{'A', 'B'}, {'C', 'D'}}
+
+// === FUNCIÓN CON SHADOWING LOCAL ===
+FUNCION ENTERA funcion_local()
+    // Matrices locales con MISMO NOMBRE pero valores DISTINTOS
+    MATRIZ ENTERA $e[2][2] = {{10, 20}, {30, 40}}
+    MATRIZ DECIMAL SIN SIGNO $d[2][2] = {{10.1, 20.2}, {30.3, 40.4}}
+    MATRIZ CARACTER SIN SIGNO $c[2][2] = {{'X', 'Y'}, {'Z', 'W'}}
+    
+    MOSTRAR("\n>>> Dentro de funcion_local():") SALTO
+    MOSTRAR("ENTERA  (local): e\[0\]\[0\] = $e[0][0] e\[1\]\[1\] = $e[1][1]") SALTO
+    MOSTRAR("DECIMAL (local): d\[0\]\[0\] = $d[0][0] d\[1\]\[1\] = $d[1][1]", DECIMALES(2, 2)) SALTO
+    MOSTRAR("CARACTER(local): c\[0\]\[0\] = $c[0][0] c\[1\]\[1\] = $c[1][1]") SALTO
+    
+    // === MODIFICAR VALORES LOCALES ===
+    $e[0][0] = 99
+    $e[1][1] = 88
+    $d[0][0] = 99.99
+    $d[1][1] = 88.88
+    $c[0][0] = 'M'
+    $c[1][1] = 'N'
+    
+    MOSTRAR("\n>>> Tras modificar locales:") SALTO
+    MOSTRAR("ENTERA  (local): e\[0\]\[0\] = $e[0][0] e\[1\]\[1\] = $e[1][1]") SALTO
+    MOSTRAR("DECIMAL (local): d\[0\]\[0\] = $d[0][0] d\[1\]\[1\] = $d[1][1]", DECIMALES(2, 2)) SALTO
+    MOSTRAR("CARACTER(local): c\[0\]\[0\] = $c[0][0] c\[1\]\[1\] = $c[1][1]") SALTO
+    
+    // Retornar código de éxito
+    RETORNAR 999
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    MOSTRAR("\n=== SCOPE GLOBAL (ANTES) ===") SALTO
+    MOSTRAR("ENTERA  : e\[0\]\[0\] = $e[0][0] e\[1\]\[1\] = $e[1][1]") SALTO
+    MOSTRAR("DECIMAL : d\[0\]\[0\] = $d[0][0] d\[1\]\[1\] = $d[1][1]", DECIMALES(2, 2)) SALTO
+    MOSTRAR("CARACTER: c\[0\]\[0\] = $c[0][0] c\[1\]\[1\] = $c[1][1]") SALTO
+
+    MOSTRAR("") SALTO
+    MOSTRAR("=== LLAMANDO A funcion_local() ===") SALTO
+    VARIABLE ENTERA $res = 0
+    ASIGNAR EN $res = funcion_local()
+
+    MOSTRAR("") SALTO
+    MOSTRAR("=== SCOPE GLOBAL (DESPUÉS) ===") SALTO
+    MOSTRAR("ENTERA  : e\[0\]\[0\] = $e[0][0] e\[1\]\[1\] = $e[1][1]") SALTO
+    MOSTRAR("DECIMAL : d\[0\]\[0\] = $d[0][0] d\[1\]\[1\] = $d[1][1]", DECIMALES(2, 2)) SALTO
+    MOSTRAR("CARACTER: c\[0\]\[0\] = $c[0][0] c\[1\]\[1\] = $c[1][1]") SALTO
+    
+    MOSTRAR("") SALTO
+    SI($res IGUAL 999) ENTONCES
+        MOSTRAR("✅ TEST EXITOSO: shadowing funciona correctamente") SALTO
+    SINO
+        MOSTRAR("❌ TEST FALLIDO: shadowing no aisló scopes") SALTO
+    FIN SI
+    MOSTRAR("")SALTO
+FIN PRINCIPAL
+FINAL

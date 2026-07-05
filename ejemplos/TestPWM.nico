@@ -1,0 +1,42 @@
+PROGRAMA TestPWM
+    VARIABLE ENTERA $pin = 17
+
+BLOQUE PRINCIPAL
+    MOSTRAR("=== Test PWM Hardware ===") SALTO
+    MOSTRAR("Conecta LED en GPIO 17 (con resistencia 330Ω)") SALTO
+    MOSTRAR("Nota: Requiere ejecutar con sudo") SALTO
+    ESPERAR(2, SEGUNDOS)
+
+    // Test 1: PWM a 1 Hz (parpadeo visible)
+    MOSTRAR("\n🔵 Test 1: 1 Hz, 50% duty cycle (parpadeo lento)") SALTO
+    GENERARPWM($pin, 1, 50)
+    ESPERAR(5, SEGUNDOS)
+
+    // Test 2: PWM a 5 Hz
+    MOSTRAR("\n🟢 Test 2: 5 Hz, 50% duty cycle") SALTO
+    GENERARPWM($pin, 5, 50)
+    ESPERAR(5, SEGUNDOS)
+
+    // Test 3: PWM a 10 Hz con 25% duty cycle
+    MOSTRAR("\n🟡 Test 3: 10 Hz, 25% duty cycle (LED más apagado)") SALTO
+    GENERARPWM($pin, 10, 25)
+    ESPERAR(5, SEGUNDOS)
+
+    // Test 4: PWM a 100 Hz con 75% duty cycle
+    MOSTRAR("\n🔴 Test 4: 100 Hz, 75% duty cycle (LED más brillante)") SALTO
+    GENERARPWM($pin, 100, 75)
+    ESPERAR(5, SEGUNDOS)
+
+    // Test 5: Frecuencia alta (LED parece siempre encendido pero con brillo variable)
+    MOSTRAR("\n⚪ Test 5: 500 Hz, 50% duty cycle (brillo medio)") SALTO
+    GENERARPWM($pin, 500, 50)
+    ESPERAR(5, SEGUNDOS)
+
+    // Detener PWM
+    MOSTRAR("\n⚫ Deteniendo PWM...") SALTO
+    DETENERPWM($pin)
+    ESPERAR(1, SEGUNDOS)
+
+    MOSTRAR("\n✅ Test PWM finalizado") SALTO
+FIN PRINCIPAL
+FINAL

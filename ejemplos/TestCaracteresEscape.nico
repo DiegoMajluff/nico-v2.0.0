@@ -1,0 +1,18 @@
+PROGRAMA TestEscapes
+
+BLOQUE PRINCIPAL
+    // Declaración con escapes
+    VARIABLE TEXTO $msg = "Línea 1\nLínea 2\t(con tab)\nCamino: C:\\Windows\\System32"
+    VARIABLE ENTERA $dummy = 10
+    // TEXTO EXTENSO con saltos y concatenación
+    VARIABLE TEXTO EXTENSO $log = "Inicio del log...\n"
+    ASIGNAR EN $log = $log + "Advertencia: \"archivo no encontrado\"\n"
+    ASIGNAR EN $log = $log + "Ruta de respaldo: /var/backup/datos_\n"
+    ASIGNAR EN $log = $log + "Hora: 12:00:00\tOK" + " $dummy"
+    ESCRIBIR("\n") SALTO   
+    ESCRIBIR("=== TEXTO ===\n")
+    ESCRIBIR("$msg\n")
+    ESCRIBIR("=== TEXTO EXTENSO ===\n")
+    ESCRIBIR("$log\n")
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,14 @@
+PROGRAMA TestParaDesde
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n=== DESDE ===") SALTO
+    PARA($i DESDE 2 HASTA 16 PASO 2) HACER
+        ESCRIBIR("  i = $i") SALTO
+    FIN PARA
+    
+    ESCRIBIR("\n=== = clásico ===") SALTO
+    PARA($j = 5 HASTA 7) HACER
+        ESCRIBIR("  j = $j") SALTO
+    FIN PARA
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

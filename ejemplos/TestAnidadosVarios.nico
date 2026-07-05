@@ -1,0 +1,27 @@
+PROGRAMA TestAnidados
+    VARIABLE ENTERA $y = 0
+    VARIABLE ENTERA $ext = 0
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ESCRIBIR("=== ANIDADOS ===") SALTO
+    MIENTRAS ($ext MENOR 3) HACER
+        PARA ($int = 1 HASTA 3) HACER
+            ESCRIBIR("E: $ext | I: $int") SALTO
+            SI ($int IGUAL 2 Y $ext IGUAL 1) ENTONCES
+                CORTE
+            FIN SI
+        FIN PARA
+        CALCULAR EN $ext = $ext + 1
+    FIN MIENTRAS
+    ESCRIBIR("") SALTO
+    ESCRIBIR("=== REALIZAR DENTRO DE PARA ===") SALTO
+    PARA ($x = 1 HASTA 2) HACER
+        REALIZAR
+            CALCULAR EN $y = $y + 1
+            ESCRIBIR("  x: $x -  y: $y") SALTO
+        MIENTRAS ($y MENOR 2)
+    FIN PARA
+    ESCRIBIR("=== FIN ===")
+FIN PRINCIPAL
+FINAL

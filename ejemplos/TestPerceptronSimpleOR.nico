@@ -1,0 +1,99 @@
+// 🧠 Perceptrón Simple en Nico v2.0.0 
+// Tarea: Aprender la puerta lógica OR (O)
+// 🤖 Elaborado con asistencia de la IA Qwen (Alibaba Cloud)
+// 📝 Autor: Diego Alejandro Majluff | 2026 | MIT
+PROGRAMA PerceptronSimpleOR
+
+BLOQUE PRINCIPAL
+    VARIABLE DECIMAL $tasa_aprendizaje = 0.1
+    VARIABLE ENTERA  $max_epochs = 100
+    VARIABLE ENTERA  $epoch = 0
+    VARIABLE DECIMAL $peso1 = 0.0
+    VARIABLE DECIMAL $peso2 = 0.0
+    VARIABLE DECIMAL $bias  = 0.0
+
+    LISTA DECIMAL $X1[4]
+    LISTA DECIMAL $X2[4]
+    LISTA DECIMAL $Y[4]
+
+    // Datos de entrenamiento para OR: (0,0)->0, (0,1)->1, (1,0)->1, (1,1)->1
+    ASIGNAR EN $X1[0] = 0   
+    ASIGNAR EN $X1[1] = 0   
+    ASIGNAR EN $X1[2] = 1   
+    ASIGNAR EN $X1[3] = 1   
+
+    ASIGNAR EN $X2[0] = 0
+    ASIGNAR EN $X2[1] = 1
+    ASIGNAR EN $X2[2] = 0
+    ASIGNAR EN $X2[3] = 1
+
+    ASIGNAR EN $Y[0] = 0
+    ASIGNAR EN $Y[1] = 1
+    ASIGNAR EN $Y[2] = 1
+    ASIGNAR EN $Y[3] = 1
+
+    VARIABLE ENTERA $i = 0
+    VARIABLE DECIMAL $t1, $t2, $z
+    VARIABLE DECIMAL $prediccion
+    VARIABLE DECIMAL $error
+    VARIABLE DECIMAL $x1_act, $x2_act, $y_act
+    VARIABLE DECIMAL $z_val, $prob_val
+    
+    ESCRIBIR("") SALTO
+    MOSTRAR("🧠 Entrenando Perceptrón para puerta OR...") SALTO
+
+    MIENTRAS ($epoch MENOR $max_epochs) HACER
+        ASIGNAR EN $i = 0
+        MIENTRAS ($i MENOR 4) HACER
+            // 1. EXTRAER VALORES DE LISTAS
+            ASIGNAR EN $x1_act = $X1[$i]
+            ASIGNAR EN $x2_act = $X2[$i]
+            ASIGNAR EN $y_act  = $Y[$i]
+
+            // 2. PROPAGACIÓN PASO A PASO
+            CALCULAR EN $t1 = $peso1 * $x1_act
+            CALCULAR EN $t2 = $peso2 * $x2_act
+            CALCULAR EN $z  = $t1 + $t2 + $bias
+
+            // 3. ACTIVACIÓN  
+            CALCULAR EN $prediccion = SIGMOIDE($z)
+
+            // 4. ERROR Y ACTUALIZACIÓN
+            CALCULAR EN $error = $y_act - $prediccion
+
+            CALCULAR EN $peso1 = $peso1 + ($tasa_aprendizaje * $error * $x1_act)
+            CALCULAR EN $peso2 = $peso2 + ($tasa_aprendizaje * $error * $x2_act)
+            CALCULAR EN $bias  = $bias  + ($tasa_aprendizaje * $error)
+
+            CALCULAR EN $i = $i + 1
+        FIN MIENTRAS
+        CALCULAR EN $epoch = $epoch + 1
+    FIN MIENTRAS
+    
+    ESCRIBIR("") SALTO
+    MOSTRAR("✅ Entrenamiento finalizado en $epoch epochs") SALTO
+    MOSTRAR("Pesos finales: w1=$peso1  w2=$peso2  bias=$bias") SALTO
+    ESCRIBIR("") SALTO
+    
+    VARIABLE ENTERA $caso = 0
+    MIENTRAS ($caso MENOR 4) HACER
+        CALCULAR EN $z_val = (($peso1 * $X1[$caso]) + ($peso2 * $X2[$caso]) + $bias)
+        CALCULAR EN $prob_val = SIGMOIDE($z_val)
+        
+        ESCRIBIR("X1=") 
+        ESCRIBIR("$X1[$caso]") 
+        ESCRIBIR(" X2=") 
+        ESCRIBIR("$X2[$caso]")
+        ESCRIBIR(" → Sigmoide: $prob_val → ")
+        SI ($prob_val MAYOR IGUAL 0.5) ENTONCES 
+            ESCRIBIR("Salida: 1") SALTO
+        SINO 
+            ESCRIBIR("Salida: 0") SALTO
+        FIN SI
+        CALCULAR EN $caso = $caso + 1
+    FIN MIENTRAS
+
+    MOSTRAR("") SALTO
+    MOSTRAR("📚 Material educativo elaborado con asistencia de Qwen AI.\n") SALTO
+FIN PRINCIPAL
+FINAL

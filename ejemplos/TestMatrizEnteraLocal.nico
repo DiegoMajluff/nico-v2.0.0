@@ -1,0 +1,19 @@
+PROGRAMA TestMatrizEnteraLocal
+
+FUNCION ENTERA llamar_funcion()
+    MATRIZ ENTERA $local[2][2] = {{10, 20}, {30, 40}}
+    MOSTRAR("Entera local[0][1]=$local[0][1]") SALTO
+    $local[1][1] = 999
+    CALCULAR EN $local[0][0] = $local[0][1] * 2
+    MOSTRAR("Modificada: $local[0][0], $local[1][1]") SALTO
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    MOSTRAR("")SALTO
+    VARIABLE ENTERA $llamar = 0
+    ASIGNAR EN $llamar = llamar_funcion()
+    MOSTRAR("")SALTO
+FIN PRINCIPAL
+FINAL
+

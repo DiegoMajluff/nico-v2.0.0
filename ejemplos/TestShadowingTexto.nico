@@ -1,0 +1,53 @@
+PROGRAMA TestShadowingTexto
+    // === GLOBALES ===
+    LISTA TEXTO $t[3] = {"global1", "global2", "global3"}
+    MATRIZ TEXTO $m[2][2] = {{"G1", "G2"}, {"G3", "G4"}}
+
+// === FUNCIÓN CON SHADOWING ===
+FUNCION ENTERA test_texto()
+    // Locales con MISMO NOMBRE
+    LISTA TEXTO $t[3] = {"local1", "local2", "local3"}
+    MATRIZ TEXTO $m[2][2] = {{"L1", "L2"}, {"L3", "L4"}}
+    
+    MOSTRAR("\n>>> DENTRO (ANTES):") SALTO
+    MOSTRAR("Lista: t[0] = $t[0]") SALTO
+    MOSTRAR("Matriz: m[0][0] = $m[0][0]") SALTO
+    
+    // Modificar locales
+    COPIARTEXTO($t[0], "MODIFICADO_LISTA")
+    COPIARTEXTO($m[0][0], "MODIFICADO_MATRIZ")
+    
+    MOSTRAR("\n>>> DENTRO (DESPUÉS):") SALTO
+    MOSTRAR("Lista: t[0] = $t[0]") SALTO
+    MOSTRAR("Matriz: m[0][0] = $m[0][0]") SALTO
+    
+    RETORNAR 1
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    MOSTRAR("\n=== GLOBAL (ANTES) ===") SALTO
+    MOSTRAR("Lista: t[0] = $t[0]") SALTO
+    MOSTRAR("Matriz: m[0][0] = $m[0][0]") SALTO
+    VARIABLE ENTERA $dummy = 0
+    ASIGNAR EN $dummy = test_texto()
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("=== GLOBAL (DESPUÉS) ===") SALTO
+    MOSTRAR("Lista: t[0] = $t[0]") SALTO
+    MOSTRAR("Matriz: m[0][0] = $m[0][0]") SALTO
+    
+    // Verificación
+    VARIABLE TEXTO $esperado_lista = "global1"
+    VARIABLE TEXTO $esperado_matriz = "G1"
+    
+    // Nota: Nico no tiene comparación directa de TEXTO, así que usamos longitud como proxy
+    VARIABLE ENTERA $long = 0
+    ASIGNAR EN $long = LONGITUDTEXTO($t[0])
+    SI($long IGUAL 8 - 1) ENTONCES  // "global1" tiene 7 chars
+        MOSTRAR("✅ LISTA TEXTO: shadowing OK") SALTO
+    SINO
+        MOSTRAR("❌ LISTA TEXTO: shadowing FALLÓ") SALTO
+    FIN SI
+    MOSTRAR("")SALTO
+FIN PRINCIPAL
+FINAL

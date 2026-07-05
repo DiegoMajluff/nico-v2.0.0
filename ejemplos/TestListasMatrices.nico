@@ -1,0 +1,44 @@
+PROGRAMA listas_matrices
+    LISTA ENTERA $valores[10] = {15, 96, 74, 21, 3, 80, 62, 55, 18, 63}
+    LISTA CARACTER $letras[10] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'} 
+    LISTA CARACTER SIN SIGNO $letsinsigno[5] = {'#', '1', '.', '_', '='}
+    MATRIZ DECIMAL $numdec[3][3] = {{2.55, 6.89, 4.21}, {69.23, 41.89, 72.63}, {115.63, 854.36, 410.77}}
+    MATRIZ CARACTER $caract[3][3] = {{'K', 'L', 'A'}, {'Q', 'W', 'Y'}, {'X', 'Z', 'B'}}
+BLOQUE PRINCIPAL
+
+    MOSTRAR("") SALTO
+    MOSTRAR("----- LISTA ENTERA -----")SALTO
+    PARA($f DESDE 0 HASTA 9) HACER
+        MOSTRAR("Número: $valores[$f] <--> Posición: $f") SALTO
+    FIN PARA
+
+    MOSTRAR("") SALTO
+    MOSTRAR("+++++ LISTA CARACTER +++++")SALTO
+    PARA($f DESDE 0 HASTA 9) HACER
+        MOSTRAR("Caracter: $letras[$f] <--> Posición: $f") SALTO
+    FIN PARA
+   
+    MOSTRAR("") SALTO
+    MOSTRAR("+++++ LISTA CARACTER SIN SIGNO +++++")SALTO
+    PARA($f DESDE 0 HASTA 4) HACER
+        MOSTRAR("Caracter: $letsinsigno[$f] <--> Posición: $f") SALTO
+    FIN PARA
+
+    MOSTRAR("")SALTO
+    MOSTRAR("***** MATRIZ DECIMAL *****")SALTO
+    PARA($f DESDE 0 HASTA 2) HACER
+        PARA($g DESDE 0 HASTA 2) HACER
+            MOSTRAR("Tabla decimal: $numdec[$f][$g] <--> Posición: $f|$g", DECIMALES(2))SALTO
+        FIN PARA
+    FIN PARA
+
+    MOSTRAR("")SALTO
+    MOSTRAR("..... MATRIZ CARACTER .....")SALTO
+    PARA($f DESDE 0 HASTA 2) HACER
+        PARA($g DESDE 0 HASTA 2) HACER
+            MOSTRAR("Tabla caracter: $caract[$f][$g] <--> Posición: $f|$g")SALTO
+        FIN PARA
+    FIN PARA
+    MOSTRAR("") SALTO
+FIN PRINCIPAL
+FINAL     

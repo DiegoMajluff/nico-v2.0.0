@@ -1,0 +1,37 @@
+PROGRAMA TestMatrizLogica
+BLOQUE PRINCIPAL
+    MATRIZ LOGICA $tablero[3][3]
+    
+    // Asignar con VERDADERO/FALSO
+    $tablero[0][0] = VERDADERO
+    $tablero[0][1] = FALSO
+    $tablero[0][2] = VERDADERO
+    
+    // Asignar con 1/0
+    $tablero[1][0] = 1
+    $tablero[1][1] = 0
+    $tablero[1][2] = 1
+    
+    // Mezclado
+    $tablero[2][0] = FALSO
+    $tablero[2][1] = 1
+    $tablero[2][2] = VERDADERO
+    
+    // Imprimir como mapa de bits
+    ESCRIBIR("Mapa de bits 3x3:") SALTO
+    VARIABLE ENTERA $i = 0
+    MIENTRAS($i MENOR 3) HACER
+        VARIABLE ENTERA $j = 0
+        MIENTRAS($j MENOR 3) HACER
+            SI($tablero[$i][$j] IGUAL VERDADERO) ENTONCES
+                ESCRIBIR("1 ") SALTO
+            SINO
+                ESCRIBIR("0 ") SALTO
+            FIN SI
+            CALCULAR EN $j = $j + 1
+        FIN MIENTRAS
+        ESCRIBIR("") SALTO
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+FIN PRINCIPAL
+FINAL

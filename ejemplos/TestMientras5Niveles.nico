@@ -1,0 +1,83 @@
+PROGRAMA TestMientrasQuintupleAnidado
+
+    VARIABLE ENTERA $nivel1 = 0
+    VARIABLE ENTERA $nivel2 = 0
+    VARIABLE ENTERA $nivel3 = 0
+    VARIABLE ENTERA $nivel4 = 0
+    VARIABLE ENTERA $nivel5 = 0
+    VARIABLE ENTERA $contador = 0
+
+BLOQUE PRINCIPAL
+
+    ESCRIBIR ("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR ("║   TEST 5 NIVELES DE MIENTRAS-HACER     ║") SALTO
+    ESCRIBIR ("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR ("") SALTO
+
+    // ========================================
+    // NIVEL 1
+    // ========================================
+    CALCULAR EN $nivel1 = 1
+    MIENTRAS ($nivel1 MENOR IGUAL 2) HACER
+        
+        ESCRIBIR ("\[Nivel 1\] Iteración $nivel1") SALTO
+        
+        // ========================================
+        // NIVEL 2
+        // ========================================
+        CALCULAR EN $nivel2 = 1
+        MIENTRAS ($nivel2 MENOR IGUAL 2) HACER
+            
+            ESCRIBIR ("  \[Nivel 2\] Iteración $nivel2") SALTO
+            
+            // ========================================
+            // NIVEL 3
+            // ========================================
+            CALCULAR EN $nivel3 = 1
+            MIENTRAS ($nivel3 MENOR IGUAL 2) HACER
+                
+                ESCRIBIR ("    \[Nivel 3\] Iteración $nivel3") SALTO
+                
+                // ========================================
+                // NIVEL 4
+                // ========================================
+                CALCULAR EN $nivel4 = 1
+                MIENTRAS ($nivel4 MENOR IGUAL 2) HACER
+                    
+                    ESCRIBIR ("      \[Nivel 4\] Iteración $nivel4") SALTO
+                    
+                    // ========================================
+                    // NIVEL 5
+                    // ========================================
+                    CALCULAR EN $nivel5 = 1
+                    MIENTRAS ($nivel5 MENOR IGUAL 2) HACER
+                        
+                        CALCULAR EN $contador = $contador + 1
+                        ESCRIBIR ("        \[Nivel 5\] Iteración $nivel5 (Total: $contador)") SALTO
+                        
+                        CALCULAR EN $nivel5 = $nivel5 + 1
+                    FIN MIENTRAS
+                    
+                    CALCULAR EN $nivel4 = $nivel4 + 1
+                FIN MIENTRAS
+                
+                CALCULAR EN $nivel3 = $nivel3 + 1
+            FIN MIENTRAS
+            
+            CALCULAR EN $nivel2 = $nivel2 + 1
+        FIN MIENTRAS
+        
+        CALCULAR EN $nivel1 = $nivel1 + 1
+        ESCRIBIR ("") SALTO
+    FIN MIENTRAS
+
+    ESCRIBIR ("╔════════════════════════════════════════╗") SALTO
+    ESCRIBIR ("║   FIN DEL TEST                         ║") SALTO
+    ESCRIBIR ("╚════════════════════════════════════════╝") SALTO
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("Total de iteraciones en nivel 5: $contador") SALTO
+    ESCRIBIR ("(Esperado: 32 = 2^5)") SALTO
+
+FIN PRINCIPAL
+
+FINAL

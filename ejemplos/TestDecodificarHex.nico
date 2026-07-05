@@ -1,0 +1,32 @@
+PROGRAMA DecodificarHex
+    VARIABLE ENTERA SIN SIGNO $empaquetado = 0x48656C6C6F  // "Hello"
+    VARIABLE TEXTO EXTENSO $resultado = ""
+    VARIABLE TEXTO $char = ""
+    VARIABLE ENTERA $byte, $i, $temp, $desplazamiento
+BLOQUE PRINCIPAL
+    ASIGNAR EN $temp = $empaquetado
+    
+    // Calcular desplazamiento inicial (4 bytes * 8 bits = 32 bits para 5 caracteres)
+    CALCULAR EN $desplazamiento = 32
+    
+    // Extraer 5 bytes desde el más significativo
+    PARA($i DESDE 0 HASTA 4) HACER
+        // Desplazar para obtener el byte actual en posición más significativa
+        CALCULAR EN $byte = DESPLAZARDERECHA($temp, $desplazamiento)
+        
+        // Obtener solo el byte menos significativo (mask con 0xFF)
+        CALCULAR EN $byte = BITY($byte, 255)
+        
+        // Convertir byte a carácter ASCII
+        CARACTERATEXTO($byte, $char)
+        
+        // Concatenar al resultado
+        CONCATENARTEXTO($resultado, $char)
+        
+        // Reducir desplazamiento para el siguiente byte
+        CALCULAR EN $desplazamiento = $desplazamiento - 8
+    FIN PARA
+    
+    ESCRIBIR("\nTexto decodificado: $resultado\n") SALTO
+FIN PRINCIPAL
+FINAL

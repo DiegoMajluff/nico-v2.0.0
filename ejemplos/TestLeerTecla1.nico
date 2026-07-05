@@ -1,0 +1,65 @@
+PROGRAMA TestLeerTecla
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $tecla = 0
+    VARIABLE ENTERA $fin = 0
+    
+    LIMPIARPANTALLA
+    ESCRIBIR("=== TEST LEERTECLA ===") SALTO
+    ESCRIBIR("Presioná cualquier tecla para ver su código") SALTO
+    ESCRIBIR("Presioná ESC (27) para salir") SALTO
+    ESCRIBIR("") SALTO
+    
+    MIENTRAS ($fin IGUAL 0) HACER
+        LEERTECLA($tecla)
+        
+        SI ($tecla DIFERENTE 0) ENTONCES
+            CURSOR(6, 1)
+            ESCRIBIR("Última tecla: $tecla                    ") SALTO
+            
+            SI ($tecla IGUAL 27) ENTONCES
+                ESCRIBIR("ESC presionado - Saliendo...") SALTO
+                ASIGNAR EN $fin = 1
+            SINO
+                SI ($tecla IGUAL 1001) ENTONCES
+                    ESCRIBIR("Flecha ARRIBA") SALTO
+                SINO
+                    SI ($tecla IGUAL 1002) ENTONCES
+                        ESCRIBIR("Flecha ABAJO") SALTO
+                    SINO
+                        SI ($tecla IGUAL 1003) ENTONCES
+                            ESCRIBIR("Flecha DERECHA") SALTO
+                        SINO
+                            SI ($tecla IGUAL 1004) ENTONCES
+                                ESCRIBIR("Flecha IZQUIERDA") SALTO
+                            SINO
+                                SI ($tecla IGUAL 1007) ENTONCES
+                                    ESCRIBIR("INSERT") SALTO
+                                SINO
+                                    SI ($tecla IGUAL 1008) ENTONCES
+                                        ESCRIBIR("DELETE") SALTO
+                                    SINO
+                                        SI ($tecla IGUAL 1005) ENTONCES
+                                            ESCRIBIR("HOME") SALTO
+                                        SINO
+                                            SI ($tecla IGUAL 1006) ENTONCES
+                                                ESCRIBIR("END") SALTO
+                                            SINO
+                                                ESCRIBIR("Otra tecla") SALTO
+                                            FIN SI
+                                        FIN SI
+                                    FIN SI
+                                FIN SI
+                            FIN SI
+                        FIN SI
+                    FIN SI
+                FIN SI
+            FIN SI
+        FIN SI
+        
+        ESPERAR(50, MILISEGUNDOS)
+    FIN MIENTRAS
+    
+    ESCRIBIR("") SALTO
+    ESCRIBIR("✅ Test finalizado") SALTO
+FIN PRINCIPAL
+FINAL

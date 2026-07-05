@@ -1,0 +1,33 @@
+PROGRAMA FibonacciOptimizado
+    // Usamos una lista global como caché. 0 significa "no calculado aún"
+    LISTA ENTERA $cache[40] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+    FUNCION ENTERA fib_rapido($n)
+        VARIABLE ENTERA $res = 0
+        
+        // Si ya lo calculamos, lo devolvemos inmediatamente (O(1))
+        SI($cache[$n] DIFERENTE 0) ENTONCES
+            RESULTADO EN $res = $cache[$n]
+        SINO
+            // Si no, lo calculamos, lo guardamos en la caché y lo devolvemos
+            SI($n IGUAL 0 O $n IGUAL 1) ENTONCES
+                $cache[$n] = $n
+            SINO
+                VARIABLE ENTERA $a = 0
+                VARIABLE ENTERA $b = 0
+                CALCULAR EN $a = fib_rapido($n - 1)
+                CALCULAR EN $b = fib_rapido($n - 2)
+                $cache[$n] = $a + $b
+            FIN SI
+            RESULTADO EN $res = $cache[$n]
+        FIN SI
+        RETORNAR $res
+    FIN FUNCION
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $resultado = 0
+    ESCRIBIR("\nCalculando Fibonacci(35) con memoización...") SALTO
+    CALCULAR EN $resultado = fib_rapido(35)
+    ESCRIBIR("Fibonacci(35) = $resultado (¡Tardó milisegundos!)\n") SALTO
+FIN PRINCIPAL
+FINAL

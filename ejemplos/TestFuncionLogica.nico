@@ -1,0 +1,23 @@
+PROGRAMA TestFuncionLogica
+
+FUNCION LOGICA ES_PAR($n)
+    SI($n MOD 2 IGUAL 0) ENTONCES
+        RETORNAR VERDADERO
+    SINO
+        RETORNAR FALSO
+    FIN SI
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    VARIABLE LOGICA $resultado
+    VARIABLE ENTERA $numero = 10
+    
+    ASIGNAR EN $resultado = ES_PAR($numero)
+    
+    SI($resultado) ENTONCES
+        MOSTRAR("El número es par") SALTO
+    SINO
+        MOSTRAR("El número es impar") SALTO
+    FIN SI
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,46 @@
+PROGRAMA RelacionesWeb
+
+BLOQUE PRINCIPAL
+    CONECTARBD("tienda.db")
+    
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS categorias (id INTEGER PRIMARY KEY, nombre TEXT UNIQUE, descripcion TEXT)")
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS productos (id INTEGER PRIMARY KEY, nombre TEXT, precio REAL, stock INTEGER, id_categoria INTEGER, FOREIGN KEY (id_categoria) REFERENCES categorias(id))")
+    
+    EJECUTARBD("DELETE FROM productos")
+    EJECUTARBD("DELETE FROM categorias")
+    
+    EJECUTARBD("INSERT INTO categorias (nombre, descripcion) VALUES ('Electrónica', 'Dispositivos y accesorios'), ('Hogar', 'Artículos para el hogar'), ('Deportes', 'Equipamiento deportivo')")
+    EJECUTARBD("INSERT INTO productos (nombre, precio, stock, id_categoria) VALUES ('Auriculares Bluetooth', 49.99, 25, 1), ('Teclado Mecánico', 89.99, 12, 1), ('Lámpara LED', 24.50, 40, 2), ('Balón de Fútbol', 19.99, 60, 3), ('Raqueta de Tenis', 75.00, 8, 3)")
+    
+    // Variable auxiliar para el símbolo de moneda (evita error de parser)
+    VARIABLE TEXTO $dol = "$"
+    
+    ESCRIBIR("=== Productos por Categoría ===") SALTO
+    CONSULTARBD("SELECT c.nombre AS categoria, p.nombre AS producto, p.precio, p.stock FROM categorias AS c JOIN productos AS p ON c.id = p.id_categoria ORDER BY categoria, producto", 1)
+    
+    MIENTRAS(SIGUIENTEFILABD()) HACER
+        // Concatenación segura: $dol + valor numérico (convertido implícitamente a texto)
+        ESCRIBIR("📦 $BDCOL1  $BDCOL2  -  $dol $BDCOL3 (Stock: $BDCOL4)") SALTO
+    FIN MIENTRAS
+    CERRARCONSULTABD
+    
+    ESCRIBIR("") SALTO
+    ESCRIBIR("=== Resumen por Categoría (LEFT JOIN) ===") SALTO
+    CONSULTARBD("SELECT c.nombre, COUNT(p.id) AS total, AVG(p.precio) AS promedio FROM categorias AS c LEFT JOIN productos AS p ON c.id = p.id_categoria GROUP BY c.id ORDER BY total", 1)
+
+    MIENTRAS(SIGUIENTEFILABD()) HACER
+        ESCRIBIR("📊  $BDCOL1: $BDCOL2  productos | Promedio: $dol $BDCOL3") SALTO
+    FIN MIENTRAS
+    CERRARCONSULTABD
+    
+    ESCRIBIR("🌐 Panel web: http://localhost:8080/admin") SALTO
+    ESCRIBIR("Usuario: admin | Clave: nico2026") SALTO
+    INICIARSERVER(8080)
+    MIENTRAS(1) HACER 
+        ESPERAR(1, SEGUNDOS)
+    FIN MIENTRAS
+    DETENERSERVER() 
+    CERRARBD
+FIN PRINCIPAL
+FINAL
+

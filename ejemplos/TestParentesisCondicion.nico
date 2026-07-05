@@ -1,0 +1,9 @@
+PROGRAMA test_parentesis_condicion
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $x=10, $lim=12, $y=5, $vel=2, $a=0  
+    // ✅ Combinado con paréntesis
+    SI((($x MENOR $lim) Y ($y MAYOR $vel)) O ($a IGUAL 0)) ENTONCES
+        MOSTRAR("\n✅ Combinado con () funciona perfecto\n") SALTO
+    FIN SI
+FIN PRINCIPAL
+FINAL

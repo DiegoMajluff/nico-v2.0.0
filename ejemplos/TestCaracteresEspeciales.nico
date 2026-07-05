@@ -1,0 +1,16 @@
+PROGRAMA TestCaracteresEspeciales
+    LISTA CARACTER SIN SIGNO $lista[5] = {'ñ', 'á', 'é', 'í', 'ó'}
+    
+BLOQUE PRINCIPAL
+    MOSTRAR("Caracteres extendidos:") SALTO
+    MOSTRAR("Lista[0] = $lista[0] (ñ)") SALTO
+    MOSTRAR("Lista[1] = $lista[1] (á)") SALTO
+    MOSTRAR("Lista[2] = $lista[2] (é)") SALTO
+    MOSTRAR("Lista[3] = $lista[3] (í)") SALTO
+    MOSTRAR("Lista[4] = $lista[4] (ó)") SALTO
+    
+    ASIGNAR EN $lista[0] = 'ü'
+    MOSTRAR("") SALTO
+    MOSTRAR("Tras modificar Lista[0] = $lista[0] (ü)") SALTO
+FIN PRINCIPAL
+FINAL

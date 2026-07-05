@@ -1,0 +1,10 @@
+PROGRAMA leer_hasta
+    VARIABLE TEXTO $entrada = ""
+BLOQUE PRINCIPAL
+    ESCRIBIR("\nIngresá el texto y al final escribí EOF para finalizar: ") SALTO
+    LEERHASTA($entrada, "EOF")
+    ESCRIBIR("") SALTO
+    ESCRIBIR("\nEl texto que ingresaste es el siguiente: ") SALTO
+    ESCRIBIR("$entrada\n") SALTO
+FIN PRINCIPAL
+FINAL   

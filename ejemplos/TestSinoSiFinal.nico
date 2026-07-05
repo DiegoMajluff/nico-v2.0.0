@@ -1,0 +1,42 @@
+PROGRAMA TestSinoSiFinal
+VARIABLE TEXTO $opcion = ""
+VARIABLE ENTERA $resultado = 0
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n=== TEST FINAL: SINO SI ===") SALTO
+    ESCRIBIR("Ingrese: A, B, C o X") SALTO
+    ESCRIBIR("Opcion: ") SALTO
+    LEER($opcion)
+
+    // 🔥 PRUEBA CENTRAL: Cadena SINO SI en una línea
+    SI($opcion IGUAL "A") ENTONCES
+        ESCRIBIR("✅ Rama A ejecutada") SALTO
+        ASIGNAR EN $resultado = 1
+    SINO SI($opcion IGUAL "B") ENTONCES
+        ESCRIBIR("✅ Rama B ejecutada") SALTO
+        ASIGNAR EN $resultado = 2
+    SINO SI($opcion IGUAL "C") ENTONCES
+        ESCRIBIR("✅ Rama C ejecutada") SALTO
+        ASIGNAR EN $resultado = 3
+    SINO
+        ESCRIBIR("⚠️ Rama por defecto ejecutada") SALTO
+        ASIGNAR EN $resultado = 0
+    FIN SI  // ← Único cierre para toda la cadena
+
+    ESCRIBIR("Resultado: $resultado") SALTO
+
+    // 🔁 PRUEBA SECUNDARIA: Anidamiento (valida que FIN SI no se confunda)
+    VARIABLE ENTERA $x = 1
+    VARIABLE ENTERA $y = 2
+    
+    SI($x IGUAL 1) ENTONCES
+        SI($y IGUAL 2) ENTONCES
+            ESCRIBIR("✅ Anidamiento nivel 2: OK") SALTO
+        FIN SI  // Cierra SI y
+        ESCRIBIR("✅ Volviendo a nivel 1: OK") SALTO
+    SINO SI($x IGUAL 5) ENTONCES
+        ESCRIBIR("❌ Esto NO debe imprimirse") SALTO
+    FIN SI  // Cierra SI x
+
+    ESCRIBIR("Fin del test.\n") SALTO
+FIN PRINCIPAL
+FINAL

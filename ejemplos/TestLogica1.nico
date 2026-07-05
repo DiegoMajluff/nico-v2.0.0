@@ -1,0 +1,22 @@
+PROGRAMA TestLogica
+BLOQUE PRINCIPAL
+    VARIABLE LOGICA $flag1 = VERDADERO
+    VARIABLE LOGICA $flag2 = 1
+    VARIABLE LOGICA $flag3 = 0
+    VARIABLE LOGICA $flag4 = FALSO
+    
+    ESCRIBIR("flag1 (VERDADERO): $flag1") SALTO
+    ESCRIBIR("flag2 (1): $flag2") SALTO
+    ESCRIBIR("flag3 (0): $flag3") SALTO
+    ESCRIBIR("flag4 (FALSO): $flag4") SALTO
+    
+    // Probar lista logica
+    LISTA LOGICA $flags[5]
+    $flags[0] = VERDADERO
+    $flags[1] = 1
+    $flags[2] = FALSO
+    $flags[3] = 0
+    
+    ESCRIBIR("Lista: $flags[0], $flags[1], $flags[2], $flags[3]") SALTO
+FIN PRINCIPAL
+FINAL

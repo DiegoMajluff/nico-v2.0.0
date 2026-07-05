@@ -1,0 +1,20 @@
+PROGRAMA prueba_cursor
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $i
+    LIMPIARPANTALLA
+    OCULTARCURSOR
+    MOSTRAR("🔍 Cursor oculto. Animando...") SALTO
+    
+    PARA($i = 1 HASTA 5) HACER
+        CURSOR(5, $i)
+        MOSTRAR("⏳ Paso $i") SALTO
+        ESPERAR(500, MILISEGUNDOS)
+    FIN PARA
+    
+    LIMPIARPANTALLA
+    CURSOR(7, 1)
+    MOSTRARCURSOR
+    MOSTRAR("✅ Cursor restaurado.")
+FIN PRINCIPAL
+FINAL

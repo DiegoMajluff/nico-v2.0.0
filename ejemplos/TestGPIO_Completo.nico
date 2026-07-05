@@ -1,0 +1,77 @@
+PROGRAMA TestGPIO_Completo
+    VARIABLE ENTERA $pin_led = 17
+    VARIABLE ENTERA $pin_boton = 27
+    VARIABLE ENTERA $estado_boton = 0
+    VARIABLE ENTERA $tecla = 0
+    VARIABLE ENTERA $contador = 0
+
+BLOQUE PRINCIPAL
+    LIMPIARPANTALLA
+    MOSTRAR("=== Test Completo de GPIO en Nico ===") SALTO
+    MOSTRAR("Conecta: LED en GPIO 17 | Boton en GPIO 27 (a GND)") SALTO
+    MOSTRAR("Presiona ESC en cualquier momento para salir.") SALTO
+    ESPERAR(2, SEGUNDOS)
+
+    // 1. Configuración explícita
+    CONFIGURARPIN($pin_led, SALIDA)
+    CONFIGURARPIN($pin_boton, ENTRADA, PULLUP)
+    MOSTRAR("\n✅ Pines configurados correctamente.") SALTO
+
+    // 2. Fase 1: Salida
+    MOSTRAR("\n🔵 Fase 1: Test de SALIDA (LED parpadea 3 veces)") SALTO
+    MIENTRAS($contador MENOR 3) HACER
+        ESTADOPIN($pin_led, SI)
+        ESPERAR(200, MILISEGUNDOS)
+        ESTADOPIN($pin_led, NO)
+        ESPERAR(200, MILISEGUNDOS)
+        CALCULAR EN $contador = $contador + 1
+        
+        LEERTECLA($tecla)
+        SI($tecla IGUAL 27) ENTONCES 
+            SALTAR A salir 
+        FIN SI
+    FIN MIENTRAS
+    ASIGNAR EN $contador = 0
+
+    // 3. Fase 2: Entrada con PULLUP
+    MOSTRAR("\n🟢 Fase 2: Test de ENTRADA (Presiona el boton para continuar)") SALTO
+    MOSTRAR("Reposo (PULLUP): 1 | Presionado (a GND): 0") SALTO
+    MIENTRAS(1) HACER
+        LEERPIN($pin_boton, EN $estado_boton)
+        SI($estado_boton IGUAL 0) ENTONCES  // ✅ 0 = NO = presionado
+            MOSTRAR("\n🔘 ¡Boton presionado detectado!") SALTO
+            ESPERAR(200, MILISEGUNDOS)
+            SALTAR A fase3
+        FIN SI
+        LEERTECLA($tecla)
+        SI($tecla IGUAL 27) ENTONCES 
+            SALTAR A salir 
+        FIN SI
+        ESPERAR(50, MILISEGUNDOS)
+    FIN MIENTRAS
+
+    ETIQUETA fase3
+    // 4. Fase 3: Integración
+    MOSTRAR("\n🟡 Fase 3: Integracion (Boton controla LED)") SALTO
+    MIENTRAS(1) HACER
+        LEERPIN($pin_boton, EN $estado_boton)
+        SI($estado_boton IGUAL 0) ENTONCES
+            ESTADOPIN($pin_led, SI)
+            MOSTRAR("🔴 LED ON  | Boton: PRESIONADO") SALTO
+        SINO
+            ESTADOPIN($pin_led, NO)
+            MOSTRAR("⚫ LED OFF | Boton: LIBRE") SALTO
+        FIN SI
+        LEERTECLA($tecla)
+        SI($tecla IGUAL 27) ENTONCES 
+            SALTAR A salir 
+        FIN SI
+        ESPERAR(30, MILISEGUNDOS)
+    FIN MIENTRAS
+
+    ETIQUETA salir
+    ESTADOPIN($pin_led, NO)
+    LIMPIARPANTALLA
+    MOSTRAR("\n✅ Test GPIO finalizado correctamente.") SALTO
+FIN PRINCIPAL
+FINAL

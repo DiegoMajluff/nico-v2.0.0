@@ -1,0 +1,8 @@
+PROGRAMA test_bd
+BLOQUE PRINCIPAL
+   CONECTARBD("test_nico.db")
+   ESCRIBIR("\n✅ Conexión exitosa.\n")
+   CERRARBD
+   ESCRIBIR("✅ BD cerrada correctamente.\n") SALTO
+FIN PRINCIPAL
+FINAL

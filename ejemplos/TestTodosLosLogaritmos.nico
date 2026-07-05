@@ -1,0 +1,32 @@
+PROGRAMA TestTodasLasFunciones
+
+    VARIABLE DECIMAL $resultado = 0
+    VARIABLE DECIMAL $lognatural = 2.718281828459
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("\n=== FUNCIONES MATEMÁTICAS COMPLETAS ===") SALTO
+
+    // Logaritmos
+    CALCULAR EN $resultado = LOGNATURAL($lognatural)
+    ESCRIBIR("LOGNATURAL($lognatural) = $resultado", DECIMALES(5, 2)) SALTO 
+
+    CALCULAR EN $resultado = LOGNATURAL(2.72)
+    ESCRIBIR("LOGNATURAL(2.72) = ")
+    ESCRIBIR("$resultado", DECIMALES(3)) SALTO
+
+    CALCULAR EN $resultado = LOGBASE10(100)
+    ESCRIBIR("LOGBASE10(100) = ") 
+    ESCRIBIR("$resultado") SALTO
+
+    CALCULAR EN $resultado = LOGBASE2(8)
+    ESCRIBIR("LOGBASE2(8) = ") 
+    ESCRIBIR("$resultado") SALTO
+
+    CALCULAR EN $resultado = LOGARITMO(27, 3)
+    ESCRIBIR("LOGARITMO(27, 3) = ") 
+    ESCRIBIR("$resultado") SALTO
+
+    ESCRIBIR("=== FIN TEST ===\n") SALTO
+
+FIN PRINCIPAL
+FINAL

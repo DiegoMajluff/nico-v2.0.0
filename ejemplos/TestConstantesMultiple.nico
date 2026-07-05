@@ -1,0 +1,18 @@
+PROGRAMA declaraciones_multiples_de_constantes
+
+CONSTANTE ENTERA $valor1 = 10, $valor2 = 50
+CONSTANTE DECIMAL $dec1 = 10.56987, $dec2 = 1520.692
+CONSTANTE CARACTER $char1 = 'A', $char2 = 'H'
+CONSTANTE TEXTO $txt = "Hola mundo"
+VARIABLE ENTERA $var1, $var2
+VARIABLE TEXTO $texto
+BLOQUE PRINCIPAL
+    ASIGNAR EN $var1 = $valor1
+    ASIGNAR EN $var2 = $valor2
+    ASIGNAR EN $texto = $txt
+    ESCRIBIR("\nVariable 1: $var1 - Variable 2: $var2") SALTO
+    ESCRIBIR("Constante 1: $dec1 - Constante 2: $dec2", DECIMALES(4, 4)) SALTO
+    ESCRIBIR("Constante CARACTER 1: $char1 - Constante CARACTER 2: $char2") SALTO
+    ESCRIBIR("Mensaje: $texto\n") SALTO
+FIN PRINCIPAL
+FINAL 

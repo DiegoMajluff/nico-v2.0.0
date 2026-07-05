@@ -1,0 +1,24 @@
+PROGRAMA test_bd_cursor
+BLOQUE PRINCIPAL
+   CONECTARBD("usuarios.db")
+   EJECUTARBD("DROP TABLE IF EXISTS personas;")
+   EJECUTARBD("CREATE TABLE personas (id INTEGER, nombre TEXT, edad INTEGER);")
+   
+   INICIARTRANSACCION
+   EJECUTARBD("INSERT INTO personas VALUES (1, 'Ana', 30);")
+   EJECUTARBD("INSERT INTO personas VALUES (2, 'Luis', 25);")
+   EJECUTARBD("INSERT INTO personas VALUES (3, 'Carla', 28);")
+   CONFIRMARTRANSACCION
+   
+   ESCRIBIR("\n--- Listado de personas ---\n")
+   CONSULTARBD("SELECT nombre, edad FROM personas WHERE edad > 20 ORDER BY edad;")
+   
+   MIENTRAS(SIGUIENTEFILABD()) HACER 
+       ESCRIBIR("Nombre: $BDCOL1 | Edad: $BDCOL2\n")
+   FIN MIENTRAS
+   CERRARCONSULTABD
+   
+   CERRARBD
+   ESCRIBIR("✅ Prueba de cursor finalizada.\n") SALTO
+FIN PRINCIPAL
+FINAL

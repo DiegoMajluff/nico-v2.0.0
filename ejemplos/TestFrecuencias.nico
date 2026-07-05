@@ -1,0 +1,20 @@
+PROGRAMA TestPWM
+    VARIABLE ENTERA $pin = 18
+
+BLOQUE PRINCIPAL
+    MOSTRAR("=== Test PWM Hardware ===") SALTO
+    MOSTRAR("Conecta LED en GPIO 18 (con resistencia 330Ω)") SALTO
+    MOSTRAR("Nota: Requiere ejecutar con sudo") SALTO
+
+    // Test: PWM a 50 Hz
+    GENERARPWM($pin, 50, 75)
+    ESPERAR(20, SEGUNDOS)
+  
+    // Detener PWM
+    MOSTRAR("\n⚫ Deteniendo PWM...") SALTO
+    DETENERPWM($pin)
+    ESPERAR(1, SEGUNDOS)
+
+    MOSTRAR("\n✅ Test PWM finalizado") SALTO
+FIN PRINCIPAL
+FINAL

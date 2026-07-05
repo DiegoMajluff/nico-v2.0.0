@@ -1,0 +1,63 @@
+PROGRAMA TestCaracteresHexOctal
+
+MATRIZ CARACTER $matCar[2][2]
+MATRIZ CARACTER SIN SIGNO $matCarSin[2][2]
+VARIABLE ENTERA $i = 0
+VARIABLE ENTERA $j = 0
+VARIABLE CARACTER $temp = ''
+VARIABLE ENTERA $temp1 = 0
+
+BLOQUE PRINCIPAL
+    // TEST 1: CARACTERES CON COMILLAS SIMPLES
+    ESCRIBIR("\n") 
+    ESCRIBIR ("=== TEST 1: CARACTERES 'A' ===") SALTO
+    
+    ASIGNAR EN $matCar[0][0] = 'A'
+    ASIGNAR EN $matCar[0][1] = 'B'
+    ASIGNAR EN $matCar[1][0] = 'C'
+    ASIGNAR EN $matCar[1][1] = 'D'
+    
+    PARA ($i = 0 HASTA 1 PASO 1) HACER
+        PARA ($j = 0 HASTA 1 PASO 1) HACER
+            CALCULAR EN $temp = $matCar[$i][$j]
+            ESCRIBIR ("matCar[$i][$j] = $temp") SALTO
+        FIN PARA
+    FIN PARA
+    
+    // TEST 2: VALORES HEXADECIMALES
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("=== TEST 2: HEXADECIMAL 0x ===") SALTO
+    
+    ASIGNAR EN $matCarSin[0][0] = 0x41  // 65 = 'A'
+    ASIGNAR EN $matCarSin[0][1] = 0x42  // 66 = 'B'
+    ASIGNAR EN $matCarSin[1][0] = 0x43  // 67 = 'C'
+    ASIGNAR EN $matCarSin[1][1] = 0x44  // 68 = 'D'
+    
+    PARA ($i = 0 HASTA 1 PASO 1) HACER
+        PARA ($j = 0 HASTA 1 PASO 1) HACER
+            CALCULAR EN $temp = $matCarSin[$i][$j]
+            ESCRIBIR ("matCarSin[$i][$j] = $temp") 
+            ESCRIBIR ("") SALTO
+        FIN PARA
+    FIN PARA
+    
+    // TEST 3: VALORES OCTALES
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("=== TEST 3: OCTAL 0 ===") SALTO
+    
+    ASIGNAR EN $matCarSin[0][0] = 0101  // 65 en octal
+    ASIGNAR EN $matCarSin[0][1] = 0102  // 66 en octal
+    ASIGNAR EN $matCarSin[1][0] = 0103  // 67 en octal
+    ASIGNAR EN $matCarSin[1][1] = 0104  // 68 en octal
+    
+    PARA ($i = 0 HASTA 1 PASO 1) HACER
+        PARA ($j = 0 HASTA 1 PASO 1) HACER
+            CALCULAR EN $temp = $matCarSin[$i][$j]
+            ESCRIBIR ("matCarSin[$i][$j] = $temp") SALTO
+        FIN PARA
+    FIN PARA
+    
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("=== TODOS LOS TESTS COMPLETADOS ===") SALTO
+FIN PRINCIPAL
+FINAL

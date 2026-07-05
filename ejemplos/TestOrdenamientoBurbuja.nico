@@ -1,0 +1,97 @@
+PROGRAMA TestOrdenamientoBurbuja
+
+LISTA ENTERA $lista[10]
+VARIABLE ENTERA $i = 0
+VARIABLE ENTERA $j = 0
+VARIABLE ENTERA $temp = 0
+VARIABLE ENTERA $intercambios = 0
+VARIABLE ENTERA $tamanio = 10
+VARIABLE ENTERA $ordenada = 1
+VARIABLE ENTERA $limite_interno = 0 
+
+BLOQUE PRINCIPAL    
+    // INICIALIZAR LISTA CON VALORES DESORDENADOS
+    ASIGNAR EN $lista[0] = 64
+    ASIGNAR EN $lista[1] = 34
+    ASIGNAR EN $lista[2] = 25
+    ASIGNAR EN $lista[3] = 12
+    ASIGNAR EN $lista[4] = 22
+    ASIGNAR EN $lista[5] = 11
+    ASIGNAR EN $lista[6] = 90
+    ASIGNAR EN $lista[7] = 88
+    ASIGNAR EN $lista[8] = 45
+    ASIGNAR EN $lista[9] = 50
+
+    // MOSTRAR LISTA ORIGINAL
+    ESCRIBIR ("\n=== LISTA ORIGINAL (DESORDENADA) ===") SALTO
+    ESCRIBIR ("") SALTO
+    
+    PARA ($i = 0 HASTA 9 PASO 1) HACER
+        ESCRIBIR ("lista[$i] = $lista[$i]") SALTO
+    FIN PARA
+    
+    ESCRIBIR ("") SALTO
+
+    // ALGORITMO DE ORDENAMIENTO BURBUJA
+    ESCRIBIR ("=== ORDENANDO CON BURBUJA ===") SALTO
+    ESCRIBIR ("") SALTO
+    
+    // Bucle externo: recorre toda la lista
+    PARA ($i = 0 HASTA $tamanio - 1 PASO 1) HACER
+        
+        // Calcular límite en variable separada
+        CALCULAR EN $limite_interno = $tamanio - $i - 2
+        
+        // Bucle interno: compara elementos adyacentes
+        PARA ($j = 0 HASTA $limite_interno PASO 1) HACER
+            
+            // Si el elemento actual es MAYOR que el siguiente, intercambiar
+            SI ($lista[$j] MAYOR $lista[$j+1]) ENTONCES 
+                
+                // Guardar valor temporal
+                ASIGNAR EN $temp = $lista[$j]               
+                // Intercambiar elementos
+                CALCULAR EN $lista[$j] = $lista[$j+1]   
+                CALCULAR EN $lista[$j+1] = $temp        
+                
+                // Contar intercambios
+                CALCULAR EN $intercambios = $intercambios + 1
+                ESCRIBIR ("  Intercambio [$j] con [$j+1]: $lista[$j] <-> $lista[$j+1]") SALTO
+            FIN SI
+        FIN PARA       
+    FIN PARA
+    
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("Total de intercambios: $intercambios") SALTO
+    ESCRIBIR ("") SALTO
+
+    // MOSTRAR LISTA ORDENADA
+    ESCRIBIR ("=== LISTA ORDENADA (ASCENDENTE) ===") SALTO
+    ESCRIBIR ("") SALTO
+    
+    PARA ($i = 0 HASTA 9 PASO 1) HACER
+        ESCRIBIR ("lista[$i] = $lista[$i]") SALTO
+    FIN PARA
+    
+    ESCRIBIR ("") SALTO
+
+    // VERIFICAR QUE ESTÁ ORDENADA
+    ESCRIBIR ("=== VERIFICACION ===") SALTO
+    ASIGNAR EN $ordenada = 1
+
+    PARA ($i = 0 HASTA 8 PASO 1) HACER
+        SI ($lista[$i] MAYOR $lista[$i+1]) ENTONCES  // 🔧 Sin espacios en [$i+1]
+            ASIGNAR EN $ordenada = 0
+        FIN SI
+    FIN PARA
+    
+    SI ($ordenada IGUAL 1) ENTONCES
+        ESCRIBIR ("✓ La lista está correctamente ordenada") SALTO
+    SINO
+        ESCRIBIR ("✗ Error: La lista NO está ordenada") SALTO
+    FIN SI
+    
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("=== FIN DEL TEST DE BURBUJA ===\n") SALTO
+FIN PRINCIPAL    
+FINAL

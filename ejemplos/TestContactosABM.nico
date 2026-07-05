@@ -1,0 +1,99 @@
+PROGRAMA abm_contactos
+VARIABLE TEXTO $nombre = ""
+VARIABLE TEXTO $apellido = ""
+VARIABLE ENTERA $edad = 0
+VARIABLE TEXTO $direccion = ""
+VARIABLE ENTERA $opcion = 0
+VARIABLE ENTERA $id_baja = 0
+VARIABLE ENTERA $confirmar = 0
+VARIABLE TEXTO $NOMBRE_BAJA = ""
+VARIABLE TEXTO $APELLIDO_BAJA = ""
+
+BLOQUE PRINCIPAL
+   // 1. Conexión y estructura
+   CONECTARBD("agenda.db")
+   EJECUTARBD("CREATE TABLE IF NOT EXISTS contactos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, apellido TEXT, edad INTEGER, direccion TEXT);")
+
+   // 2. Menú principal
+   MIENTRAS(1 IGUAL 1) HACER
+      ESCRIBIR("\n=== 📋 AGENDA DE CONTACTOS ===\n")
+      ESCRIBIR("1. Alta (Insertar)\n")
+      ESCRIBIR("2. Consulta (Listar/Buscar)\n")
+      ESCRIBIR("3. Baja (Eliminar)\n")
+      ESCRIBIR("4. Salir\n")
+      ESCRIBIR("Seleccioná opción: ")
+      LEER($opcion)
+
+      // 🔹 ALTA
+      SI($opcion IGUAL 1) ENTONCES
+         ESCRIBIR("\n--- 📝 NUEVO REGISTRO ---\n")
+         ESCRIBIR("Nombre: ") 
+         LEER($nombre)
+         ESCRIBIR("Apellido: ") 
+         LEER($apellido)
+         ESCRIBIR("Edad: ") 
+         LEER($edad)
+         ESCRIBIR("Dirección: ")
+         LEER($direccion)
+         
+         // Bind seguro: evita inyección y maneja tipos automáticamente
+         EJECUTARBD("INSERT INTO contactos (nombre, apellido, edad, direccion) VALUES (?, ?, ?, ?);", $nombre, $apellido, $edad, $direccion)
+         ESCRIBIR("✅ Registro guardado correctamente.\n")
+      FIN SI
+
+      // 🔹 CONSULTA
+      SI($opcion IGUAL 2) ENTONCES
+         ESCRIBIR("\n--- 🔍 CONSULTAR ---\n")
+         ESCRIBIR("1. Ver todos\n2. Buscar por apellido exacto\nOpción: ")
+         LEER($opcion)
+         
+         SI($opcion IGUAL 1) ENTONCES
+            CONSULTARBD("SELECT id, nombre, apellido, edad, direccion FROM contactos ORDER BY apellido;")
+         FIN SI
+         
+         SI($opcion IGUAL 2) ENTONCES
+            ESCRIBIR("Apellido: ") 
+            LEER($apellido)
+            CONSULTARBD("SELECT id, nombre, apellido, edad, direccion FROM contactos WHERE apellido = ? ORDER BY apellido;", $apellido)
+         FIN SI
+
+         ESCRIBIR("ID | Nombre | Apellido | Edad | Dirección\n")
+         ESCRIBIR("--- | --- | --- | --- | ---\n")
+         
+         // Itera fila a fila sin cargar todo en memoria
+         MIENTRAS (SIGUIENTEFILABD()) HACER
+            ESCRIBIR("$BDCOL1 | $BDCOL2 | $BDCOL3 | $BDCOL4 | $BDCOL5\n")
+         FIN MIENTRAS
+         CERRARCONSULTABD
+      FIN SI
+
+      // 🔹 BAJA
+      SI($opcion IGUAL 3) ENTONCES
+         ESCRIBIR("\n--- 🗑️ ELIMINAR ---\n")
+         ESCRIBIR("ID a eliminar: ")
+         LEER($id_baja)
+         
+         CONSULTARBD("SELECT nombre, apellido FROM contactos WHERE id = ?;", $id_baja)
+         SI(SIGUIENTEFILABD()) ENTONCES
+            // Usamos variables locales para evitar colisión con $BDCOL1/$BDCOL2
+            ASIGNAR EN $NOMBRE_BAJA = $BDCOL1
+            ASIGNAR EN $APELLIDO_BAJA = $BDCOL2
+            ESCRIBIR("¿Eliminar a $NOMBRE_BAJA $APELLIDO_BAJA? (1=Sí, 0=No): ")
+            LEER($confirmar)
+            SI ($confirmar IGUAL 1) ENTONCES
+               EJECUTARBD("DELETE FROM contactos WHERE id = ?;", $id_baja)
+               ESCRIBIR("✅ Eliminado correctamente.\n")
+            FIN SI
+         FIN SI
+         CERRARCONSULTABD
+      FIN SI
+      // 🔹 SALIR
+      SI($opcion IGUAL 4) ENTONCES
+         ESCRIBIR("👋 Hasta luego.\n") SALTO
+         SALTAR A cerrar
+      FIN SI
+   FIN MIENTRAS
+   ETIQUETA cerrar
+   CERRARBD
+FIN PRINCIPAL
+FINAL

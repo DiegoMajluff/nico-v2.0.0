@@ -1,0 +1,16 @@
+PROGRAMA TestCopiarTextoLista
+    LISTA TEXTO $frutas[3] = {"Manzana", "Pera", "Uva"}
+    VARIABLE TEXTO $nuevo = "Kiwi"
+BLOQUE PRINCIPAL
+    MOSTRAR("Antes: $frutas[0]") SALTO
+    COPIARTEXTO($frutas[0], "Naranja")
+    MOSTRAR("Después lista: $frutas[0]") SALTO
+    COPIARTEXTO($frutas[1], $nuevo)
+    MOSTRAR("Desde variable: $frutas[1]") SALTO
+    // Verificar que variables simples SIGUEN funcionando:
+    VARIABLE TEXTO $otra = "Original"
+    MOSTRAR("Antes variable: $otra") SALTO
+    COPIARTEXTO($otra, "Modificada")
+    MOSTRAR("Después variable: $otra") SALTO
+FIN PRINCIPAL
+FINAL

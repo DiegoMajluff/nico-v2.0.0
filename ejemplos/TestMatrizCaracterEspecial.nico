@@ -1,0 +1,30 @@
+PROGRAMA TestMatrizCaracteresEspeciales
+    MATRIZ CARACTER SIN SIGNO $matriz[2][3] = {{'ñ', 'á', 'é'}, {'í', 'ó', 'ü'}}
+    
+BLOQUE PRINCIPAL
+    MOSTRAR("=== MATRIZ CARACTER SIN SIGNO (extendidos) ===") SALTO
+    MOSTRAR("Matriz[0][0] = $matriz[0][0] (ñ)") SALTO
+    MOSTRAR("Matriz[0][1] = $matriz[0][1] (á)") SALTO
+    MOSTRAR("Matriz[0][2] = $matriz[0][2] (é)") SALTO
+    MOSTRAR("Matriz[1][0] = $matriz[1][0] (í)") SALTO
+    MOSTRAR("Matriz[1][1] = $matriz[1][1] (ó)") SALTO
+    MOSTRAR("Matriz[1][2] = $matriz[1][2] (ü)") SALTO
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("=== MODIFICANDO VALORES ===") SALTO
+    ASIGNAR EN $matriz[0][0] = 'Ñ'
+    ASIGNAR EN $matriz[0][2] = 'É'
+    ASIGNAR EN $matriz[1][1] = 'Ó'
+    ASIGNAR EN $matriz[1][2] = 'Ü'
+    
+    MOSTRAR("Matriz[0][0] = $matriz[0][0] (era ñ, ahora Ñ)") SALTO
+    MOSTRAR("Matriz[0][2] = $matriz[0][2] (era é, ahora É)") SALTO
+    MOSTRAR("Matriz[1][1] = $matriz[1][1] (era ó, ahora Ó)") SALTO
+    MOSTRAR("Matriz[1][2] = $matriz[1][2] (era ü, ahora Ü)") SALTO
+    
+    MOSTRAR("") SALTO
+    MOSTRAR("=== VERIFICANDO SIN CAMBIOS ===") SALTO
+    MOSTRAR("Matriz[0][1] = $matriz[0][1] (debe seguir á)") SALTO
+    MOSTRAR("Matriz[1][0] = $matriz[1][0] (debe seguir í)") SALTO
+FIN PRINCIPAL
+FINAL

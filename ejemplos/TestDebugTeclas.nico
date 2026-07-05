@@ -1,0 +1,33 @@
+PROGRAMA debug_tecla
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $t
+    VARIABLE ENTERA $fin
+    
+    ASIGNAR EN $fin = 0
+    LIMPIARPANTALLA
+    OCULTARCURSOR
+    MOSTRAR("Presioná teclas. ESC=27, Flechas=1001-1004, Ctrl+C para salir") SALTO
+    
+    MIENTRAS($fin IGUAL 0) HACER
+        LEERTECLA($t)
+        
+        SI($t DIFERENTE 0) ENTONCES
+            CURSOR(3, 1)
+            MOSTRAR("Última tecla: $t  (0x $t)") SALTO
+            
+            // Debug: si es ESC, forzar salida
+            SI($t IGUAL 27) ENTONCES
+                MOSTRAR(" ✅ ESC detectado! Saliendo...") SALTO
+                ASIGNAR EN $fin = 1
+            FIN SI
+        FIN SI
+        
+        ESPERAR(10, MILISEGUNDOS)
+    FIN MIENTRAS
+    
+    MOSTRARCURSOR
+    CURSOR(5, 1)
+    MOSTRAR("Fin. Última tecla registrada: $t\n") SALTO
+FIN PRINCIPAL
+FINAL

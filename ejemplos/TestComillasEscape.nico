@@ -1,0 +1,8 @@
+PROGRAMA TestComillas
+BLOQUE PRINCIPAL
+    ESCRIBIR("\nHola \"Diego\" ,  esto es Nico.\n")
+    ESCRIBIR("Ruta: C:\\Archivos\\Programa\n")
+    ESCRIBIR("Mix: \$no_var , \"comillas\" , \n y tabulador.\n")
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

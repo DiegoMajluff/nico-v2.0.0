@@ -1,0 +1,33 @@
+// Ejemplo 05: Persistencia y funciones de texto
+PROGRAMA ArchivosYTexto
+
+    VARIABLE ENTERA $llamada = 0
+
+FUNCION ENTERA archivos()
+
+    VARIABLE TEXTO $leido = ""
+    VARIABLE ARCHIVO $archivo 
+
+    // 1. Crear y escribir
+    ABRIRARCHIVO($archivo, "archivos_funcion.txt", ESCRITURA) 
+    ESCRIBIRARCHIVO($archivo, "Primera línea: Archivos en función")
+    ESCRIBIRARCHIVO($archivo, "Segunda línea: Lenguaje Nico escrito en C")
+    CERRARARCHIVO($archivo)
+    ESCRIBIR("Archivo escrito correctamente.") SALTO
+
+    // 2. Leer
+    ABRIRARCHIVO($archivo, "archivos_funcion.txt", LECTURA)
+    LEERARCHIVO($archivo, $leido)
+    //ESCRIBIR("Primera línea: ")
+    ESCRIBIR("$leido") SALTO
+    LEERARCHIVO($archivo, $leido)
+    //ESCRIBIR("Segunda línea: ")
+    ESCRIBIR("$leido") SALTO
+    CERRARARCHIVO($archivo)
+    RETORNAR 1
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    ASIGNAR EN $llamada = archivos()    
+FIN PRINCIPAL
+FINAL

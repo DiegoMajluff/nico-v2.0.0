@@ -1,0 +1,38 @@
+PROGRAMA prueba_geometria_ascii
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $ancho, $alto, $cx, $cy, $fin, $tecla
+    VARIABLE CARACTER $pixel = '#'
+    
+    ANCHOTERMINAL($ancho)
+    ALTOTERMINAL($alto)
+    CALCULAR EN $cx = $ancho / 2
+    CALCULAR EN $cy = $alto / 2
+    
+    LIMPIARPANTALLA
+    OCULTARCURSOR
+    
+    // Marco: DIBUJARLINEA(col_inicio, fil_inicio, col_fin, fil_fin, "char")
+    DIBUJARLINEA(2, 2, $ancho-1, 2, "═")           // Superior
+    DIBUJARLINEA(2, $alto-2, $ancho-1, $alto-2, "═")// Inferior 
+    DIBUJARLINEA(2, 2, 2, $alto-2, "║")             // Izquierda
+    DIBUJARLINEA($ancho-1, 2, $ancho-1, $alto-2, "║")// Derecha 
+    
+    // Círculo central
+    DIBUJARCIRCULO($cx, $cy, 8, $pixel)
+    
+    CURSOR($cy, $cx - 4)
+    MOSTRAR("🎯 Nico")
+    
+    MIENTRAS($fin IGUAL 0) HACER
+        LEERTECLA($tecla)
+        SI($tecla IGUAL 27) ENTONCES 
+           ASIGNAR EN $fin = 1 
+        FIN SI
+        ESPERAR(20, MILISEGUNDOS)
+    FIN MIENTRAS
+    
+    CURSOR($alto, 1)
+    MOSTRARCURSOR
+FIN PRINCIPAL
+FINAL

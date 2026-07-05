@@ -1,0 +1,24 @@
+PROGRAMA TestTransaccion
+
+BLOQUE PRINCIPAL
+    CONECTARBD("test_txn.db")
+    EJECUTARBD("CREATE TABLE IF NOT EXISTS cuentas (id INTEGER PRIMARY KEY, saldo INTEGER)")
+    EJECUTARBD("INSERT OR IGNORE INTO cuentas (id, saldo) VALUES (1, 1000)")
+    
+    ESCRIBIR("Inicio transacción...") SALTO
+    EJECUTARBD("BEGIN TRANSACTION")
+    EJECUTARBD("UPDATE cuentas SET saldo = saldo - 200 WHERE id = 1")
+    
+    // Forzamos ROLLBACK para probar que NO se guarda
+    EJECUTARBD("ROLLBACK")
+    
+    // Leemos el valor final
+    CONSULTARBD("SELECT saldo FROM cuentas WHERE id = 1", 1)
+    ESCRIBIR("") SALTO
+    SI(SIGUIENTEFILABD()) ENTONCES
+        ESCRIBIR("Saldo final: $BDCOL1 (debería ser 1000)\n") SALTO
+    FIN SI
+    CERRARCONSULTABD
+    CERRARBD
+FIN PRINCIPAL
+FINAL

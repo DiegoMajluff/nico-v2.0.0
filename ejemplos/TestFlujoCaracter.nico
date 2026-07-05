@@ -1,0 +1,17 @@
+PROGRAMA TestFlujoCaracter
+    VARIABLE CARACTER $c = ''
+    VARIABLE TEXTO $t = "", $nombre = "Diego", $concatena = ""
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ASIGNAR EN $c = 65
+    ESCRIBIR("1. CARACTER tras = 65: ")
+    ESCRIBIR("$c") SALTO
+
+    COPIARTEXTO($t, $nombre)
+    ESCRIBIR("2. TEXTO tras COPIARTEXTO: $t") SALTO
+
+    CONCATENARTEXTO($concatena, "Hola Mundo")
+    ESCRIBIR("3. TEXTO tras CONCATENARTEXTO: $concatena") SALTO
+    ESCRIBIR("") SALTO
+FIN PRINCIPAL
+FINAL

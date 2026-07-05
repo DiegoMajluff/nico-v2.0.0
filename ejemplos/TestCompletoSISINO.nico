@@ -1,0 +1,122 @@
+PROGRAMA "Test Completo SI/SINO"
+
+    FUNCION ENTERA test_si_simple($valor)
+        VARIABLE ENTERA $resultado = 0
+        SI($valor IGUAL 1) ENTONCES
+            ASIGNAR EN $resultado = 10
+        FIN SI
+        RETORNAR $resultado
+    FIN FUNCION
+
+    FUNCION ENTERA test_si_sino($valor)
+        VARIABLE ENTERA $resultado = 0
+        SI($valor IGUAL 1) ENTONCES
+            ASIGNAR EN $resultado = 10
+        SINO
+            ASIGNAR EN $resultado = 20
+        FIN SI
+        RETORNAR $resultado
+    FIN FUNCION
+
+    FUNCION ENTERA test_sino_si_misma_linea($valor)
+        VARIABLE ENTERA $resultado = 0
+        SI($valor IGUAL 1) ENTONCES
+            ASIGNAR EN $resultado = 10
+        SINO SI($valor IGUAL 2) ENTONCES
+            ASIGNAR EN $resultado = 20
+        SINO SI($valor IGUAL 3) ENTONCES
+            ASIGNAR EN $resultado = 30
+        SINO
+            ASIGNAR EN $resultado = 40
+        FIN SI
+        RETORNAR $resultado
+    FIN FUNCION
+
+    FUNCION ENTERA test_sino_si_linea_separada($valor)
+        VARIABLE ENTERA $resultado = 0
+        SI($valor IGUAL 1) ENTONCES
+            ASIGNAR EN $resultado = 10
+        SINO
+            SI($valor IGUAL 2) ENTONCES
+                ASIGNAR EN $resultado = 20
+            FIN SI
+        FIN SI
+        RETORNAR $resultado
+    FIN FUNCION
+
+    FUNCION ENTERA test_anidamiento_complejo($valor)
+        VARIABLE ENTERA $resultado = 0
+        
+        SI($valor MENOR 10) ENTONCES
+            SI($valor MENOR 5) ENTONCES
+                ASIGNAR EN $resultado = 1
+            SINO
+                ASIGNAR EN $resultado = 2
+            FIN SI
+        SINO SI($valor IGUAL 10) ENTONCES
+            ASIGNAR EN $resultado = 10
+        SINO
+            SI($valor MENOR 20) ENTONCES
+                ASIGNAR EN $resultado = 11
+            SINO
+                SI($valor MENOR 30) ENTONCES
+                    ASIGNAR EN $resultado = 21
+                SINO
+                    ASIGNAR EN $resultado = 31
+                FIN SI
+            FIN SI
+        FIN SI
+        
+        RETORNAR $resultado
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE ENTERA $r = 0
+        
+        ESCRIBIR("\n=== TEST 1: SI Simple ===") SALTO
+        ASIGNAR EN $r = test_si_simple(1)
+        ESCRIBIR("test_si_simple(1) = $r (esperado: 10)") SALTO
+        ASIGNAR EN $r = test_si_simple(2)
+        ESCRIBIR("test_si_simple(2) = $r (esperado: 0)") SALTO
+        
+        ESCRIBIR("\n=== TEST 2: SI con SINO ===") SALTO
+        ASIGNAR EN $r = test_si_sino(1)
+        ESCRIBIR("test_si_sino(1) = $r (esperado: 10)") SALTO
+        ASIGNAR EN $r = test_si_sino(2)
+        ESCRIBIR("test_si_sino(2) = $r (esperado: 20)") SALTO
+        
+        ESCRIBIR("\n=== TEST 3: SINO SI en misma línea ===") SALTO
+        ASIGNAR EN $r = test_sino_si_misma_linea(1)
+        ESCRIBIR("test_sino_si_misma_linea(1) = $r (esperado: 10)") SALTO
+        ASIGNAR EN $r = test_sino_si_misma_linea(2)
+        ESCRIBIR("test_sino_si_misma_linea(2) = $r (esperado: 20)") SALTO
+        ASIGNAR EN $r = test_sino_si_misma_linea(3)
+        ESCRIBIR("test_sino_si_misma_linea(3) = $r (esperado: 30)") SALTO
+        ASIGNAR EN $r = test_sino_si_misma_linea(4)
+        ESCRIBIR("test_sino_si_misma_linea(4) = $r (esperado: 40)") SALTO
+        
+        ESCRIBIR("\n=== TEST 4: SINO y SI en línea separada ===") SALTO
+        ASIGNAR EN $r = test_sino_si_linea_separada(1)
+        ESCRIBIR("test_sino_si_linea_separada(1) = $r (esperado: 10)") SALTO
+        ASIGNAR EN $r = test_sino_si_linea_separada(2)
+        ESCRIBIR("test_sino_si_linea_separada(2) = $r (esperado: 20)") SALTO
+        ASIGNAR EN $r = test_sino_si_linea_separada(3)
+        ESCRIBIR("test_sino_si_linea_separada(3) = $r (esperado: 0)") SALTO
+        
+        ESCRIBIR("\n=== TEST 5: Anidamiento complejo ===") SALTO
+        ASIGNAR EN $r = test_anidamiento_complejo(3)
+        ESCRIBIR("test_anidamiento_complejo(3) = $r (esperado: 1)") SALTO
+        ASIGNAR EN $r = test_anidamiento_complejo(7)
+        ESCRIBIR("test_anidamiento_complejo(7) = $r (esperado: 2)") SALTO
+        ASIGNAR EN $r = test_anidamiento_complejo(10)
+        ESCRIBIR("test_anidamiento_complejo(10) = $r (esperado: 10)") SALTO
+        ASIGNAR EN $r = test_anidamiento_complejo(15)
+        ESCRIBIR("test_anidamiento_complejo(15) = $r (esperado: 11)") SALTO
+        ASIGNAR EN $r = test_anidamiento_complejo(25)
+        ESCRIBIR("test_anidamiento_complejo(25) = $r (esperado: 21)") SALTO
+        ASIGNAR EN $r = test_anidamiento_complejo(35)
+        ESCRIBIR("test_anidamiento_complejo(35) = $r (esperado: 31)") SALTO
+        
+        ESCRIBIR("\n=== TODOS LOS TESTS COMPLETADOS ===") SALTO
+    FIN PRINCIPAL
+FINAL

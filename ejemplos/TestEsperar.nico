@@ -1,0 +1,17 @@
+PROGRAMA test_esperar
+BLOQUE PRINCIPAL
+    ESCRIBIR("-----Test esperar-----") SALTO
+    // Forzar flush con salto extra o llamada directa si existe
+    ESCRIBIR("") SALTO
+    
+    ESCRIBIR("\[ANTES de 1000ms\] ") SALTO
+    ESPERAR(1000, MILISEGUNDOS)
+    ESCRIBIR("\[DESPUÉS de 1000ms\] 1 Segundo OK") SALTO
+    
+    ESCRIBIR("\[ANTES de 2s\] ") SALTO
+    ESPERAR(2, SEGUNDOS)
+    ESCRIBIR("\[DESPUÉS de 2s\] 2 Segundos OK") SALTO
+    
+    ESCRIBIR("Fin del test\n") SALTO
+FIN PRINCIPAL
+FINAL

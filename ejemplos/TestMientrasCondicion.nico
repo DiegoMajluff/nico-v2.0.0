@@ -1,0 +1,43 @@
+PROGRAMA TestMientrasCondicion
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $i
+    VARIABLE ENTERA $flag
+    
+    // === TEST 1: AND con paréntesis anidados === 
+    ASIGNAR EN $i = 0
+    ASIGNAR EN $flag = 0
+    ESCRIBIR("") SALTO
+    MIENTRAS (($i MENOR 5) Y ($flag IGUAL 0)) HACER
+        ESCRIBIR("Iteración Y: ") 
+        ESCRIBIR("$i") SALTO
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+    
+    // === TEST 2: OR con paréntesis ===
+    ASIGNAR EN $i = 0
+    ASIGNAR EN $flag = 0
+    MIENTRAS (($i MENOR 3) O ($flag IGUAL 0)) HACER
+        ESCRIBIR("Iteración O: ") 
+        ESCRIBIR("$i") SALTO
+        CALCULAR EN $i = $i + 1
+        SI($i IGUAL 2) ENTONCES
+            ASIGNAR EN $flag = 1
+        FIN SI
+    FIN MIENTRAS
+    
+    // === TEST 3: Triple anidación (edge case) ===
+    ASIGNAR EN $i = 0
+    ASIGNAR EN $flag = 0
+    MIENTRAS((($i MENOR 4) Y ($i MAYOR IGUAL 0)) O ($flag IGUAL 0)) HACER
+        ESCRIBIR("Iteración triple: ") 
+        ESCRIBIR("$i") SALTO
+        CALCULAR EN $i = $i + 1
+        SI($i IGUAL 4) ENTONCES
+            CORTE
+        FIN SI
+    FIN MIENTRAS
+    
+    ESCRIBIR("✅ Todos los tests de MIENTRAS pasaron.\n") SALTO
+FIN PRINCIPAL
+FINAL

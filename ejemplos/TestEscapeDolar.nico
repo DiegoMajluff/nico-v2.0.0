@@ -1,0 +1,18 @@
+PROGRAMA TestEscapeDolar
+
+    DECLARAR VARIABLE ENTERA $precio = 100
+
+BLOQUE PRINCIPAL
+    // Mostrar $ como caracter literal (con escape)
+    ESCRIBIR("\nEl precio es \$100") SALTO
+
+    // Mostrar valor de variable (sin escape)
+    ESCRIBIR("El valor es $precio") SALTO
+
+    // Combinar ambos
+    ESCRIBIR("Precio: \$ $precio") SALTO
+
+    // Mostrar texto con $ al final
+    ESCRIBIR("Costo total: \$50\n") SALTO
+FIN PRINCIPAL
+FINAL

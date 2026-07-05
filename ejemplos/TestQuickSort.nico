@@ -1,0 +1,71 @@
+PROGRAMA QuickSortNico
+// Lista global a ordenar
+LISTA ENTERA $datos[10] = {64, 34, 25, 12, 22, 11, 90, 88, 45, 50}
+VARIABLE ENTERA $n = 10
+
+// Intercambia dos posiciones en la lista global
+FUNCION ENTERA intercambiar($i, $j)
+    VARIABLE ENTERA $temp = 0
+    CALCULAR EN $temp = $datos[$i]
+    $datos[$i] = $datos[$j]
+    $datos[$j] = $temp
+    RETORNAR 0
+FIN FUNCION
+
+// Algoritmo de particionamiento
+FUNCION ENTERA particionar($inicio, $fin)
+    VARIABLE ENTERA $pivote = 0
+    VARIABLE ENTERA $i = 0
+    VARIABLE ENTERA $j = 0, $llamada = 0
+    
+    CALCULAR EN $pivote = $datos[$fin]
+    CALCULAR EN $i = $inicio - 1
+
+    ASIGNAR EN $j = $inicio
+    MIENTRAS($j MENOR $fin) HACER
+        // Nico usa IGUAL/MENOR separados. Equivale a: $datos[$j] <= $pivote
+        SI($datos[$j] IGUAL $pivote O $datos[$j] MENOR $pivote) ENTONCES
+            CALCULAR EN $i = $i + 1
+            ASIGNAR EN $llamada = intercambiar($i, $j)
+        FIN SI
+        CALCULAR EN $j = $j + 1
+    FIN MIENTRAS
+    ASIGNAR EN $llamada = intercambiar($i + 1, $fin)
+    RETORNAR $i + 1
+FIN FUNCION
+
+// QuickSort recursivo
+FUNCION ENTERA quick_sort($inicio, $fin)
+    VARIABLE ENTERA $pi = 0, $llamada = 0
+    SI($inicio MENOR $fin) ENTONCES
+        CALCULAR EN $pi = particionar($inicio, $fin)
+        ASIGNAR EN $llamada = quick_sort($inicio, $pi - 1)
+        ASIGNAR EN $llamada = quick_sort($pi + 1, $fin)
+    FIN SI
+    RETORNAR 0
+FIN FUNCION
+
+// Auxiliar para imprimir la lista
+FUNCION ENTERA mostrar_lista($cant)
+    VARIABLE ENTERA $k = 0
+    MIENTRAS($k MENOR $cant) HACER
+        MOSTRAR("$datos[$k] ") SALTO
+        CALCULAR EN $k = $k + 1
+    FIN MIENTRAS
+    MOSTRAR("") SALTO
+    RETORNAR 0
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $llamada = 0
+    ESCRIBIR("\n=== ORDENAMIENTO QUICK SORT ===") SALTO
+    ESCRIBIR("Lista original:") SALTO
+    ASIGNAR EN $llamada = mostrar_lista($n)
+
+    ESCRIBIR("Ordenando recursivamente...") SALTO
+    ASIGNAR EN $llamada = quick_sort(0, $n - 1)
+
+    ESCRIBIR("Lista ordenada:") SALTO
+    ASIGNAR EN $llamada = mostrar_lista($n)
+FIN PRINCIPAL
+FINAL

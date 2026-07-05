@@ -1,0 +1,13 @@
+PROGRAMA TestMatrizTexto
+    MATRIZ TEXTO $coord[2][3] = {{"Norte","Este","Sur"},{"Oeste","Arriba","Abajo"}}
+    MATRIZ TEXTO $vacia[2][2]
+BLOQUE PRINCIPAL
+    MOSTRAR("")SALTO
+    MOSTRAR("coord\[0\]\[0\]=$coord[0][0], coord\[1\]\[2\]=$coord[1][2]") SALTO
+    MOSTRAR("vacia\[0\]\[1\]=$vacia[0][1]") SALTO
+    // Probar con índices variables:
+    VARIABLE ENTERA $f = 1, $c = 0
+    MOSTRAR("Índices variables: $coord[$f][$c]") SALTO
+    MOSTRAR("")SALTO
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,19 @@
+PROGRAMA test_mientos_parentesis
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $i = 0, $lim = 5, $flag = 0
+
+    // ✅ MIENTRAS con paréntesis anidados
+    MIENTRAS(($i MENOR $lim) Y ($flag IGUAL 0)) HACER
+        MOSTRAR("🔁 Iteración: $i") SALTO
+        CALCULAR EN $i = $i + 1
+        
+        // Salida anticipada para probar O
+        SI($i IGUAL 3) ENTONCES
+            CALCULAR EN $flag = 1
+        FIN SI
+    FIN MIENTRAS
+
+    MOSTRAR("✅ Loop cortado correctamente en i=$i") SALTO
+FIN PRINCIPAL
+FINAL
