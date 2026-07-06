@@ -98,7 +98,6 @@ sudo usermod -a -G gpio $USER
 **Reiniciá sesión** o reiniciá la Raspberry Pi para que el cambio surta efecto. Si no lo hacés, Nico te pedirá `sudo` cada vez que uses GPIO.
 
 ---
-
 ## 🪟 Windows 10 / 11
 
 Windows es el sistema que requiere más pasos porque no trae compilador de C por defecto. No te preocupes, lo haremos juntos, paso a paso.
@@ -115,64 +114,100 @@ Si funciona, ¡ya podés programar! Si querés compilar vos mismo o modificar el
 
 ### 🛠️ Opción B: Compilar desde cero (Guía detallada)
 
-#### Paso 1: Descargar MSYS2
+#### Paso 1: Descargar e instalar MSYS2
 1. Abrí tu navegador y andá a: [https://www.msys2.org/](https://www.msys2.org/)
 2. Hacé clic en el botón azul que dice **"Download Installer"**.
 3. Guardá el archivo `.exe` y ejecutalo.
 4. Seguí los pasos por defecto (`Next` → `Next` → `Install`). Se instalará en `C:\msys64`.
 
-#### Paso 2: Abrir la terminal CORRECTA
+#### Paso 2: Actualizar MSYS2 (primera vez)
+1. Al finalizar la instalación, se abrirá automáticamente la terminal **"MSYS2 MSYS"** (ícono negro).
+2. En esa terminal, escribí:
+
+    pacman -Syu
+
+3. Te pedirá cerrar la terminal. Cerrala.
+4. Volvé a abrir **"MSYS2 MSYS"** desde el menú Inicio.
+5. Ejecutá de nuevo:
+
+    pacman -Su
+
+6. Cuando termine, cerrá esa terminal.
+
+#### Paso 3: Instalar el compilador y SQLite3
 1. Abrí el menú Inicio de Windows.
 2. Escribí `MSYS2`.
-3. Verás varias opciones. Hacé clic **SOLO** en **"MINGW64"** (tiene un icono de terminal negra).
-> 🚨 **Muy importante:** No abras "MSYS", "UCRT64" ni "CLANG64". Solo **"MINGW64"**. Si abrís otra, los comandos de más abajo fallarán.
+3. Verás varias opciones. Hacé clic **SOLO** en **"MSYS2 MinGW x64"** (tiene un icono de terminal **azul**).
 
-#### Paso 3: Actualizar el sistema
-En la terminal que se abrió, escribí:
-```bash
-pacman -Syu
-```
-Si te pide cerrar la terminal y abrirla de nuevo, hacelo. Luego volvé a ejecutar `pacman -Syu` hasta que diga `there is nothing to do`.
+> 🚨 **Muy importante:** No abras "MSYS2 MSYS" (negro), "UCRT64" ni "CLANG64". Solo **"MSYS2 MinGW x64"** (azul). Si abrís otra, los comandos de más abajo fallarán.
 
-#### Paso 4: Instalar el compilador y SQLite3
-En la misma terminal MINGW64, escribí:
+4. En la terminal que se abrió, escribí:
 
-    pacman -S --needed base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-sqlite3
+    pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-sqlite3
 
-Presioná `Enter`. Si te pregunta `Proceed with installation? [Y/n]`, escribí `y` y presioná `Enter`.
-Esperá a que descargue e instale todo (puede tardar 2-5 minutos dependiendo de tu conexión).
+5. Presioná `Enter`. Si te pregunta `Proceed with installation? [Y/n]`, escribí `y` y presioná `Enter`.
+6. Esperá a que descargue e instale todo (puede tardar 2-5 minutos dependiendo de tu conexión).
 
-#### Paso 5: Verificar instalación
-Escribí:
+#### Paso 4: Verificar instalación
+En la misma terminal **MSYS2 MinGW x64**, escribí:
 
     gcc --version
+    sqlite3 --version
+    ls /mingw64/include/sqlite3.h
 
-Debería mostrar algo como `gcc (RevX, Built by MSYS2 project) X.X.X`.
-Si dice `command not found`, volvé al Paso 2 y aseguráte de estar en la terminal **MINGW64**.
+Los tres comandos deben funcionar. El último te tiene que mostrar la ruta del header de SQLite3.
 
-#### Paso 6: Compilar Nico
-1. En la terminal, navegá a la carpeta de tu proyecto. Ejemplo:
+#### Paso 5: Agregar al PATH de Windows (Importante)
+Para que Nico encuentre `sqlite3.dll` al ejecutar desde CMD normal:
 
-    cd /c/Users/TuNombre/nico-v2.0.0
+1. Presioná `Windows + R`, escribí `sysdm.cpl` y presioná `Enter`.
+2. Andá a la pestaña **"Opciones avanzadas"** → **"Variables de entorno"**.
+3. En **"Variables del sistema"** (abajo), buscá `Path` → **"Editar"**.
+4. Hacé clic en **"Nuevo"** y agregá:
 
-   *(Nota: en MSYS2, `C:\` se escribe como `/c/`. Reemplazá `TuNombre` por tu usuario real de Windows).*
+    C:\msys64\mingw64\bin
+
+5. Aceptá todo y cerrá.
+6. **Importante:** Abrí una **nueva** terminal CMD (las terminales abiertas antes no verán el cambio).
+
+#### Paso 6: Verificar desde CMD
+Abrí una **nueva** terminal CMD y escribí:
+
+    gcc --version
+    sqlite3 --version
+
+Ambos deben mostrar su versión. Si dice "no se reconoce como comando", volvé al Paso 5 y verificá la ruta.
+
+#### Paso 7: Compilar Nico
+1. En la terminal CMD, navegá a la carpeta de tu proyecto:
+
+    cd C:\Users\TuNombre\nico-v2.0.0
+
+   *(Reemplazá `TuNombre` por tu usuario real de Windows).*
+
 2. Ejecutá el script de compilación:
 
-    ./compile_windows.bat
+    compile_windows.bat
 
-3. Si el script dice `gcc no se reconoce como comando`, agregá la ruta al `PATH` temporalmente:
+3. Si todo sale bien, verás mensajes como `[OK] src\main.c` y al final `[OK] nico.exe generado correctamente.`
 
-    export PATH=/mingw64/bin:$PATH
-    ./compile_windows.bat
+#### Paso 8: Probar que funciona
+En la misma terminal CMD:
 
-#### Paso 7: Distribuir o ejecutar sin MSYS2 abierto
-El ejecutable se creará en `bin\windows\nico.exe`.
+    nico.exe -e "2 + 2"
+
+Si responde `4`, ¡ya está listo! 🎉
+
+#### Paso 9: Distribuir o ejecutar sin MSYS2 abierto
+El ejecutable se creará en la carpeta del proyecto como `nico.exe`.
+
 Para moverlo a otra PC o ejecutarlo desde fuera de la terminal MSYS2, copiá estos 4 archivos a una misma carpeta:
-- `nico.exe`
-- `libgcc_s_seh-1.dll`
-- `libsqlite3-0.dll`
-- `libwinpthread-1.dll`
-*(Los encontrás en `C:\msys64\mingw64\bin\` y en la carpeta `bin\windows\` del proyecto. Sin ellos, Windows te mostrará un error de "falta DLL").*
+- `nico.exe` (de tu carpeta del proyecto)
+- `libgcc_s_seh-1.dll` (de `C:\msys64\mingw64\bin\`)
+- `libsqlite3-0.dll` (de `C:\msys64\mingw64\bin\`)
+- `libwinpthread-1.dll` (de `C:\msys64\mingw64\bin\`)
+
+Sin estos DLLs, Windows te mostrará un error de "falta DLL".
 
 ---
 
