@@ -19,6 +19,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Tip de recursión en Linux**: Script `compile.sh` ahora sugiere `ulimit -s unlimited` para máxima profundidad de recursión.
 
 ### 🔧 Corregido
+- **Inicialización automática de listas y matrices de texto/lógica**: Corregido el bug donde `LISTA TEXTO` y `MATRIZ TEXTO` sin inicialización explícita fallaban al usar `COPIARTEXTO` (mostraban punteros de memoria en lugar de strings vacíos). Ahora se inicializan automáticamente con valores por defecto: `""` para `TEXTO`/`TEXTO EXTENSO`, `FALSO` para `LOGICA`, `0` para numéricos. Aplica tanto a listas como matrices.
 - **Documentación de panel web**: Troubleshooting corregido en `04-panel-web.md`.
 - **Documentación de entrada/formato**: Agregados `LEERCARACTER` y `LEERHASTA` en `09-entrada-formato.md`, removido `LEERLINEA`.
 

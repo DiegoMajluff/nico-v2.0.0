@@ -1,0 +1,269 @@
+PROGRAMA BaseParentescoProlog
+    // Base de hechos estructurada (3 listas paralelas) - INICIALIZADAS
+    LISTA TEXTO $tipo[50]
+    LISTA TEXTO $persona1[50]
+    LISTA TEXTO $persona2[50]
+    VARIABLE ENTERA $num_hechos = 0
+
+    // 1. Agregar hechos (simula cláusulas de Prolog)
+    SUBPROGRAMA agregar($t, $p1, $p2)
+        COPIARTEXTO($tipo[$num_hechos], $t)
+        COPIARTEXTO($persona1[$num_hechos], $p1)
+        COPIARTEXTO($persona2[$num_hechos], $p2)
+        CALCULAR EN $num_hechos = $num_hechos + 1
+    FIN SUBPROGRAMA
+    
+    // 2. Buscador genérico (simula unificación de Prolog)
+    FUNCION LOGICA buscar($t, $p1, $p2)
+        VARIABLE ENTERA $i = 0
+        PARA($i DESDE 0 HASTA $num_hechos - 1 PASO 1) HACER
+            SI($tipo[$i] IGUAL $t Y $persona1[$i] IGUAL $p1 Y $persona2[$i] IGUAL $p2) ENTONCES
+                RETORNAR VERDADERO
+            FIN SI
+        FIN PARA
+        RETORNAR FALSO
+    FIN FUNCION
+    
+    // 3. Reglas derivadas (simulan :- en Prolog)
+    FUNCION LOGICA es_padre($p, $h)
+        RETORNAR buscar("padre", $p, $h)
+    FIN FUNCION
+    
+    FUNCION LOGICA es_madre($m, $h)
+        RETORNAR buscar("madre", $m, $h)
+    FIN FUNCION
+    
+    FUNCION LOGICA es_abuelo($a, $n)
+        VARIABLE ENTERA $i = 0
+        VARIABLE TEXTO $intermedio = ""
+        PARA($i DESDE 0 HASTA $num_hechos - 1 PASO 1) HACER
+            SI($tipo[$i] IGUAL "padre" O $tipo[$i] IGUAL "madre") ENTONCES
+                SI($persona1[$i] IGUAL $a) ENTONCES
+                    COPIARTEXTO($intermedio, $persona2[$i])
+                    SI(buscar("padre", $intermedio, $n) O buscar("madre", $intermedio, $n)) ENTONCES
+                        RETORNAR VERDADERO
+                    FIN SI
+                FIN SI
+            FIN SI
+        FIN PARA
+        RETORNAR FALSO
+    FIN FUNCION
+    
+    FUNCION LOGICA es_abuela($a, $n) 
+        RETORNAR es_abuelo($a, $n) // Simplificado para este ejemplo
+    FIN FUNCION
+
+    FUNCION LOGICA es_hermano($x, $y)
+        VARIABLE ENTERA $i = 0
+        VARIABLE TEXTO $progenitor = ""
+        SI($x DIFERENTE $y) ENTONCES
+            PARA($i DESDE 0 HASTA $num_hechos - 1 PASO 1) HACER
+                SI($tipo[$i] IGUAL "padre" O $tipo[$i] IGUAL "madre") ENTONCES
+                    SI($persona2[$i] IGUAL $x) ENTONCES
+                        COPIARTEXTO($progenitor, $persona1[$i])
+                        SI(buscar("padre", $progenitor, $y) O buscar("madre", $progenitor, $y)) ENTONCES
+                            RETORNAR VERDADERO
+                        FIN SI
+                    FIN SI
+                FIN SI
+            FIN PARA
+        FIN SI
+        RETORNAR FALSO
+    FIN FUNCION
+    
+    FUNCION LOGICA es_tio($t, $n)
+        VARIABLE ENTERA $i = 0
+        VARIABLE TEXTO $padre_n = ""
+        // Buscar padre/madre del nieto
+        PARA($i DESDE 0 HASTA $num_hechos - 1 PASO 1) HACER
+            SI($tipo[$i] IGUAL "padre" O $tipo[$i] IGUAL "madre") ENTONCES
+                SI($persona2[$i] IGUAL $n) ENTONCES
+                    COPIARTEXTO($padre_n, $persona1[$i])
+                    // Verificar si $t es hermano de ese padre
+                    SI(es_hermano($t, $padre_n)) ENTONCES
+                        RETORNAR VERDADERO
+                    FIN SI
+                FIN SI
+            FIN SI
+        FIN PARA
+        RETORNAR FALSO
+    FIN FUNCION
+    
+    FUNCION LOGICA es_primo($p1, $p2)
+        VARIABLE ENTERA $i = 0
+        VARIABLE TEXTO $padre_p1 = ""
+        // Buscar padres de p1 y p2
+        PARA($i DESDE 0 HASTA $num_hechos - 1 PASO 1) HACER
+            SI($tipo[$i] IGUAL "padre" O $tipo[$i] IGUAL "madre") ENTONCES
+                SI($persona2[$i] IGUAL $p1) ENTONCES 
+                    COPIARTEXTO($padre_p1, $persona1[$i]) 
+                FIN SI
+            FIN SI
+        FIN PARA
+        
+        SI($padre_p1 DIFERENTE "") ENTONCES
+            // Buscar padre de p2 y verificar si es hermano del padre de p1
+            PARA($i DESDE 0 HASTA $num_hechos - 1 PASO 1) HACER
+                SI($tipo[$i] IGUAL "padre" O $tipo[$i] IGUAL "madre") ENTONCES
+                    SI($persona2[$i] IGUAL $p2) ENTONCES
+                        SI(es_hermano($padre_p1, $persona1[$i])) ENTONCES
+                            RETORNAR VERDADERO
+                        FIN SI
+                    FIN SI
+                FIN SI
+            FIN PARA
+        FIN SI
+        RETORNAR FALSO
+    FIN FUNCION
+
+    // es_esposo: Relación simétrica de pareja
+    FUNCION LOGICA es_esposo($x, $y)
+        // Buscar si existe esposo(x, y) o esposo(y, x)
+        SI(buscar("esposo", $x, $y) O buscar("esposo", $y, $x)) ENTONCES
+            RETORNAR VERDADERO
+        FIN SI
+        RETORNAR FALSO
+    FIN FUNCION
+    
+    // es_nieto: Inversa de es_abuelo
+    FUNCION LOGICA es_nieto($n, $a)
+        RETORNAR es_abuelo($a, $n)
+    FIN FUNCION
+    
+    // es_primo bidireccional: Ya funciona, pero verificamos ambos sentidos
+    FUNCION LOGICA es_primo_bidir($x, $y)
+        VARIABLE LOGICA $res1 = FALSO
+        VARIABLE LOGICA $res2 = FALSO
+        CALCULAR EN $res1 = es_primo($x, $y)
+        CALCULAR EN $res2 = es_primo($y, $x)
+        SI($res1 O $res2) ENTONCES
+            RETORNAR VERDADERO
+        FIN SI
+        RETORNAR FALSO
+    FIN FUNCION
+    
+    // 4. Simulador de Backtracking (lista todos los resultados)
+    SUBPROGRAMA listar_hijos($progenitor)
+        VARIABLE ENTERA $i = 0
+        VARIABLE LOGICA $encontro = FALSO
+        ESCRIBIR("  Hijos de $progenitor:") SALTO
+        PARA($i DESDE 0 HASTA $num_hechos - 1 PASO 1) HACER
+            SI($tipo[$i] IGUAL "padre" O $tipo[$i] IGUAL "madre") ENTONCES
+                SI($persona1[$i] IGUAL $progenitor) ENTONCES
+                    ESCRIBIR("    - $persona2[$i]") SALTO
+                    ASIGNAR EN $encontro = VERDADERO
+                FIN SI
+            FIN SI
+        FIN PARA
+        SI($encontro IGUAL FALSO) ENTONCES
+            ESCRIBIR("    (ninguno)") SALTO 
+        FIN SI
+    FIN SUBPROGRAMA
+
+BLOQUE PRINCIPAL
+    VARIABLE LOGICA $res = FALSO
+    
+    // Inicializar y cargar base de conocimiento
+    LLAMAR A agregar("padre", "juan", "maria")
+    LLAMAR A agregar("padre", "juan", "pedro")
+    LLAMAR A agregar("madre", "ana", "maria")
+    LLAMAR A agregar("madre", "ana", "pedro")
+    LLAMAR A agregar("padre", "pedro", "luis")
+    LLAMAR A agregar("padre", "pedro", "rosa")
+    LLAMAR A agregar("madre", "luis", "carlos")
+    LLAMAR A agregar("esposo", "juan", "ana")
+    LLAMAR A agregar("esposo", "pedro", "lucia")
+
+    ESCRIBIR("=== MOTOR DE INFERENCIA TIPO PROLOG ===") SALTO
+    
+    // Consultas Sí/No (Unificación simple)
+    ESCRIBIR("1. ¿Es juan padre de maria?")
+    CALCULAR EN $res = es_padre("juan", "maria")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO
+    SINO 
+        ESCRIBIR(" → NO") SALTO
+    FIN SI 
+    
+    ESCRIBIR("2. ¿Es pedro hermano de maria?") 
+    CALCULAR EN $res = es_hermano("pedro", "maria")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO 
+    SINO 
+        ESCRIBIR(" → NO") SALTO 
+    FIN SI 
+    
+    ESCRIBIR("3. ¿Es juan abuelo de luis?")
+    CALCULAR EN $res = es_abuelo("juan", "luis")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO 
+    SINO 
+        ESCRIBIR(" → NO") SALTO 
+    FIN SI 
+    
+    ESCRIBIR("4. ¿Es ana abuela de luis?")
+    CALCULAR EN $res = es_abuela("ana", "luis")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO 
+    SINO 
+        ESCRIBIR(" → NO") SALTO 
+    FIN SI 
+    
+    ESCRIBIR("5. ¿Es luis tío de carlos?")
+    CALCULAR EN $res = es_tio("luis", "carlos")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO
+    SINO 
+        ESCRIBIR(" → NO") SALTO 
+    FIN SI
+    
+    ESCRIBIR("6. ¿Es maria prima de luis?")
+    CALCULAR EN $res = es_primo("maria", "luis")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO 
+    SINO 
+        ESCRIBIR(" → NO") SALTO 
+    FIN SI 
+    
+    // Backtracking simulado (búsqueda exhaustiva)
+    ESCRIBIR("7. Backtracking: Buscar todos los hijos de pedro") SALTO
+    LLAMAR A listar_hijos("pedro")
+    
+    ESCRIBIR("8. Backtracking: Buscar todos los hijos de ana") SALTO
+    LLAMAR A listar_hijos("ana")
+    
+    ESCRIBIR("9. ¿Es juan esposo de ana?")
+    CALCULAR EN $res = es_esposo("juan", "ana")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO
+    SINO 
+        ESCRIBIR(" → NO") SALTO
+    FIN SI
+    
+    ESCRIBIR("10. ¿Es ana esposo de juan? (simétrico)")
+    CALCULAR EN $res = es_esposo("ana", "juan")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO
+    SINO 
+        ESCRIBIR(" → NO") SALTO
+    FIN SI
+    
+    ESCRIBIR("11. ¿Es luis nieto de juan?")
+    CALCULAR EN $res = es_nieto("luis", "juan")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO
+    SINO 
+        ESCRIBIR(" → NO") SALTO
+    FIN SI
+    
+    ESCRIBIR("12. ¿Es maria prima de pedro? (bidireccional)")
+    CALCULAR EN $res = es_primo_bidir("maria", "pedro")
+    SI($res) ENTONCES 
+        ESCRIBIR(" → SI") SALTO 
+    SINO 
+        ESCRIBIR(" → NO") SALTO
+    FIN SI
+    
+    ESCRIBIR("=== FIN DE CONSULTAS ===") SALTO
+FIN PRINCIPAL
+FINAL

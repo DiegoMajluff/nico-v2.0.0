@@ -2522,7 +2522,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 EstadoFlujo estado_anterior = ctx->estado_flujo;
                 Valor retorno_anterior = ctx->valor_retorno;
 
-                // Crear nuevo scope con tabla local
                 // Usar tabla del pool o crear nueva
                 TablaSimbolos *tabla_local;
                 if (ctx->pool_index < 1000 && ctx->pool_tablas[ctx->pool_index])
@@ -4472,6 +4471,19 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 case TIPO_CARACTER_SIN_SIGNO:
                     lista.datos.lista[i] = valor_crear_caracter_sin_signo(0);
                     break;
+
+                case TIPO_TEXTO:
+                    lista.datos.lista[i] = valor_crear_texto("");
+                    break;
+                
+                case TIPO_TEXTO_EXTENSO:
+                    lista.datos.lista[i] = valor_crear_texto("");
+                    break;
+                
+                case TIPO_LOGICA:
+                    lista.datos.lista[i] = valor_crear_logica(0);
+                    break;
+
                 default:
                     lista.datos.lista[i] = valor_crear_entero(0);
                     break;
@@ -4567,6 +4579,15 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     }
                     case TIPO_CARACTER_SIN_SIGNO:
                         matriz.datos.matriz[i][j] = valor_crear_caracter_sin_signo(0);
+                        break;
+                    case TIPO_TEXTO:
+                        matriz.datos.matriz[i][j] = valor_crear_texto("");
+                        break;
+                    case TIPO_TEXTO_EXTENSO:
+                        matriz.datos.matriz[i][j] = valor_crear_texto("");
+                        break;
+                    case TIPO_LOGICA:
+                        matriz.datos.matriz[i][j] = valor_crear_logica(0);
                         break;
                     default:
                         matriz.datos.matriz[i][j] = valor_crear_entero(0);
