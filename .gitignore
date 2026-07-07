@@ -63,3 +63,4 @@ compile_errors.txt
 # ✅ Excepción crítica: Binarios precompilados de Windows
 !bin/windows/*.dll
 !bin/windows/nico.exe
+package.json
