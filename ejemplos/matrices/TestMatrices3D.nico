@@ -1,0 +1,99 @@
+PROGRAMA TestMatrices3D
+
+    MATRIZ ENTERA $mat_entera[2][2][2]
+    MATRIZ DECIMAL $mat_decimal[2][2][2]
+    MATRIZ ENTERA SIN SIGNO $mat_sin_signo[2][2][2]
+    MATRIZ TEXTO $mat_texto[2][2][2]
+    MATRIZ LOGICA $mat_logica[2][2][2]
+    MATRIZ CARACTER $mat_caracter[2][2][2]
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║     TEST DE MATRICES 3D                             ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 1: ENTERA
+    ESCRIBIR("=== 1. MATRIZ ENTERA ===") SALTO
+    ASIGNAR EN $mat_entera[0][0][0] = 10
+    ASIGNAR EN $mat_entera[0][0][1] = 20
+    ASIGNAR EN $mat_entera[0][1][0] = 30
+    ASIGNAR EN $mat_entera[0][1][1] = 40
+    ASIGNAR EN $mat_entera[1][0][0] = 50
+    ASIGNAR EN $mat_entera[1][0][1] = 60
+    ASIGNAR EN $mat_entera[1][1][0] = 70
+    ASIGNAR EN $mat_entera[1][1][1] = 80
+    
+    ESCRIBIR("mat_entera[0][0][0] = $mat_entera[0][0][0] (esperado: 10)") SALTO
+    ESCRIBIR("mat_entera[0][1][0] = $mat_entera[0][1][0] (esperado: 30)") SALTO
+    ESCRIBIR("mat_entera[1][1][1] = $mat_entera[1][1][1] (esperado: 80)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 2: DECIMAL
+    ESCRIBIR("=== 2. MATRIZ DECIMAL ===") SALTO
+    ASIGNAR EN $mat_decimal[0][0][0] = 3.14
+    ASIGNAR EN $mat_decimal[0][0][1] = 2.71
+    ASIGNAR EN $mat_decimal[1][1][1] = 1.618
+    
+    ESCRIBIR("mat_decimal[0][0][0] = $mat_decimal[0][0][0] (esperado: 3.14)") SALTO
+    ESCRIBIR("mat_decimal[0][0][1] = $mat_decimal[0][0][1] (esperado: 2.71)") SALTO
+    ESCRIBIR("mat_decimal[1][1][1] = $mat_decimal[1][1][1] (esperado: 1.618)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 3: SIN SIGNO
+    ESCRIBIR("=== 3. MATRIZ ENTERA SIN SIGNO ===") SALTO
+    ASIGNAR EN $mat_sin_signo[0][0][0] = 100
+    ASIGNAR EN $mat_sin_signo[1][1][1] = 999
+    
+    ESCRIBIR("mat_sin_signo[0][0][0] = $mat_sin_signo[0][0][0] (esperado: 100)") SALTO
+    ESCRIBIR("mat_sin_signo[1][1][1] = $mat_sin_signo[1][1][1] (esperado: 999)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 4: TEXTO
+    ESCRIBIR("=== 4. MATRIZ TEXTO ===") SALTO
+    ASIGNAR EN $mat_texto[0][0][0] = "Hola"
+    ASIGNAR EN $mat_texto[1][1][1] = "Mundo 3D"
+    
+    ESCRIBIR("mat_texto[0][0][0] = $mat_texto[0][0][0] (esperado: Hola)") SALTO
+    ESCRIBIR("mat_texto[1][1][1] = $mat_texto[1][1][1] (esperado: Mundo 3D)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 5: LOGICA
+    ESCRIBIR("=== 5. MATRIZ LOGICA ===") SALTO
+    ASIGNAR EN $mat_logica[0][0][0] = VERDADERO
+    ASIGNAR EN $mat_logica[1][1][1] = FALSO
+    
+    ESCRIBIR("mat_logica[0][0][0] = $mat_logica[0][0][0] (esperado: VERDADERO)") SALTO
+    ESCRIBIR("mat_logica[1][1][1] = $mat_logica[1][1][1] (esperado: FALSO)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 6: CARACTER
+    ESCRIBIR("=== 6. MATRIZ CARACTER ===") SALTO
+    ASIGNAR EN $mat_caracter[0][0][0] = 'A'
+    ASIGNAR EN $mat_caracter[1][1][1] = 'Z'
+    
+    ESCRIBIR("mat_caracter[0][0][0] = $mat_caracter[0][0][0] (esperado: A)") SALTO
+    ESCRIBIR("mat_caracter[1][1][1] = $mat_caracter[1][1][1] (esperado: Z)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 7: EXPRESIONES
+    ESCRIBIR("=== 7. USO EN EXPRESIONES ===") SALTO
+    VARIABLE ENTERA $suma = 0
+    CALCULAR EN $suma = $mat_entera[0][0][0] + $mat_entera[1][1][1]
+    ESCRIBIR("mat_entera[0][0][0] + mat_entera[1][1][1] = $suma (esperado: 90)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 8: INDICES VARIABLES
+    ESCRIBIR("=== 8. INDICES VARIABLES ===") SALTO
+    VARIABLE ENTERA $i = 0
+    VARIABLE ENTERA $j = 1
+    VARIABLE ENTERA $k = 0
+    ESCRIBIR("mat_entera[$i][$j][$k] = $mat_entera[$i][$j][$k] (esperado: 30)") SALTO
+    ESCRIBIR("") SALTO
+
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║     FIN DEL TEST DE MATRICES 3D                   ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+
+FIN PRINCIPAL
+FINAL

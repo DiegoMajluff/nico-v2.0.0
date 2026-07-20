@@ -1,0 +1,36 @@
+PROGRAMA prueba_leertecla
+
+    VARIABLE ENTERA $t = 0
+    VARIABLE ENTERA $fin = 0
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    MIENTRAS($fin IGUAL 0) HACER
+        LEERTECLA($t)
+        // Flechas: 1001-1004, Espacio: 32, ESC: 27 
+        SI($t IGUAL 1001) ENTONCES
+            ESCRIBIR("⬆️ Arriba") SALTO
+        FIN SI
+        SI($t IGUAL 1002) ENTONCES
+            ESCRIBIR("⬇️ Abajo") SALTO
+        FIN SI
+        SI($t IGUAL 1003) ENTONCES
+            ESCRIBIR("➡️ Derecha") SALTO
+        FIN SI
+        SI($t IGUAL 1004) ENTONCES
+            ESCRIBIR("⬅️ Izquierda") SALTO
+        FIN SI
+        SI($t IGUAL 32) ENTONCES
+            ESCRIBIR("💥 Disparo!") SALTO
+        FIN SI
+        SI($t IGUAL 27) ENTONCES
+            ESCRIBIR("🚪 Saliendo...") SALTO
+            ASIGNAR EN $fin = 1
+        FIN SI
+        
+        ESPERAR(5, MILISEGUNDOS)
+    FIN MIENTRAS
+    
+    ESCRIBIR("✅ Juego terminado\n") SALTO
+FIN PRINCIPAL
+FINAL

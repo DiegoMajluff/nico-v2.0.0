@@ -1,0 +1,7 @@
+PROGRAMA TestMatriz3D
+    MATRIZ ENTERA $mi_matriz[2][3][4]
+    
+BLOQUE PRINCIPAL
+    ESCRIBIR("Matriz 3D declarada") SALTO
+FIN PRINCIPAL
+FINAL

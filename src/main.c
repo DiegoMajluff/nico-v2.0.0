@@ -45,10 +45,14 @@ void handler_sigint(int sig);
 char* programa_cargado = NULL;
 int archivo_cargado = 0;
 
-void handler_sigint(int sig) {
+void handler_sigint(int sig)
+{
     (void)sig;
+    // Restaurar terminal ANTES de salir
+    teclado_restaurar_modo();
     printf("\n> Programa interrumpido.\n");
-    if (programa_cargado) {
+    if (programa_cargado)
+    {
         free(programa_cargado);
         programa_cargado = NULL;
     }
@@ -75,34 +79,34 @@ void comando_rangos(void) {
     printf("   RANGOS DE VARIABLES - NICO v2.0.0\n");
     printf("\n");
     printf("   VARIABLES ENTERAS:\n");
-    printf("     Rango: %d a %d\n", INT_MIN, INT_MAX);
+    printf("     Rango: %lld a %lld\n", LLONG_MIN, LLONG_MAX);
     printf("\n");
     printf("   VARIABLES ENTERAS SIN SIGNO:\n");
-    printf("     Rango: 0 a %u\n", UINT_MAX);
+    printf("     Rango: 0 a %llu\n", ULLONG_MAX);
     printf("\n");
     printf("   VARIABLES DECIMALES:\n");
     printf("     Rango: %e a %e\n", -DBL_MAX, DBL_MAX);
     printf("\n");
     printf("   VARIABLES DECIMALES SIN SIGNO:\n");
-    printf("     Rango: 0.0 a %e (mismo tipo que DECIMAL, solo valores ≥ 0)\n", DBL_MAX);
+    printf("     Rango: 0.0 a %e (mismo tipo que DECIMAL, solo valores >= 0)\n", DBL_MAX);
     printf("\n");
     printf("   VARIABLES CARACTER:\n");
-    printf("     Rango: %d a %d (ASCII)\n", SCHAR_MIN, SCHAR_MAX);
+    printf("     Rango: %d a %d (ASCII extendido, signed char)\n", SCHAR_MIN, SCHAR_MAX);
     printf("\n");
     printf("   VARIABLES CARACTER SIN SIGNO:\n");
-    printf("     Rango: 0 a %u (ASCII)\n", UCHAR_MAX);
+    printf("     Rango: 0 a %u (ASCII extendido, unsigned char)\n", UCHAR_MAX);
     printf("\n");
     printf("   VARIABLES TEXTO y TEXTO EXTENSO:\n");
-    printf("     Largo: Dinámico (limitado por RAM disponible)\n");
+    printf("     Largo: Dinamico (limitado por RAM disponible)\n");
     printf("\n");
     printf("   VARIABLES LOGICA:\n");
-    printf("     Para valores o estados lógicos: VERDADERO/FALSO o 1/0\n");
+    printf("     Para valores o estados logicos: VERDADERO/FALSO\n");
     printf("\n");
     printf("   ARCHIVOS:\n");
     printf("     Modos: ESCRITURA, AGREGAR, LECTURA, LECTOESCRITURA\n");
     printf("\n");
     printf("   FUNCIONES Y SUBPROGRAMAS:\n");
-    printf("     Soporte completo con parámetros y retorno\n");
+    printf("     Soporte completo con parametros y retorno\n");
     printf("\n");
 }
 
@@ -410,12 +414,15 @@ int main(int argc, char* argv[]) {
         
         signal(SIGINT, handler_sigint);
         signal(SIGTERM, handler_sigint);
-    
-    // Modo expresión: ./nico -e "expresión"
-    if (argc == 3 && strcmp(argv[1], "-e") == 0) {
-        evaluar_expresion(argv[2]);
-        return 0;
-    }
+        // Registrar función de restauración de terminal para ejecución normal
+        atexit(teclado_restaurar_modo);
+
+        // Modo expresión: ./nico -e "expresión"
+        if (argc == 3 && strcmp(argv[1], "-e") == 0)
+        {
+            evaluar_expresion(argv[2]);
+            return 0;
+        }
     // Ayuda
     else if (argc == 2 && (strcmp(argv[1], "-a") == 0 || strcmp(argv[1], "--ayuda") == 0))
     {

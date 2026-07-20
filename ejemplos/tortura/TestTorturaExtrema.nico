@@ -1,0 +1,185 @@
+PROGRAMA TestTorturaExtrema
+
+    // Variables para tracking - USAMOS SIN SIGNO PARA MÁS RANGO
+    VARIABLE ENTERA SIN SIGNO $contador = 0, $suma_total = 0, $resultado = 0, $i = 0
+    VARIABLE ENTERA SIN SIGNO $j = 0, $k = 0, $temp = 0
+    VARIABLE DECIMAL $promedio = 0.0, $a = 0.0, $b = 1.0, $temp_fib = 0.0
+    VARIABLE ENTERA $idx = 0
+    VARIABLE DECIMAL $res_fact = 1.0
+    VARIABLE ENTERA $idx_fact = 1
+    VARIABLE DECIMAL $fact_result = 0.0
+    VARIABLE ENTERA $temp_ack = 0, $res_ack = 0, $res = 0, $fib_result = 0, $var1 = 0
+    VARIABLE ENTERA $var2 = 0, $ack_result = 0
+    // Listas grandes
+    LISTA ENTERA $lista1[500]
+    LISTA ENTERA $lista2[500]
+    LISTA DECIMAL $lista3[500]
+
+// ACKERMANN
+FUNCION ENTERA ACKERMANN($m, $n)      
+    SI ($m IGUAL 0) ENTONCES
+        RETORNAR $n + 1
+    FIN SI
+        
+    SI ($n IGUAL 0) ENTONCES
+        RETORNAR ACKERMANN($m - 1, 1)
+    FIN SI
+        
+        //Evaluar llamada interna primero
+    CALCULAR EN $temp_ack = ACKERMANN($m, $n - 1)
+    CALCULAR EN $res_ack = ACKERMANN($m - 1, $temp_ack)
+    RETORNAR $res_ack
+FIN FUNCION
+    
+// FIBONACCI 
+FUNCION ENTERA FIBONACCI($u)
+        
+    SI ($u MENOR IGUAL 0) ENTONCES
+        RETORNAR 0
+    FIN SI
+
+    SI ($u IGUAL 1) ENTONCES
+        RETORNAR 1
+    FIN SI
+        RETORNAR FIBONACCI($u - 1) + FIBONACCI($u - 2)  
+FIN FUNCION
+    
+// FACTORIAL
+FUNCION DECIMAL FACTORIAL_BIG($n)
+        
+    MIENTRAS ($idx_fact MENOR IGUAL $n) HACER
+        CALCULAR EN $res_fact = $res_fact * $idx_fact
+        CALCULAR EN $idx_fact = $idx_fact + 1
+    FIN MIENTRAS
+        
+    RETORNAR $res_fact
+FIN FUNCION
+
+// SUBPROGRAMAS  
+SUBPROGRAMA LLENAR_LISTAS
+    ASIGNAR EN $i = 0
+    MIENTRAS ($i MENOR 500) HACER
+        CALCULAR EN $lista1[$i] = $i * 2
+        CALCULAR EN $lista2[$i] = $i * 3
+        CALCULAR EN $lista3[$i] = $i * 1.5
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+FIN SUBPROGRAMA
+    
+SUBPROGRAMA PROCESAR_LISTAS
+    ASIGNAR EN $suma_total = 0
+    ASIGNAR EN $i = 0
+    MIENTRAS ($i MENOR 500) HACER
+        CALCULAR EN $suma_total = $suma_total + $lista1[$i]
+        CALCULAR EN $suma_total = $suma_total + $lista2[$i]
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+FIN SUBPROGRAMA
+    
+SUBPROGRAMA OPERACIONES_BINARIAS
+    ASIGNAR EN $a = 0
+    ASIGNAR EN $b = 0
+    ASIGNAR EN $res = 0
+    ASIGNAR EN $i = 0
+    
+    MIENTRAS ($i MENOR 100) HACER
+        CALCULAR EN $a = POTENCIA(2, $i MOD 30)
+        CALCULAR EN $b = $i * 17
+        CALCULAR EN $res = $a BITY $b
+        CALCULAR EN $res = $res BITO $i
+        CALCULAR EN $res = $res BITXOR 255
+        CALCULAR EN $res = $res DESPLAZARIZQUIERDA 2
+        CALCULAR EN $res = $res DESPLAZARDERECHA 1
+        CALCULAR EN $contador = $contador + 1
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+FIN SUBPROGRAMA
+    
+SUBPROGRAMA ANIDAMIENTO_EXTREMO
+    ASIGNAR EN $i = 1
+    MIENTRAS ($i MENOR IGUAL 3) HACER
+        ASIGNAR EN $j = 1
+        MIENTRAS ($j MENOR IGUAL 3) HACER
+            ASIGNAR EN $k = 1
+            MIENTRAS ($k MENOR IGUAL 3) HACER
+                CALCULAR EN $contador = $contador + 1
+                CALCULAR EN $k = $k + 1
+            FIN MIENTRAS
+            CALCULAR EN $j = $j + 1
+        FIN MIENTRAS
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+FIN SUBPROGRAMA
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ESCRIBIR ("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR ("║     TEST DE TORTURA EXTREMA                        ║") SALTO
+    ESCRIBIR ("║     Ackermann + Variables Sin Signo                ║") SALTO
+    ESCRIBIR ("╚════════════════════════════════════════════════════╝") SALTO
+    ESCRIBIR ("") SALTO
+    
+    // Test 1: Llenado masivo de listas
+    ESCRIBIR ("\[1/8\] Llenando 1500 elementos en listas...") SALTO
+    LLAMAR A LLENAR_LISTAS
+    ESCRIBIR ("      ✓ Listas llenas") SALTO
+    
+    // Test 2: Procesamiento de listas
+    ESCRIBIR ("\[2/8\] Procesando listas (1000 operaciones)...") SALTO
+    LLAMAR A PROCESAR_LISTAS
+    ESCRIBIR ("      ✓ Suma total: $suma_total") SALTO
+    
+    // Test 3: Operaciones binarias masivas
+    ESCRIBIR ("\[3/8\] Operaciones binarias (600 ops por iteración)...") SALTO
+    LLAMAR A OPERACIONES_BINARIAS
+    ESCRIBIR ("      ✓ Operaciones completas: $contador") SALTO
+    
+    // Test 4: Anidamiento extremo
+    ESCRIBIR ("\[4/8\] Anidamiento 3x3x3 (27 iteraciones)...") SALTO
+    LLAMAR A ANIDAMIENTO_EXTREMO
+    ESCRIBIR ("      ✓ Iteraciones anidadas: $contador") SALTO
+    
+    // Test 5: Ackermann
+    ESCRIBIR ("\[5/8\] Ackermann(3, 2)") SALTO
+    CALCULAR EN $ack_result = ACKERMANN(3, 2)
+    ESCRIBIR ("      ✓ Ackermann(3,2) = $ack_result (esperado: 29)") SALTO
+    
+    // Test 6: Fibonacci DECIMAL - Sin overflow 
+    ESCRIBIR ("\[6/8\] Fibonacci(30) - Recursivo ingenuo - Esperá...") SALTO
+    CALCULAR EN $fib_result = FIBONACCI(30)
+    ESCRIBIR ("      ✓ Fibonacci(30) = $fib_result (esperado: 832040)") SALTO
+    
+    // Test 7: Factorial DECIMAL - Sin overflow
+    ESCRIBIR ("\[7/8\] Factorial(15)") SALTO
+    CALCULAR EN $fact_result = FACTORIAL_BIG(15)
+    ESCRIBIR ("      ✓ Factorial(15) = $fact_result (esperado: 1.30767e+12)") SALTO
+    
+    // Test 8: Potencias y decimales
+    ESCRIBIR ("\[8/8\] Potencias y decimales combinados...") SALTO
+    CALCULAR EN $promedio = $suma_total / 500.0
+    ESCRIBIR ("      ✓ Promedio: $promedio") SALTO
+    CALCULAR EN $resultado = POTENCIA(2, 25)
+    ESCRIBIR ("      ✓ 2^25 = $resultado (esperado: 33554432)") SALTO
+    
+    ESCRIBIR ("") SALTO
+    ESCRIBIR ("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR ("║              RESULTADOS FINALES                    ║") SALTO
+    ESCRIBIR ("╠════════════════════════════════════════════════════╣") SALTO
+    ESCRIBIR ("║  Contador total: $contador                               ║") SALTO
+    ESCRIBIR ("║  Suma total: $suma_total                                ║") SALTO
+    ESCRIBIR ("║  Ackermann(3,2): $ack_result                                ║") SALTO
+    ESCRIBIR ("║  Fibonacci(30): $fib_result                             ║") SALTO
+    ESCRIBIR ("║  Factorial(15): $fact_result                      ║") SALTO
+    ESCRIBIR ("╚════════════════════════════════════════════════════╝") SALTO
+    ESCRIBIR ("") SALTO
+    
+    SI ($contador MAYOR 0) ENTONCES
+        MOSTRAR ("✅ ¡NICO SOBREVIVIÓ A LA TORTURA!\n") SALTO
+    SINO
+        ESCRIBIR ("❌ Algo salió mal...\n") SALTO
+    FIN SI
+    
+    ESCRIBIR ("") SALTO
+    MOSTRAR ("=== FIN DEL TEST DE TORTURA ===\n") SALTO
+FIN PRINCIPAL
+FINAL

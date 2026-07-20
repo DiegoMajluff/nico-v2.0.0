@@ -1,0 +1,13 @@
+PROGRAMA TestAsignacionDirecta
+    LISTA TEXTO $frutas[3] = {"Manzana", "Pera", "Uva"}
+    VARIABLE TEXTO $nuevo = "Kiwi"
+BLOQUE PRINCIPAL
+    MOSTRAR("\nAntes: $frutas[0]") SALTO
+    $frutas[0] = "Naranja"
+    MOSTRAR("Literal: $frutas[0]") SALTO
+    $frutas[1] = $nuevo
+    MOSTRAR("Variable: $frutas[1]") SALTO
+    $frutas[2] = "Con\nsalto y \"comillas\""
+    MOSTRAR("Escapes: $frutas[2]") SALTO
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,12 @@
+PROGRAMA invertir_texto
+
+BLOQUE PRINCIPAL
+    VARIABLE TEXTO $original = "Hello"
+    VARIABLE TEXTO $invertido = ""
+
+    INVERTIRTEXTO($original, $invertido)
+    ESCRIBIR("Original: $original") SALTO
+    ESCRIBIR("Invertido: $invertido") SALTO
+    
+FIN PRINCIPAL
+FINAL

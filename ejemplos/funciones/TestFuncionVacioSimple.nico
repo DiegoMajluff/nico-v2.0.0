@@ -1,0 +1,23 @@
+PROGRAMA TestFuncionVacioSimple
+
+FUNCION SALUDAR($nombre)
+    MOSTRAR("¡Hola ")
+    MOSTRAR("$nombre")
+    MOSTRAR("!") SALTO
+FIN FUNCION
+
+FUNCION ENTERA sumar($a, $b)
+    VARIABLE ENTERA $op = 0
+    CALCULAR EN $op = $a + $b
+    MOSTRAR("Suma da: $op") SALTO
+    RETORNAR $op
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $x = 1, $y
+    SI($x IGUAL 1) ENTONCES
+        LLAMAR A SALUDAR("mundo")
+        ASIGNAR EN $y = sumar(2, 3)
+    FIN SI
+FIN PRINCIPAL
+FINAL

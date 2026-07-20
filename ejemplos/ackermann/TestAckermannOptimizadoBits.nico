@@ -1,0 +1,106 @@
+PROGRAMA TestAckermannOptimizado
+    LISTA ENTERA SIN SIGNO $cache[1000000] = {0}
+
+    FUNCION ENTERA SIN SIGNO ackermann_mem($m, $n)
+        VARIABLE ENTERA SIN SIGNO $res = 0
+        VARIABLE ENTERA SIN SIGNO $temp = 0
+        VARIABLE ENTERA SIN SIGNO $m_menos_1 = 0
+        VARIABLE ENTERA SIN SIGNO $indice = 0
+        VARIABLE ENTERA SIN SIGNO $valor_cache = 0
+        
+        // --- ATAJOS MATEMÁTICOS ---
+        SI($m IGUAL 1) ENTONCES
+            RETORNAR $n + 2
+        FIN SI
+        SI($m IGUAL 2) ENTONCES
+            RETORNAR (2 * $n) + 3
+        FIN SI
+        SI($m IGUAL 3) ENTONCES
+    
+            VARIABLE ENTERA SIN SIGNO $exponente = $n + 3
+    
+            // Protección contra desbordamiento
+            SI($exponente MAYORIGUAL 65) ENTONCES
+                ESCRIBIR("⚠️ ADVERTENCIA: A(3, [$n]) excede el límite de 64 bits.") SALTO
+                RETORNAR 0
+            FIN SI
+    
+            // CASO ESPECIAL: 2^64 - 3 (exponente = 64)
+            SI($exponente IGUAL 64) ENTONCES
+                VARIABLE ENTERA SIN SIGNO $max_val = BITNO(0)
+                RETORNAR $max_val - 2
+            FIN SI
+    
+            // Para exponente < 64, calcular 2^n con ciclo (aritmética SIN SIGNO)
+            VARIABLE ENTERA SIN SIGNO $potencia = 1
+            VARIABLE ENTERA SIN SIGNO $j = 0
+            MIENTRAS($j MENOR $exponente) HACER
+                CALCULAR EN $potencia = $potencia * 2
+                CALCULAR EN $j = $j + 1
+            FIN MIENTRAS
+            RETORNAR $potencia - 3
+        FIN SI
+        // ----------------------------
+
+        CALCULAR EN $indice = ($m * 100000) + $n
+        
+        SI($indice MAYORIGUAL 1000000) ENTONCES
+            ESCRIBIR("⚠️ ADVERTENCIA: Índice de caché fuera de rango.") SALTO
+            RETORNAR 0
+        FIN SI
+        
+        ASIGNAR EN $valor_cache = $cache[$indice]
+        
+        SI($valor_cache IGUAL 0) ENTONCES
+            SI($m IGUAL 0) ENTONCES
+                RESULTADO EN $res = $n + 1
+            SINO
+                SI($n IGUAL 0) ENTONCES
+                    RESULTADO EN $res = ackermann_mem($m - 1, 1)
+                SINO
+                    CALCULAR EN $temp = ackermann_mem($m, $n - 1)
+                    CALCULAR EN $m_menos_1 = $m - 1
+                    RESULTADO EN $res = ackermann_mem($m_menos_1, $temp)
+                FIN SI
+            FIN SI
+            
+            $cache[$indice] = $res
+        SINO
+            RESULTADO EN $res = $valor_cache
+        FIN SI
+        
+        RETORNAR $res
+    FIN FUNCION
+
+    BLOQUE PRINCIPAL
+        VARIABLE ENTERA SIN SIGNO $r = 0
+        
+        ESCRIBIR("=== ACKERMANN OPTIMIZADO (con bits) ===") SALTO
+        ESCRIBIR("") SALTO
+        
+        ESCRIBIR("A(3, 15) = ") 
+        CALCULAR EN $r = ackermann_mem(3, 15)
+        ESCRIBIR("[$r] (Esperado: 262141)") SALTO
+
+        ESCRIBIR("A(3, 30) = ")
+        CALCULAR EN $r = ackermann_mem(3, 30)
+        ESCRIBIR("[$r] (Esperado: 8589934589)") SALTO
+
+        ESCRIBIR("A(3, 60) = ")
+        CALCULAR EN $r = ackermann_mem(3, 60)
+        ESCRIBIR("[$r] (Esperado: 9223372036854775805)") SALTO
+
+        ESCRIBIR("A(3, 61) = ")
+        CALCULAR EN $r = ackermann_mem(3, 61)
+        ESCRIBIR("[$r] (Esperado: 18446744073709551613)") SALTO
+
+        ESCRIBIR("A(4, 0) = ")
+        CALCULAR EN $r = ackermann_mem(4, 0)
+        ESCRIBIR("[$r] (Esperado: 13)") SALTO
+
+        ESCRIBIR("A(4, 1) = ")
+        CALCULAR EN $r = ackermann_mem(4, 1)
+        ESCRIBIR("[$r] (Esperado: 65533)") SALTO
+        
+    FIN PRINCIPAL
+FINAL

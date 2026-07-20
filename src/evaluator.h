@@ -31,7 +31,8 @@ void *obtener_terminal_original(void);
 // ============================================================
 // TIPOS DE VALOR
 // ============================================================
-typedef enum {
+typedef enum
+{
     VALOR_VACIO,
     VALOR_ENTERO,
     VALOR_ENTERO_SIN_SIGNO,
@@ -44,6 +45,7 @@ typedef enum {
     VALOR_LOGICA,
     VALOR_LISTA,
     VALOR_MATRIZ,
+    VALOR_MATRIZ3D,
     VALOR_ARCHIVO
 } TipoValor;
 
@@ -64,11 +66,14 @@ typedef struct Valor {
         bool logica;
         struct Valor* lista;  // Array de valores
         struct Valor** matriz; // Array 2D de valores
+        struct Valor ***matriz3d; // Array 3D de valores
         FILE* archivo; 
     } datos;
     int tamano;  // Para listas/matrices
     int filas;   // Para matrices
     int columnas; // Para matrices
+    int profundidad; // Para matrices 3D
+    TipoDato tipo_elemento;
     int modo_archivo; 
 } Valor;
 
@@ -79,6 +84,7 @@ typedef struct Simbolo {
     char* nombre;
     Valor valor;
     bool es_constante;
+    TipoDato tipo_declarado;
     struct Simbolo* siguiente;
 } Simbolo;
 
@@ -147,6 +153,17 @@ typedef struct Contexto {
     Etiqueta *etiquetas;
     char *salto_pendiente;
     char *etiqueta_salto;
+    // Manejo de errores (INTENTAR/ATRAPAR)
+#define MAX_INTENTAR_STACK 50
+    struct
+    {
+        bool activo;
+        bool error_capturado;
+        char mensaje_error[512];
+        int linea_error;
+        int codigo_error;
+    } intentar_stack[MAX_INTENTAR_STACK];
+    int intentar_stack_top;
 } Contexto;
 
 // ============================================================
@@ -169,7 +186,7 @@ Valor valor_crear_decimal(double valor);
 Valor valor_crear_texto(const char* valor);
 Valor valor_crear_logica(bool valor);
 Valor valor_crear_caracter(const char *valor);
-Valor valor_crear_entero_sin_signo(unsigned int valor);
+Valor valor_crear_entero_sin_signo(unsigned long long valor);
 Valor valor_crear_decimal_sin_signo(double valor);
 Valor valor_crear_caracter_sin_signo(unsigned char valor);
 Valor valor_crear_vacio(void);

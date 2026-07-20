@@ -1,0 +1,23 @@
+PROGRAMA TestValidacionMatrices3D
+
+    MATRIZ ENTERA SIN SIGNO $mat_sin_signo[2][2][2]
+    MATRIZ ENTERA $mat_entera[2][2][2]
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("=== TEST VALIDACION MATRICES 3D ===") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 1: Asignación válida
+    ESCRIBIR("Test 1: Asignación válida a SIN SIGNO") SALTO
+    ASIGNAR EN $mat_sin_signo[0][0][0] = 100
+    ESCRIBIR("mat_sin_signo[0][0][0] = $mat_sin_signo[0][0][0] (esperado: 100)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 2: Intentar asignar negativo a SIN SIGNO (debe fallar)
+    ESCRIBIR("Test 2: Intentar asignar -50 a SIN SIGNO (debe dar ERROR)") SALTO
+    ASIGNAR EN $mat_sin_signo[0][0][0] = -50
+    ESCRIBIR("Esta línea NO debería ejecutarse") SALTO
+    ESCRIBIR("") SALTO
+
+FIN PRINCIPAL
+FINAL

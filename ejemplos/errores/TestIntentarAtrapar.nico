@@ -1,0 +1,44 @@
+PROGRAMA TestIntentarAtrapar
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("=== TEST INTENTAR/ATRAPAR ===") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 1: Capturar ALERTA
+    ESCRIBIR("Test 1: Capturar ALERTA") SALTO
+    INTENTAR
+        ESCRIBIR("Dentro de INTENTAR") SALTO
+        ALERTA("Error personalizado")
+        ESCRIBIR("Esta línea NO debería ejecutarse") SALTO
+    ATRAPAR
+        ESCRIBIR("Error capturado: $ERROR") SALTO
+        ESCRIBIR("Línea del error: $LINEA_ERROR") SALTO
+        ESCRIBIR("Código de error: $CODIGO_ERROR") SALTO
+    FIN INTENTAR
+    ESCRIBIR("Continuando después del INTENTAR/ATRAPAR") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 2: Capturar división por cero
+    ESCRIBIR("Test 2: Capturar división por cero") SALTO
+    INTENTAR
+        VARIABLE DECIMAL $resultado = 0.0
+        CALCULAR EN $resultado = 10 / 0
+        ESCRIBIR("Resultado = $resultado") SALTO
+    ATRAPAR
+        ESCRIBIR("Error capturado: $ERROR") SALTO
+    FIN INTENTAR
+    ESCRIBIR("Programa continúa ejecutándose") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 3: INTENTAR sin errores
+    ESCRIBIR("Test 3: INTENTAR sin errores") SALTO
+    INTENTAR
+        VARIABLE ENTERA $x = 42
+        ESCRIBIR("x = $x") SALTO
+    ATRAPAR
+        ESCRIBIR("Esta línea NO debería ejecutarse") SALTO
+    FIN INTENTAR
+    ESCRIBIR("Fin del test") SALTO
+
+FIN PRINCIPAL
+FINAL

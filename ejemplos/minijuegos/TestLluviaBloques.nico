@@ -1,0 +1,111 @@
+PROGRAMA lluvia_bloques
+
+BLOQUE PRINCIPAL
+    VARIABLE ENTERA $ancho, $alto, $px, $py, $px_prev, $py_prev
+    VARIABLE ENTERA $fin, $score, $ex, $ey, $ey_prev, $ex_prev
+    VARIABLE ENTERA $vel, $lim_inf, $lim_izq, $lim_der, $tecla
+
+    ANCHOTERMINAL($ancho)
+    ALTOTERMINAL($alto)
+    CALCULAR EN $px = $ancho / 2
+    CALCULAR EN $py = $alto - 4
+    ASIGNAR EN $px_prev = $px
+    ASIGNAR EN $py_prev = $py
+    CALCULAR EN $ex = $ancho / 2
+    ASIGNAR EN $ey = 2
+    ASIGNAR EN $ey_prev = 2
+    CALCULAR EN $ex_prev = $ancho / 2
+    ASIGNAR EN $vel = 1
+    ASIGNAR EN $score = 0
+    ASIGNAR EN $fin = 0
+    CALCULAR EN $lim_inf = $alto - 2
+    ASIGNAR EN $lim_izq = 2
+    CALCULAR EN $lim_der = $ancho - 2
+
+    LIMPIARPANTALLA
+    OCULTARCURSOR
+    CURSOR(1, 1) 
+    MOSTRAR("Score: 0 | A=Izq  D=Der  Q=Salir") SALTO
+
+    MIENTRAS ($fin IGUAL 0) HACER
+        ASIGNAR EN $ey_prev = $ey
+        ASIGNAR EN $ex_prev = $ex
+        ASIGNAR EN $px_prev = $px
+        ASIGNAR EN $py_prev = $py
+        CALCULAR EN $ey = $ey + $vel
+
+        // LEERTECLA es no bloqueante: si no hay tecla, devuelve 0
+        LEERTECLA($tecla)
+
+        SI ($tecla IGUAL 97) ENTONCES 
+            CALCULAR EN $px = $px - 1 
+        FIN SI
+        SI ($tecla IGUAL 100) ENTONCES 
+            CALCULAR EN $px = $px + 1 
+        FIN SI
+        SI ($tecla IGUAL 113) ENTONCES 
+            ASIGNAR EN $fin = 1 
+        FIN SI
+
+        SI ($ey_prev MENOR 1) ENTONCES 
+            ASIGNAR EN $ey_prev = 1 
+        FIN SI
+        SI ($ey_prev MAYOR $alto) ENTONCES 
+            ASIGNAR EN $ey_prev = $alto 
+        FIN SI
+        SI ($ex_prev MENOR 1) ENTONCES 
+            ASIGNAR EN $ex_prev = 1 
+        FIN SI
+        SI ($ex_prev MAYOR $ancho) ENTONCES 
+            ASIGNAR EN $ex_prev = $ancho 
+        FIN SI
+        SI ($px_prev MENOR 1) ENTONCES 
+            ASIGNAR EN $px_prev = 1 
+        FIN SI
+        SI ($px_prev MAYOR $ancho) ENTONCES 
+            ASIGNAR EN $px_prev = $ancho 
+        FIN SI
+        SI ($ex MENOR 1) ENTONCES 
+            ASIGNAR EN $ex = 1 
+        FIN SI
+        SI ($ex MAYOR $ancho) ENTONCES 
+            ASIGNAR EN $ex = $ancho 
+        FIN SI
+        SI ($px MENOR 1) ENTONCES 
+            ASIGNAR EN $px = 1 
+        FIN SI
+        SI ($px MAYOR $ancho) ENTONCES 
+            ASIGNAR EN $px = $ancho 
+        FIN SI
+
+        SI ($ey MAYOR $lim_inf) ENTONCES
+            ASIGNAR EN $ey = 2
+            ASIGNAR EN $ex = ALEATORIO(ENTERO, $lim_izq, $lim_der)
+            CALCULAR EN $score = $score + 1
+            CURSOR(1, 1) 
+            MOSTRAR("Score: $score")
+        FIN SI 
+
+        SI (($ey IGUAL $py) Y ($ex IGUAL $px)) ENTONCES
+            ASIGNAR EN $fin = 1
+        FIN SI
+
+        CURSOR($ey_prev, $ex_prev) 
+        MOSTRAR("   ")
+        CURSOR($py_prev, $px_prev)
+        MOSTRAR("   ")
+        CURSOR($py, $px)      
+        MOSTRAR(" # ")
+        CURSOR($ey, $ex)      
+        MOSTRAR(" * ")
+        
+        ESPERAR(50, MILISEGUNDOS)
+    FIN MIENTRAS
+
+    CURSOR($alto, 1)
+    MOSTRARCURSOR
+    LIMPIARPANTALLA
+    CURSOR(1, 1)
+    MOSTRAR("Fin. Score final: $score") SALTO
+FIN PRINCIPAL
+FINAL

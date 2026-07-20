@@ -10,10 +10,12 @@ echo ""
 # Limpieza previa: evitar ejecutar binario viejo si falla compilación
 rm -f nico
 
-# Lista de archivos fuente (actualizada a src/)
+# Lista de archivos fuente
 SOURCES="src/main.c src/lexer.c src/parser.c src/evaluator.c src/ast.c src/web.c"
 
 # Flags base (consistentes en todas las plataformas)
+# NOTA: Se eliminó -g para producción y se mantiene -O2 para optimización.
+# El stack size en Linux se maneja con `ulimit -s unlimited` en la terminal, no con flags del linker.
 CFLAGS="-std=gnu11 -Wall -Wextra -O2 -Isrc -Wno-stringop-truncation -Wno-unused-result"
 LIBS="-lm -lsqlite3 -lpthread"
 

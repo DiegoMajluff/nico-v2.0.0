@@ -223,7 +223,6 @@ static const PalabraClave palabras_clave[] = {
 
     // Teclado
     {"LEERTECLA", TOK_LEERTECLA},
-    {"TECLAMANTENIDA", TOK_TECLAMANTENIDA},
     {"COLISIONRECTANGULOS", TOK_COLISIONRECTANGULOS},
 
     // GPIO
@@ -236,7 +235,7 @@ static const PalabraClave palabras_clave[] = {
     {"PULLDOWN", TOK_PULLDOWN},
     {"GENERARPWM", TOK_GENERARPWM},
     {"DETENERPWM", TOK_DETENERPWM},
-    
+
     // Base de datos
     {"CONECTARBD", TOK_CONECTARBD},
     {"CERRARBD", TOK_CERRARBD},
@@ -250,6 +249,11 @@ static const PalabraClave palabras_clave[] = {
     // Servidor web
     {"INICIARSERVER", TOK_INICIARSERVER},
     {"DETENERSERVER", TOK_DETENERSERVER},
+
+    // Manejo de errores
+    {"ALERTA", TOK_ALERTA},
+    {"INTENTAR", TOK_INTENTAR},
+    {"ATRAPAR", TOK_ATRAPAR},
 
     // Redondeo
     {"ARRIBA", TOK_ARRIBA},
@@ -1091,7 +1095,6 @@ const char* lexer_nombre_token(TipoToken tipo) {
         
         // Teclado
         case TOK_LEERTECLA: return "LEERTECLA";
-        case TOK_TECLAMANTENIDA: return "TECLAMANTENIDA";
         case TOK_COLISIONRECTANGULOS: return "COLISIONRECTANGULOS";
         
         // GPIO
@@ -1127,7 +1130,15 @@ const char* lexer_nombre_token(TipoToken tipo) {
         // Servidor web
         case TOK_INICIARSERVER: return "INICIARSERVER";
         case TOK_DETENERSERVER: return "DETENERSERVER";
-        
+
+            // Manejo de errores
+        case TOK_ALERTA:
+            return "ALERTA";
+        case TOK_INTENTAR:
+            return "INTENTAR";
+        case TOK_ATRAPAR:
+            return "ATRAPAR";
+
         // Redondeo
         case TOK_ARRIBA: return "ARRIBA";
         case TOK_ABAJO: return "ABAJO";

@@ -1,0 +1,173 @@
+PROGRAMA TestBitwiseCompleto
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   TEST COMPLETO DE OPERACIONES BITWISE             ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+
+    VARIABLE ENTERA SIN SIGNO $a = 0
+    VARIABLE ENTERA SIN SIGNO $b = 0
+    VARIABLE ENTERA SIN SIGNO $resultado = 0
+
+    // ========================================
+    // TEST 1: BITNO (NOT)
+    // ========================================
+    ESCRIBIR("=== 1. BITNO (NOT) ===") SALTO
+    CALCULAR EN $a = 0
+    CALCULAR EN $resultado = BITNO($a)
+    ESCRIBIR("BITNO(0) = [$resultado] (esperado: 18446744073709551615)") SALTO
+    
+    CALCULAR EN $a = 18446744073709551615
+    CALCULAR EN $resultado = BITNO($a)
+    ESCRIBIR("BITNO(18446744073709551615) = [$resultado] (esperado: 0)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 2: BITY (AND)
+    // ========================================
+    ESCRIBIR("=== 2. BITY (AND) ===") SALTO
+    CALCULAR EN $a = 15
+    CALCULAR EN $b = 7
+    CALCULAR EN $resultado = BITY($a, $b)
+    ESCRIBIR("BITY(15, 7) = [$resultado] (esperado: 7)") SALTO
+    
+    CALCULAR EN $a = 18446744073709551615
+    CALCULAR EN $b = 255
+    CALCULAR EN $resultado = BITY($a, $b)
+    ESCRIBIR("BITY(MAX, 255) = [$resultado] (esperado: 255)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 3: BITO (OR)
+    // ========================================
+    ESCRIBIR("=== 3. BITO (OR) ===") SALTO
+    CALCULAR EN $a = 10
+    CALCULAR EN $b = 5
+    CALCULAR EN $resultado = BITO($a, $b)
+    ESCRIBIR("BITO(10, 5) = [$resultado] (esperado: 15)") SALTO
+    
+    CALCULAR EN $a = 0
+    CALCULAR EN $b = 0
+    CALCULAR EN $resultado = BITO($a, $b)
+    ESCRIBIR("BITO(0, 0) = [$resultado] (esperado: 0)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 4: BITXOR (XOR)
+    // ========================================
+    ESCRIBIR("=== 4. BITXOR (XOR) ===") SALTO
+    CALCULAR EN $a = 15
+    CALCULAR EN $b = 7
+    CALCULAR EN $resultado = BITXOR($a, $b)
+    ESCRIBIR("BITXOR(15, 7) = [$resultado] (esperado: 8)") SALTO
+    
+    CALCULAR EN $a = 255
+    CALCULAR EN $b = 255
+    CALCULAR EN $resultado = BITXOR($a, $b)
+    ESCRIBIR("BITXOR(255, 255) = [$resultado] (esperado: 0)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 5: DESPLAZARIZQUIERDA
+    // ========================================
+    ESCRIBIR("=== 5. DESPLAZARIZQUIERDA ===") SALTO
+    CALCULAR EN $a = 1
+    CALCULAR EN $resultado = DESPLAZARIZQUIERDA($a, 0)
+    ESCRIBIR("DESPLAZARIZQUIERDA(1, 0) = [$resultado] (esperado: 1)") SALTO
+    
+    CALCULAR EN $resultado = DESPLAZARIZQUIERDA($a, 10)
+    ESCRIBIR("DESPLAZARIZQUIERDA(1, 10) = [$resultado] (esperado: 1024)") SALTO
+    
+    CALCULAR EN $resultado = DESPLAZARIZQUIERDA($a, 63)
+    ESCRIBIR("DESPLAZARIZQUIERDA(1, 63) = [$resultado] (esperado: 9223372036854775808)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 6: DESPLAZARDERECHA
+    // ========================================
+    ESCRIBIR("=== 6. DESPLAZARDERECHA ===") SALTO
+    CALCULAR EN $a = 1024
+    CALCULAR EN $resultado = DESPLAZARDERECHA($a, 10)
+    ESCRIBIR("DESPLAZARDERECHA(1024, 10) = [$resultado] (esperado: 1)") SALTO
+    
+    CALCULAR EN $a = 9223372036854775808
+    CALCULAR EN $resultado = DESPLAZARDERECHA($a, 63)
+    ESCRIBIR("DESPLAZARDERECHA(2^63, 63) = [$resultado] (esperado: 1)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 7: ROTARIZQUIERDA
+    // ========================================
+    ESCRIBIR("=== 7. ROTARIZQUIERDA ===") SALTO
+    CALCULAR EN $a = 1
+    CALCULAR EN $resultado = ROTARIZQUIERDA($a, 1)
+    ESCRIBIR("ROTARIZQUIERDA(1, 1) = [$resultado] (esperado: 2)") SALTO
+    
+    CALCULAR EN $resultado = ROTARIZQUIERDA($a, 63)
+    ESCRIBIR("ROTARIZQUIERDA(1, 63) = [$resultado] (esperado: 9223372036854775808)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 8: ROTARDERECHA
+    // ========================================
+    ESCRIBIR("=== 8. ROTARDERECHA ===") SALTO
+    CALCULAR EN $a = 9223372036854775808
+    CALCULAR EN $resultado = ROTARDERECHA($a, 63)
+    ESCRIBIR("ROTARDERECHA(2^63, 63) = [$resultado] (esperado: 1)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 9: LEERBIT
+    // ========================================
+    ESCRIBIR("=== 9. LEERBIT ===") SALTO
+    CALCULAR EN $a = 10
+    VARIABLE ENTERA $bit = 0
+    CALCULAR EN $bit = LEERBIT($a, 0)
+    ESCRIBIR("LEERBIT(10, 0) = [$bit] (esperado: 0)") SALTO
+    CALCULAR EN $bit = LEERBIT($a, 1)
+    ESCRIBIR("LEERBIT(10, 1) = [$bit] (esperado: 1)") SALTO
+    CALCULAR EN $bit = LEERBIT($a, 3)
+    ESCRIBIR("LEERBIT(10, 3) = [$bit] (esperado: 1)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 10: ACTIVARBIT
+    // ========================================
+    ESCRIBIR("=== 10. ACTIVARBIT ===") SALTO
+    CALCULAR EN $a = 0
+    CALCULAR EN $resultado = ACTIVARBIT($a, 0)
+    ESCRIBIR("ACTIVARBIT(0, 0) = [$resultado] (esperado: 1)") SALTO
+    
+    CALCULAR EN $resultado = ACTIVARBIT($a, 63)
+    ESCRIBIR("ACTIVARBIT(0, 63) = [$resultado] (esperado: 9223372036854775808)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 11: DESACTIVARBIT
+    // ========================================
+    ESCRIBIR("=== 11. DESACTIVARBIT ===") SALTO
+    CALCULAR EN $a = 18446744073709551615
+    CALCULAR EN $resultado = DESACTIVARBIT($a, 0)
+    ESCRIBIR("DESACTIVARBIT(MAX, 0) = [$resultado] (esperado: 18446744073709551614)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 12: Combinaciones complejas
+    // ========================================
+    ESCRIBIR("=== 12. COMBINACIONES COMPLEJAS ===") SALTO
+    CALCULAR EN $a = 255
+    CALCULAR EN $b = 15
+    CALCULAR EN $resultado = BITY($a, DESPLAZARIZQUIERDA($b, 4))
+    ESCRIBIR("BITY(255, DESPLAZARIZQUIERDA(15, 4)) = [$resultado] (esperado: 240)") SALTO
+    
+    CALCULAR EN $resultado = BITO(BITY($a, $b), DESPLAZARIZQUIERDA(1, 8))
+    ESCRIBIR("BITO(BITY(255, 15), DESPLAZARIZQUIERDA(1, 8)) = [$resultado] (esperado: 271)") SALTO
+    ESCRIBIR("") SALTO
+
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FIN DEL TEST BITWISE                             ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+
+FIN PRINCIPAL
+FINAL

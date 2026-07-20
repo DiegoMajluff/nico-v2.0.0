@@ -16,6 +16,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Soporte de recursión profunda**: Stack size aumentado a 64MB en Windows (`-Wl,--stack,67108864`), permitiendo ejecutar algoritmos recursivos extremos como Ackermann A(4,1) sin desbordamiento.
 - **Documentación de `LEERCARACTER` y `LEERHASTA`**: Comandos de entrada ahora completamente documentados con ejemplos y casos de uso.
 - **Documentación completa de PWM**: Nuevo documento `19-pwm.md` con ejemplos de control de LEDs, dimmers y efectos visuales.
+- **Eliminación de `TECLAMANTENIDA`**: Removido. Comando redundante. `LEERTECLA` es ahora el método oficial no bloqueante para lectura de teclado, con soporte completo para teclas especiales (flechas 1001-1004, Insert 1007, Supr 1008, Page Up/Down 1009-1010, Home 1005, End 1006).
 - **Tip de recursión en Linux**: Script `compile.sh` ahora sugiere `ulimit -s unlimited` para máxima profundidad de recursión.
 
 ### 🔧 Corregido
@@ -26,7 +27,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 ### 🔄 Mejorado
 - **Scripts de compilación**: `compile_windows.bat` actualizado con stack de 64MB, `compile.sh` con tips de recursión.
 - **Verificación de documentación**: Revisados y verificados los siguientes documentos:
-  - `05-sistema-consola.md`: Verificados `LEERTECLA` y `TECLAMANTENIDA`.
+  - `05-sistema-consola.md`: Verificado `LEERTECLA` como método oficial no bloqueante.
+Documentación actualizada con códigos de teclas especiales.
   - `06-graficos-ascii.md`: Verificadas primitivas de dibujo (`DIBUJARLINEA`, `DIBUJARCIRCULO`, `RELLENARRECTANGULO`).
   - `08-fecha-hora.md`: Verificados `FECHAACTUAL` y `HORAACTUAL`.
   - `17-operaciones-bit.md`: Verificadas todas las funciones bit-a-bit.
@@ -112,7 +114,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Implementación, Debugging y Optimización:** Qwen (Alibaba Cloud)
 - **Licencia:** MIT / Uso Educativo
 
-> 💡 **Nota:** Nico v1.1.1 es un release de estabilización crítica que corrige bugs fundamentales en el motor de ejecución (recursión profunda, operadores infijos) y completa el soporte de memoria dinámica para `TEXTO EXTENSO` en todas las operaciones de cadena. Esta versión establece la base sólida para el desarrollo de features avanzadas en v1.2.0.
+> 💡 **Nota:** Nico v1.1.1 es un release de estabilización crítica que corrige bugs fundamentales en el motor de ejecución (recursión profunda, operadores infijos) y completa el soporte de memoria dinámica para `TEXTO EXTENSO` en todas las operaciones de cadena. Esta versión establece la base sólida para el desarrollo de features avanzadas en v2.0.0.
 
 ---
 
@@ -153,7 +155,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - 📝 `19-gpio-raspberry.md`: Referencia completa, diagramas de conexión segura, patrón `PULLUP` para switches y troubleshooting.
 - 📝 `18-dibujarcirculo.md`: Parámetros, sistema de coordenadas 1-based, corrección de aspect ratio y equivalencias multiplataforma.
 - 📝 `MANUAL.md`: Índice maestro con navegación rápida por categorías y búsqueda por comando.
-- 📝 **Nota sobre corchetes en `MOSTRAR`**: Los corchetes `[...]` sin escapar se interpretan como placeholders; usar `\[` y `\]` para literales.
+- 📝 **Nota sobre corchetes en `MOSTRAR` y `ESCRIBIR`**: Los corchetes `[...]` sin escapar se interpretan como placeholders; usar `\[` y `\]` para literales.
 - 📝 **Filosofía de asignación**: Escalares requieren `ASIGNAR EN`/`CALCULAR EN`; colecciones permiten asignación directa por pragmatismo.
 - 📝 **`DECIMAL SIN SIGNO`**: Restricción de signo es semántica (dominio positivo), almacenamiento interno `double` (IEEE 754).
 - 📝 **Límites prácticos**: `MAX_TEXTO_LEN=4096`, `MAX_LISTA=1024`, `MAX_DIMENSION=64` documentados en referencia de tipos.
@@ -182,8 +184,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 ### ✅ Agregado
 - Flag `-e` para evaluación rápida de expresiones desde terminal (`./nico -e "2+2"`).
 - Función nativa `SIGMOIDE(x)` para educación en Machine Learning básico.
-- Ejemplo educativo: `ejemplos/TestPerceptronSimple.nico` (Perceptrón aprendiendo puerta AND).
-- Buffer inteligente y estable para `TECLAMANTENIDA()` (input no-bloqueante cross-platform).
+- Ejemplo educativo: `ejemplos/ml/TestPerceptronSimple.nico` (Perceptrón aprendiendo puerta AND).
 - Restauración automática de eco y configuración de terminal post-ejecución.
 
 ### 🔧 Corregido
@@ -217,4 +218,4 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 > 💡 **Nota:** Este release prioriza estabilidad, claridad pedagógica y compatibilidad multiplataforma. La precedencia matemática nativa se planificó como feature principal para `v1.1.0`.
 
 ---
-📚 *Documentación validada con Nico v1.1.1. Ejemplos probados en Linux, Windows y Raspberry Pi OS.*
+📚 *Documentación validada con Nico v2.0.0. Ejemplos probados en Linux, Windows y Raspberry Pi OS.*

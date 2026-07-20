@@ -1,0 +1,49 @@
+PROGRAMA TestConversionIncluir
+
+INCLUIR "ejemplos/incluir/TestConversionFunciones.nico"
+
+// ========================================
+// DECLARACIONES GLOBALES (al inicio)
+// ========================================
+MATRIZ ENTERA $mi_matriz[2][2] = {{1, 2}, {3, 4}}
+LISTA ENTERA $mi_lista[5] = {10, 20, 30, 40, 50}
+VARIABLE ENTERA $resultado1 = 0
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║  TEST DE CONVERSIÓN CON INCLUIR                    ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 1: Funciones ENTERAS
+    ESCRIBIR("=== 1. FUNCIONES ENTERAS CON DIVISIÓN ===") SALTO
+    CALCULAR EN $resultado1 = dividir_entera(25, 4)
+    ESCRIBIR("dividir_entera(25, 4) → $resultado1 (esperado: 6)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 2: Listas
+    ESCRIBIR("=== 2. FUNCIONES CON LISTAS ENTERAS ===") SALTO
+    LLAMAR A procesar_lista_entera($mi_lista, 5)
+    ESCRIBIR("Lista tras procesar:") SALTO
+    ESCRIBIR("  [0] = $mi_lista[0] (esperado: 15)") SALTO
+    ESCRIBIR("  [1] = $mi_lista[1] (esperado: 30)") SALTO
+    ESCRIBIR("  [2] = $mi_lista[2] (esperado: 45)") SALTO
+    ESCRIBIR("  [3] = $mi_lista[3] (esperado: 60)") SALTO
+    ESCRIBIR("  [4] = $mi_lista[4] (esperado: 75)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 3: Matrices
+    ESCRIBIR("=== 3. FUNCIONES CON MATRICES ENTERAS ===") SALTO
+    LLAMAR A procesar_matriz_entera($mi_matriz, 2, 2)
+    ESCRIBIR("Matriz tras procesar:") SALTO
+    ESCRIBIR("  [0][0] = $mi_matriz[0][0] (esperado: 1)") SALTO
+    ESCRIBIR("  [0][1] = $mi_matriz[0][1] (esperado: 2)") SALTO
+    ESCRIBIR("  [1][0] = $mi_matriz[1][0] (esperado: 3)") SALTO
+    ESCRIBIR("  [1][1] = $mi_matriz[1][1] (esperado: 4)") SALTO
+    ESCRIBIR("") SALTO
+
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║  FIN DEL TEST DE CONVERSIÓN CON INCLUIR            ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+FIN PRINCIPAL
+FINAL

@@ -1,0 +1,26 @@
+PROGRAMA TestOperadorModulo
+
+    CONSTANTE TEXTO $txtabajo = "=== Fin TEST con operador % ==="
+    CONSTANTE TEXTO $txtarriba = "=== TEST OPERADOR % ==="
+    VARIABLE ENTERA $resultado = 0
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("") SALTO
+    ESCRIBIR("$txtarriba") SALTO
+    
+    CALCULAR EN $resultado = 48 % 18
+    ESCRIBIR("48 % 18 = $resultado (esperado: 12)") SALTO
+    
+    CALCULAR EN $resultado = 100 % 35
+    ESCRIBIR("100 % 35 = $resultado (esperado: 30)") SALTO
+    
+    CALCULAR EN $resultado = 17 % 5
+    ESCRIBIR("17 % 5 = $resultado (esperado: 2)") SALTO
+    
+    CALCULAR EN $resultado = 100 % 10
+    ESCRIBIR("100 % 10 = $resultado (esperado: 0)") SALTO
+    
+    ESCRIBIR ("$txtabajo") SALTO
+
+FIN PRINCIPAL
+FINAL

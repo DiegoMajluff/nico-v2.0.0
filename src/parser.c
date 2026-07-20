@@ -28,6 +28,8 @@ static NodoAST *parsear_termino(Parser *parser);
 static NodoAST *parsear_expresion_simple(Parser *parser);
 static NodoAST *parsear_funcion(Parser *parser);
 static NodoAST *parsear_subprograma(Parser *parser);
+static NodoAST *parsear_alerta(Parser *parser);
+static NodoAST *parsear_intentatrapar(Parser *parser);
 
 // ============================================================
 // FUNCIONES AUXILIARES INTERNAS
@@ -151,32 +153,45 @@ static TipoDato parsear_tipo_dato(Parser* parser) {
     return TIPO_ENTERO;
 }
 
-static NodoAST* parsear_literal(Parser* parser) {
+static NodoAST *parsear_literal(Parser *parser)
+{
     int linea = parser->token_actual.linea;
-    
-    if (parser_coincidir(parser, TOK_NUMERO_ENTERO)) {
-        double valor = atof(parser->token_actual.valor);
+
+    if (parser_coincidir(parser, TOK_NUMERO_ENTERO))
+    {
+        const char *valor_str = parser->token_actual.valor;
+        double valor = atof(valor_str);
+        NodoAST *nodo = crear_nodo_literal_numero(valor_str, valor, linea);
         parser_avanzar(parser);
-        return crear_nodo_literal_numero(valor, linea);
+        return nodo;
     }
-    else if (parser_coincidir(parser, TOK_NUMERO_DECIMAL)) {
-        double valor = atof(parser->token_actual.valor);
+    else if (parser_coincidir(parser, TOK_NUMERO_DECIMAL))
+    {
+        const char *valor_str = parser->token_actual.valor;
+        double valor = atof(valor_str);
+        NodoAST *nodo = crear_nodo_literal_numero(valor_str, valor, linea);
         parser_avanzar(parser);
-        return crear_nodo_literal_numero(valor, linea);
+        return nodo;
     }
     else if (parser_coincidir(parser, TOK_NUMERO_HEX))
     {
-        unsigned long long valor = strtoull(parser->token_actual.valor, NULL, 16);
+        const char *valor_str = parser->token_actual.valor;
+        unsigned long long valor = strtoull(valor_str, NULL, 16);
+        NodoAST *nodo = crear_nodo_literal_numero(valor_str, (double)valor, linea);
         parser_avanzar(parser);
-        return crear_nodo_literal_numero((double)valor, linea);
+        return nodo;
     }
-    else if (parser_coincidir(parser, TOK_NUMERO_OCTAL)) {
-        double valor = (double)strtol(parser->token_actual.valor, NULL, 8);
+    else if (parser_coincidir(parser, TOK_NUMERO_OCTAL))
+    {
+        const char *valor_str = parser->token_actual.valor;
+        double valor = (double)strtol(valor_str, NULL, 8);
+        NodoAST *nodo = crear_nodo_literal_numero(valor_str, valor, linea);
         parser_avanzar(parser);
-        return crear_nodo_literal_numero(valor, linea);
+        return nodo;
     }
-    else if (parser_coincidir(parser, TOK_TEXTO)) {
-        NodoAST* nodo = crear_nodo_literal_texto(parser->token_actual.valor, linea);
+    else if (parser_coincidir(parser, TOK_TEXTO))
+    {
+        NodoAST *nodo = crear_nodo_literal_texto(parser->token_actual.valor, linea);
         parser_avanzar(parser);
         return nodo;
     }
@@ -186,15 +201,17 @@ static NodoAST* parsear_literal(Parser* parser) {
         parser_avanzar(parser);
         return nodo;
     }
-    else if (parser_coincidir(parser, TOK_VERDADERO)) {
+    else if (parser_coincidir(parser, TOK_VERDADERO))
+    {
         parser_avanzar(parser);
         return crear_nodo_literal_logico(true, linea);
     }
-    else if (parser_coincidir(parser, TOK_FALSO)) {
+    else if (parser_coincidir(parser, TOK_FALSO))
+    {
         parser_avanzar(parser);
         return crear_nodo_literal_logico(false, linea);
     }
-    
+
     parser_set_error(parser, "Se esperaba un literal");
     return NULL;
 }
@@ -218,17 +235,18 @@ static NodoAST *parsear_factor(Parser *parser)
     }
 
     // Operadores bit a bit usados como funciones
-    if (parser_coincidir(parser, TOK_BITY) ||
-        parser_coincidir(parser, TOK_BITO) ||
-        parser_coincidir(parser, TOK_BITXOR) ||
-        parser_coincidir(parser, TOK_DESPLAZARIZQUIERDA) ||
-        parser_coincidir(parser, TOK_DESPLAZARDERECHA) ||
-        parser_coincidir(parser, TOK_ROTARIZQUIERDA) ||
-        parser_coincidir(parser, TOK_ROTARDERECHA) ||
-        parser_coincidir(parser, TOK_LEERBIT) ||
-        parser_coincidir(parser, TOK_ACTIVARBIT) ||
-        parser_coincidir(parser, TOK_DESACTIVARBIT) ||
-        parser_coincidir(parser, TOK_BITNO))
+    if ((parser_coincidir(parser, TOK_BITY) ||
+         parser_coincidir(parser, TOK_BITO) ||
+         parser_coincidir(parser, TOK_BITXOR) ||
+         parser_coincidir(parser, TOK_DESPLAZARIZQUIERDA) ||
+         parser_coincidir(parser, TOK_DESPLAZARDERECHA) ||
+         parser_coincidir(parser, TOK_ROTARIZQUIERDA) ||
+         parser_coincidir(parser, TOK_ROTARDERECHA) ||
+         parser_coincidir(parser, TOK_LEERBIT) ||
+         parser_coincidir(parser, TOK_ACTIVARBIT) ||
+         parser_coincidir(parser, TOK_DESACTIVARBIT) ||
+         parser_coincidir(parser, TOK_BITNO)) &&
+        parser_verificar_siguiente(parser, TOK_PARENTESIS_ABRIR))
     {
         int linea = parser->token_actual.linea;
         char *nombre = strdup(parser->token_actual.valor);
@@ -264,8 +282,10 @@ static NodoAST *parsear_factor(Parser *parser)
         {
             parser_avanzar(parser); // Consumir )
         }
-
-        return crear_nodo_llamada_funcion(nombre, argumentos, linea);
+        
+        NodoAST *nodo = crear_nodo_llamada_funcion(nombre, argumentos, linea);
+        free(nombre);
+        return nodo;
     }
 
     // Paréntesis
@@ -291,13 +311,14 @@ static NodoAST *parsear_factor(Parser *parser)
             return NULL;
         }
 
-        // Primer argumento: modo (ARRIBA, ABAJO, ENTERA)
-        char *modo = NULL;
+        // ✅ VERSIÓN CORREGIDA (sin leak)
+        NodoAST *modo_nodo = NULL;
         if (parser_coincidir(parser, TOK_ARRIBA) ||
             parser_coincidir(parser, TOK_ABAJO) ||
             parser_coincidir(parser, TOK_ENTERO_KW))
         {
-            modo = strdup(parser->token_actual.valor);
+            // Crear el nodo directamente con el puntero del buffer del lexer
+            modo_nodo = crear_nodo_literal_texto(parser->token_actual.valor, linea);
             parser_avanzar(parser);
         }
         else
@@ -308,7 +329,7 @@ static NodoAST *parsear_factor(Parser *parser)
 
         if (!parser_esperar(parser, TOK_COMA))
         {
-            free(modo);
+            liberar_nodo(modo_nodo); // Limpieza segura en caso de error
             return NULL;
         }
 
@@ -316,23 +337,21 @@ static NodoAST *parsear_factor(Parser *parser)
         NodoAST *numero = parsear_expresion(parser);
         if (!numero)
         {
-            free(modo);
+            liberar_nodo(modo_nodo);
             return NULL;
         }
 
         if (!parser_esperar(parser, TOK_PARENTESIS_CERRAR))
         {
-            free(modo);
+            liberar_nodo(modo_nodo);
             liberar_nodo(numero);
             return NULL;
         }
 
         // Crear llamada a función con dos argumentos
         NodoAST *argumentos = crear_nodo_bloque(linea);
-        NodoAST *modo_nodo = crear_nodo_literal_texto(modo, linea);
         agregar_sentencia_a_bloque(argumentos, modo_nodo);
         agregar_sentencia_a_bloque(argumentos, numero);
-
         return crear_nodo_llamada_funcion("REDONDEAR", argumentos, linea);
     }
 
@@ -535,24 +554,24 @@ static NodoAST *parsear_factor(Parser *parser)
 
         return crear_nodo_llamada_funcion(nombre, NULL, linea);
     }
-    
+
     // Modos de redondeo (ARRIBA, ABAJO, ENTERA) - se tratan como texto
     if (parser_coincidir(parser, TOK_ARRIBA) ||
         parser_coincidir(parser, TOK_ABAJO) ||
         parser_coincidir(parser, TOK_ENTERA))
     {
         int linea = parser->token_actual.linea;
-        char *modo = strdup(parser->token_actual.valor);
+        // Crear el nodo ANTES de avanzar. La función interna ya hace el strdup.
+        NodoAST *nodo = crear_nodo_literal_texto(parser->token_actual.valor, linea);
         parser_avanzar(parser);
-        return crear_nodo_literal_texto(modo, linea);
+        return nodo;
     }
 
-    // Variable (con $) - con soporte para acceso a listas y matrices
+    // Variable (con $) - con soporte para acceso a listas, matrices y matrices 3D
     if (parser->token_actual.tipo == TOK_VARIABLE)
     {
-        char *nombre = strdup(parser->token_actual.valor + 1); // Quitar el $
+        char *nombre = strdup(parser->token_actual.valor + 1);
         parser_avanzar(parser);
-
         // Verificar si es acceso a elemento de lista/matriz
         if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
         {
@@ -563,7 +582,6 @@ static NodoAST *parsear_factor(Parser *parser)
                 free(nombre);
                 return NULL;
             }
-
             // Verificar si hay un segundo corchete (matriz)
             if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
             {
@@ -574,8 +592,24 @@ static NodoAST *parsear_factor(Parser *parser)
                     free(nombre);
                     return NULL;
                 }
-                // Es acceso a matriz [fila][columna]
-                return crear_nodo_acceso_matriz(nombre, indice1, indice2, linea);
+                // Verificar si hay un tercer corchete (matriz 3D)
+                if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
+                {
+                    parser_avanzar(parser);
+                    NodoAST *indice3 = parsear_expresion(parser);
+                    if (!parser_esperar(parser, TOK_CORCHETE_CERRAR))
+                    {
+                        free(nombre);
+                        return NULL;
+                    }
+                    // Es acceso a matriz 3D [indice1][indice2][indice3]
+                    return crear_nodo_acceso_matriz3d(nombre, indice1, indice2, indice3, linea);
+                }
+                else
+                {
+                    // Es acceso a matriz 2D [fila][columna]
+                    return crear_nodo_acceso_matriz(nombre, indice1, indice2, linea);
+                }
             }
             else
             {
@@ -583,7 +617,6 @@ static NodoAST *parsear_factor(Parser *parser)
                 return crear_nodo_acceso_lista(nombre, indice1, linea);
             }
         }
-
         return crear_nodo_variable(nombre, linea);
     }
 
@@ -734,70 +767,91 @@ static NodoAST *parsear_expresion_simple(Parser *parser)
 {
     NodoAST *izq = parsear_termino(parser);
     int iteraciones = 0;
-
     while (iteraciones < MAX_ITERACIONES_PARSER)
     {
+        int linea = parser->token_actual.linea;
         if (parser_coincidir(parser, TOK_MAS))
         {
-            int linea = parser->token_actual.linea;
             parser_avanzar(parser);
             NodoAST *der = parsear_termino(parser);
             izq = crear_nodo_operador_binario(OP_SUMA, izq, der, linea);
         }
         else if (parser_coincidir(parser, TOK_MENOS))
         {
-            int linea = parser->token_actual.linea;
             parser_avanzar(parser);
             NodoAST *der = parsear_termino(parser);
             izq = crear_nodo_operador_binario(OP_RESTA, izq, der, linea);
         }
         else if (parser_coincidir(parser, TOK_BITY))
         {
-            int linea = parser->token_actual.linea;
             parser_avanzar(parser);
             NodoAST *der = parsear_termino(parser);
             izq = crear_nodo_operador_binario(OP_BIT_AND, izq, der, linea);
         }
         else if (parser_coincidir(parser, TOK_BITO))
         {
-            int linea = parser->token_actual.linea;
             parser_avanzar(parser);
             NodoAST *der = parsear_termino(parser);
             izq = crear_nodo_operador_binario(OP_BIT_OR, izq, der, linea);
         }
         else if (parser_coincidir(parser, TOK_BITXOR))
         {
-            int linea = parser->token_actual.linea;
             parser_avanzar(parser);
             NodoAST *der = parsear_termino(parser);
             izq = crear_nodo_operador_binario(OP_BIT_XOR, izq, der, linea);
         }
         else if (parser_coincidir(parser, TOK_DESPLAZARIZQUIERDA))
         {
-            int linea = parser->token_actual.linea;
             parser_avanzar(parser);
             NodoAST *der = parsear_termino(parser);
             izq = crear_nodo_operador_binario(OP_DESPLAZAR_IZQ, izq, der, linea);
         }
         else if (parser_coincidir(parser, TOK_DESPLAZARDERECHA))
         {
-            int linea = parser->token_actual.linea;
             parser_avanzar(parser);
             NodoAST *der = parsear_termino(parser);
             izq = crear_nodo_operador_binario(OP_DESPLAZAR_DER, izq, der, linea);
         }
+        else if (parser_coincidir(parser, TOK_ROTARIZQUIERDA))
+        {
+            parser_avanzar(parser);
+            NodoAST *der = parsear_termino(parser);
+            izq = crear_nodo_operador_binario(OP_ROTAR_IZQ, izq, der, linea);
+        }
+        else if (parser_coincidir(parser, TOK_ROTARDERECHA))
+        {
+            parser_avanzar(parser);
+            NodoAST *der = parsear_termino(parser);
+            izq = crear_nodo_operador_binario(OP_ROTAR_DER, izq, der, linea);
+        }
+        else if (parser_coincidir(parser, TOK_LEERBIT))
+        {
+            parser_avanzar(parser);
+            NodoAST *der = parsear_termino(parser);
+            izq = crear_nodo_operador_binario(OP_LEER_BIT, izq, der, linea);
+        }
+        else if (parser_coincidir(parser, TOK_ACTIVARBIT))
+        {
+            parser_avanzar(parser);
+            NodoAST *der = parsear_termino(parser);
+            izq = crear_nodo_operador_binario(OP_ACTIVAR_BIT, izq, der, linea);
+        }
+        else if (parser_coincidir(parser, TOK_DESACTIVARBIT))
+        {
+            parser_avanzar(parser);
+            NodoAST *der = parsear_termino(parser);
+            izq = crear_nodo_operador_binario(OP_DESACTIVAR_BIT, izq, der, linea);
+        }
         else
         {
-            break;
+            break; // No es un operador infijo, salimos del bucle
         }
         iteraciones++;
     }
-
     if (iteraciones >= MAX_ITERACIONES_PARSER)
     {
         parser_set_error(parser, "Bucle infinito detectado en parsear_expresion_simple");
     }
-
     return izq;
 }
 
@@ -957,7 +1011,7 @@ static NodoAST *parsear_declaracion_variable(Parser *parser)
             return NULL;
         }
 
-        char *nombre = strdup(parser->token_actual.valor + 1); // Saltar el '$'
+        char *nombre = strdup(parser->token_actual.valor + 1);
         parser_avanzar(parser);
 
         NodoAST *valor_inicial = NULL;
@@ -978,7 +1032,10 @@ static NodoAST *parsear_declaracion_variable(Parser *parser)
     // Si solo hay una variable, devolverla directamente
     if (num_vars == 1)
     {
-        return bloque->datos.bloque.primera;
+        NodoAST *primera = bloque->datos.bloque.primera;
+        bloque->datos.bloque.primera = NULL; // Desacoplar
+        liberar_nodo(bloque);                // Liberar el contenedor
+        return primera;
     }
 
     return bloque;
@@ -1221,6 +1278,32 @@ static NodoAST *parsear_declaracion_matriz(Parser *parser)
             return NULL;
         }
 
+        // NUEVO: Verificar si hay un tercer corchete (matriz 3D)
+        int profundidad = 0;
+        bool es_matriz3d = false;
+
+        if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
+        {
+            parser_avanzar(parser);
+            es_matriz3d = true;
+
+            if (!parser_coincidir(parser, TOK_NUMERO_ENTERO))
+            {
+                parser_set_error(parser, "Se esperaba número de profundidad");
+                free(nombre);
+                return NULL;
+            }
+
+            profundidad = atoi(parser->token_actual.valor);
+            parser_avanzar(parser);
+
+            if (!parser_esperar(parser, TOK_CORCHETE_CERRAR))
+            {
+                free(nombre);
+                return NULL;
+            }
+        }
+
         NodoAST *valores_iniciales = NULL;
 
         // Verificar si hay inicialización
@@ -1231,40 +1314,103 @@ static NodoAST *parsear_declaracion_matriz(Parser *parser)
             {
                 valores_iniciales = crear_nodo_bloque(linea);
 
-                // Parsear filas
-                while (!parser_coincidir(parser, TOK_LLAVE_CERRAR) && !parser->hay_error)
+                if (es_matriz3d)
                 {
-                    if (parser_esperar(parser, TOK_LLAVE_ABRIR))
+                    // Parsear valores para matriz 3D: {{{...}}, {{...}}, ...}
+                    while (!parser_coincidir(parser, TOK_LLAVE_CERRAR) && !parser->hay_error)
                     {
-                        NodoAST *fila = crear_nodo_bloque(linea);
-
-                        // Parsear columnas
-                        while (!parser_coincidir(parser, TOK_LLAVE_CERRAR) && !parser->hay_error)
+                        if (parser_esperar(parser, TOK_LLAVE_ABRIR))
                         {
-                            NodoAST *valor = parsear_expresion(parser);
-                            agregar_sentencia_a_bloque(fila, valor);
+                            NodoAST *plano = crear_nodo_bloque(linea);
 
-                            if (parser_coincidir(parser, TOK_COMA))
+                            // Parsear filas
+                            while (!parser_coincidir(parser, TOK_LLAVE_CERRAR) && !parser->hay_error)
                             {
-                                parser_avanzar(parser);
+                                if (parser_esperar(parser, TOK_LLAVE_ABRIR))
+                                {
+                                    NodoAST *fila = crear_nodo_bloque(linea);
+
+                                    // Parsear columnas
+                                    while (!parser_coincidir(parser, TOK_LLAVE_CERRAR) && !parser->hay_error)
+                                    {
+                                        NodoAST *valor = parsear_expresion(parser);
+                                        agregar_sentencia_a_bloque(fila, valor);
+
+                                        if (parser_coincidir(parser, TOK_COMA))
+                                        {
+                                            parser_avanzar(parser);
+                                        }
+                                        else
+                                        {
+                                            break;
+                                        }
+                                    }
+
+                                    parser_esperar(parser, TOK_LLAVE_CERRAR);
+                                    agregar_sentencia_a_bloque(plano, fila);
+                                }
+
+                                if (parser_coincidir(parser, TOK_COMA))
+                                {
+                                    parser_avanzar(parser);
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
-                            else
-                            {
-                                break;
-                            }
+
+                            parser_esperar(parser, TOK_LLAVE_CERRAR);
+                            agregar_sentencia_a_bloque(valores_iniciales, plano);
                         }
 
-                        parser_esperar(parser, TOK_LLAVE_CERRAR);
-                        agregar_sentencia_a_bloque(valores_iniciales, fila);
+                        if (parser_coincidir(parser, TOK_COMA))
+                        {
+                            parser_avanzar(parser);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
+                }
+                else
+                {
+                    // Parsear valores para matriz 2D: {{...}, {...}, ...}
+                    while (!parser_coincidir(parser, TOK_LLAVE_CERRAR) && !parser->hay_error)
+                    {
+                        if (parser_esperar(parser, TOK_LLAVE_ABRIR))
+                        {
+                            NodoAST *fila = crear_nodo_bloque(linea);
 
-                    if (parser_coincidir(parser, TOK_COMA))
-                    {
-                        parser_avanzar(parser);
-                    }
-                    else
-                    {
-                        break;
+                            // Parsear columnas
+                            while (!parser_coincidir(parser, TOK_LLAVE_CERRAR) && !parser->hay_error)
+                            {
+                                NodoAST *valor = parsear_expresion(parser);
+                                agregar_sentencia_a_bloque(fila, valor);
+
+                                if (parser_coincidir(parser, TOK_COMA))
+                                {
+                                    parser_avanzar(parser);
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            parser_esperar(parser, TOK_LLAVE_CERRAR);
+                            agregar_sentencia_a_bloque(valores_iniciales, fila);
+                        }
+
+                        if (parser_coincidir(parser, TOK_COMA))
+                        {
+                            parser_avanzar(parser);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -1272,7 +1418,19 @@ static NodoAST *parsear_declaracion_matriz(Parser *parser)
             }
         }
 
-        NodoAST *declaracion = crear_nodo_declaracion_matriz(nombre, tipo, filas, columnas, valores_iniciales, linea);
+        NodoAST *declaracion;
+
+        if (es_matriz3d)
+        {
+            // Crear nodo de matriz 3D
+            declaracion = crear_nodo_declaracion_matriz3d(nombre, tipo, filas, columnas, profundidad, valores_iniciales, linea);
+        }
+        else
+        {
+            // Crear nodo de matriz 2D
+            declaracion = crear_nodo_declaracion_matriz(nombre, tipo, filas, columnas, valores_iniciales, linea);
+        }
+
         agregar_sentencia_a_bloque(bloque, declaracion);
         num_matrices++;
 
@@ -1766,6 +1924,118 @@ static NodoAST *parsear_incluir(Parser *parser)
     return crear_nodo_incluir(ruta, linea);
 }
 
+// ============================================================
+// PARSEO DE MANEJO DE ERRORES
+// ============================================================
+static NodoAST *parsear_alerta(Parser *parser)
+{
+    int linea = parser->token_actual.linea;
+    parser_avanzar(parser); // Consumir ALERTA
+
+    if (!parser_esperar(parser, TOK_PARENTESIS_ABRIR))
+        return NULL;
+
+    // El mensaje puede ser cualquier expresión (texto, variable, concatenación, etc.)
+    NodoAST *mensaje = parsear_expresion(parser);
+    if (!mensaje)
+        return NULL;
+
+    if (!parser_esperar(parser, TOK_PARENTESIS_CERRAR))
+    {
+        liberar_nodo(mensaje);
+        return NULL;
+    }
+
+    return crear_nodo_alerta(mensaje, linea);
+}
+
+static NodoAST *parsear_intentatrapar(Parser *parser)
+{
+    int linea = parser->token_actual.linea;
+    parser_avanzar(parser); // Consumir INTENTAR
+
+    // Parsear bloque INTENTAR (se detiene en ATRAPAR)
+    // Manejamos anidamiento manualmente para INTENTAR anidados
+    NodoAST *bloque_intent = crear_nodo_bloque(linea);
+    int nivel_intent = 0;
+
+    while (!parser->hay_error && parser->token_actual.tipo != TOK_EOF)
+    {
+        // Si encontramos ATRAPAR y estamos en nivel 0, terminamos el bloque INTENTAR
+        if (parser->token_actual.tipo == TOK_ATRAPAR && nivel_intent == 0)
+        {
+            break;
+        }
+
+        // Contar niveles de INTENTAR anidados
+        if (parser->token_actual.tipo == TOK_INTENTAR)
+        {
+            nivel_intent++;
+        }
+
+        NodoAST *sentencia = parsear_sentencia(parser);
+        if (sentencia)
+        {
+            agregar_sentencia_a_bloque(bloque_intent, sentencia);
+            // Si la sentencia es un INTENTAR/ATRAPAR completo, decrementar nivel
+            if (sentencia->tipo == AST_INTENTAR_ATRAPAR)
+            {
+                nivel_intent--;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // Consumir ATRAPAR
+    if (!parser_esperar(parser, TOK_ATRAPAR))
+    {
+        liberar_nodo(bloque_intent);
+        return NULL;
+    }
+
+    // Parsear bloque ATRAPAR (se detiene en FIN INTENTAR)
+    NodoAST *bloque_atrapar = crear_nodo_bloque(linea);
+
+    while (!parser->hay_error && parser->token_actual.tipo != TOK_EOF)
+    {
+        // Detectar FIN INTENTAR
+        if (parser->token_actual.tipo == TOK_FIN &&
+            parser_verificar_siguiente(parser, TOK_INTENTAR))
+        {
+            break;
+        }
+
+        NodoAST *sentencia = parsear_sentencia(parser);
+        if (sentencia)
+        {
+            agregar_sentencia_a_bloque(bloque_atrapar, sentencia);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // Consumir FIN INTENTAR
+    if (!parser_esperar(parser, TOK_FIN))
+    {
+        liberar_nodo(bloque_intent);
+        liberar_nodo(bloque_atrapar);
+        return NULL;
+    }
+    if (!parser_esperar(parser, TOK_INTENTAR))
+    {
+        liberar_nodo(bloque_intent);
+        liberar_nodo(bloque_atrapar);
+        return NULL;
+    }
+
+    return crear_nodo_intentatrapar(bloque_intent, bloque_atrapar, linea);
+}
+
 static NodoAST *parsear_calcular(Parser *parser)
 {
     int linea = parser->token_actual.linea;
@@ -1808,7 +2078,28 @@ static NodoAST *parsear_calcular(Parser *parser)
                 liberar_nodo(indice2);
                 return NULL;
             }
-            destino = crear_nodo_acceso_matriz(variable, indice1, indice2, linea);
+
+            // Verificar si hay un tercer índice (matriz 3D)
+            if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
+            {
+                parser_avanzar(parser);
+                NodoAST *indice3 = parsear_expresion(parser);
+                if (!parser_esperar(parser, TOK_CORCHETE_CERRAR))
+                {
+                    free(variable);
+                    liberar_nodo(indice1);
+                    liberar_nodo(indice2);
+                    liberar_nodo(indice3);
+                    return NULL;
+                }
+                // Es acceso a matriz 3D [indice1][indice2][indice3]
+                destino = crear_nodo_acceso_matriz3d(variable, indice1, indice2, indice3, linea);
+            }
+            else
+            {
+                // Es acceso a matriz 2D [fila][columna]
+                destino = crear_nodo_acceso_matriz(variable, indice1, indice2, linea);
+            }
         }
         else
         {
@@ -1870,8 +2161,25 @@ static NodoAST *parsear_asignar(Parser *parser)
                 free(variable);
                 return NULL;
             }
-            // Es acceso a matriz [fila][columna]
-            destino = crear_nodo_acceso_matriz(variable, indice1, indice2, linea);
+
+            // Verificar si hay un tercer corchete (matriz 3D)
+            if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
+            {
+                parser_avanzar(parser);
+                NodoAST *indice3 = parsear_expresion(parser);
+                if (!parser_esperar(parser, TOK_CORCHETE_CERRAR))
+                {
+                    free(variable);
+                    return NULL;
+                }
+                // Es acceso a matriz 3D [indice1][indice2][indice3]
+                destino = crear_nodo_acceso_matriz3d(variable, indice1, indice2, indice3, linea);
+            }
+            else
+            {
+                // Es acceso a matriz 2D [fila][columna]
+                destino = crear_nodo_acceso_matriz(variable, indice1, indice2, linea);
+            }
         }
         else
         {
@@ -2274,6 +2582,17 @@ static NodoAST* parsear_sentencia(Parser* parser) {
         return parsear_incluir(parser);
     }
 
+    // Manejo de errores
+    if (parser_coincidir(parser, TOK_ALERTA))
+    {
+        return parsear_alerta(parser);
+    }
+    
+    if (parser_coincidir(parser, TOK_INTENTAR))
+    {
+        return parsear_intentatrapar(parser);
+    }
+
     if (parser_coincidir(parser, TOK_LEER)) {
         return parsear_leer(parser);
     }
@@ -2468,26 +2787,22 @@ static NodoAST* parsear_sentencia(Parser* parser) {
     {
         char *variable = strdup(parser->token_actual.valor + 1);
         parser_avanzar(parser);
-
-        // Verificar si es acceso a lista/matriz: $variable[indice] o $variable[fila][columna]
+        // Verificar si es acceso a lista/matriz/matriz3D
         if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
         {
             parser_avanzar(parser);
             NodoAST *indice1 = parsear_expresion(parser);
-
             if (!parser_esperar(parser, TOK_CORCHETE_CERRAR))
             {
                 free(variable);
                 liberar_nodo(indice1);
                 return NULL;
             }
-
             // Verificar si hay un segundo índice (matriz)
             if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
             {
                 parser_avanzar(parser);
                 NodoAST *indice2 = parsear_expresion(parser);
-
                 if (!parser_esperar(parser, TOK_CORCHETE_CERRAR))
                 {
                     free(variable);
@@ -2495,18 +2810,45 @@ static NodoAST* parsear_sentencia(Parser* parser) {
                     liberar_nodo(indice2);
                     return NULL;
                 }
-
-                if (!parser_esperar(parser, TOK_IGUAL))
+                // NUEVO: Verificar si hay un tercer índice (matriz 3D)
+                if (parser_coincidir(parser, TOK_CORCHETE_ABRIR))
                 {
-                    free(variable);
-                    liberar_nodo(indice1);
-                    liberar_nodo(indice2);
-                    return NULL;
+                    parser_avanzar(parser);
+                    NodoAST *indice3 = parsear_expresion(parser);
+                    if (!parser_esperar(parser, TOK_CORCHETE_CERRAR))
+                    {
+                        free(variable);
+                        liberar_nodo(indice1);
+                        liberar_nodo(indice2);
+                        liberar_nodo(indice3);
+                        return NULL;
+                    }
+                    if (!parser_esperar(parser, TOK_IGUAL))
+                    {
+                        free(variable);
+                        liberar_nodo(indice1);
+                        liberar_nodo(indice2);
+                        liberar_nodo(indice3);
+                        return NULL;
+                    }
+                    NodoAST *valor = parsear_expresion(parser);
+                    NodoAST *destino = crear_nodo_acceso_matriz3d(variable, indice1, indice2, indice3, linea);
+                    return crear_nodo_asignar_nodo(destino, valor, linea);
                 }
-
-                NodoAST *valor = parsear_expresion(parser);
-                NodoAST *destino = crear_nodo_acceso_matriz(variable, indice1, indice2, linea);
-                return crear_nodo_asignar_nodo(destino, valor, linea);
+                else
+                {
+                    // Es matriz 2D
+                    if (!parser_esperar(parser, TOK_IGUAL))
+                    {
+                        free(variable);
+                        liberar_nodo(indice1);
+                        liberar_nodo(indice2);
+                        return NULL;
+                    }
+                    NodoAST *valor = parsear_expresion(parser);
+                    NodoAST *destino = crear_nodo_acceso_matriz(variable, indice1, indice2, linea);
+                    return crear_nodo_asignar_nodo(destino, valor, linea);
+                }
             }
             else
             {
@@ -2517,13 +2859,11 @@ static NodoAST* parsear_sentencia(Parser* parser) {
                     liberar_nodo(indice1);
                     return NULL;
                 }
-
                 NodoAST *valor = parsear_expresion(parser);
                 NodoAST *destino = crear_nodo_acceso_lista(variable, indice1, linea);
                 return crear_nodo_asignar_nodo(destino, valor, linea);
             }
         }
-
         // Asignación simple: $variable = valor
         if (parser_coincidir(parser, TOK_IGUAL))
         {
@@ -2532,7 +2872,6 @@ static NodoAST* parsear_sentencia(Parser* parser) {
             NodoAST *destino = crear_nodo_variable(variable, linea);
             return crear_nodo_asignar_nodo(destino, valor, linea);
         }
-
         free(variable);
         parser_set_error(parser, "Se esperaba '=' después de variable");
         return NULL;
@@ -3093,38 +3432,6 @@ static NodoAST* parsear_sentencia(Parser* parser) {
         return crear_nodo_saltar_a(nombre, linea);
     }
 
-    // TECLAMANTENIDA(codigo, variable)
-    if (parser_coincidir(parser, TOK_TECLAMANTENIDA))
-    {
-        int linea = parser->token_actual.linea;
-        parser_avanzar(parser); // Consumir TECLAMANTENIDA
-
-        if (!parser_esperar(parser, TOK_PARENTESIS_ABRIR))
-            return NULL;
-
-        NodoAST *codigo = parsear_expresion(parser);
-
-        if (!parser_esperar(parser, TOK_COMA))
-            return NULL;
-
-        if (!parser_coincidir(parser, TOK_VARIABLE))
-        {
-            parser_set_error(parser, "Se esperaba variable de destino");
-            return NULL;
-        }
-
-        char *variable = strdup(parser->token_actual.valor + 1); // Sin el $
-        parser_avanzar(parser);
-
-        if (!parser_esperar(parser, TOK_PARENTESIS_CERRAR))
-        {
-            free(variable);
-            return NULL;
-        }
-
-        return crear_nodo_teclamantenida(codigo, variable, linea);
-    }
-
     // LEERTECLA(variable)
     if (parser_coincidir(parser, TOK_LEERTECLA))
     {
@@ -3332,7 +3639,9 @@ static NodoAST *parsear_bloque(Parser *parser)
            parser->token_actual.tipo != TOK_SINOSI &&
            parser->token_actual.tipo != TOK_CASO &&
            parser->token_actual.tipo != TOK_POR &&
-           parser->token_actual.tipo != TOK_DEFECTO)
+           parser->token_actual.tipo != TOK_DEFECTO &&
+           parser->token_actual.tipo != TOK_ATRAPAR)
+
     {
 
         NodoAST *sentencia = parsear_sentencia(parser);
@@ -3608,15 +3917,50 @@ static NodoAST *parsear_funcion(Parser *parser)
     parser_avanzar(parser); // Consumir FUNCION
 
     TipoDato tipo_retorno = TIPO_VACIO;
+    
     if (parser_coincidir(parser, TOK_ENTERA))
     {
-        tipo_retorno = TIPO_ENTERO;
         parser_avanzar(parser);
+        if (parser_coincidir(parser, TOK_SIN))
+        {
+            parser_avanzar(parser);
+            if (parser_coincidir(parser, TOK_SIGNO))
+            {
+                parser_avanzar(parser);
+                tipo_retorno = TIPO_ENTERO_SIN_SIGNO;
+            }
+            else
+            {
+                parser_set_error(parser, "Se esperaba SIGNO después de SIN");
+                return NULL;
+            }
+        }
+        else
+        {
+            tipo_retorno = TIPO_ENTERO;
+        }
     }
     else if (parser_coincidir(parser, TOK_DECIMAL))
     {
-        tipo_retorno = TIPO_DECIMAL;
         parser_avanzar(parser);
+        if (parser_coincidir(parser, TOK_SIN))
+        {
+            parser_avanzar(parser);
+            if (parser_coincidir(parser, TOK_SIGNO))
+            {
+                parser_avanzar(parser);
+                tipo_retorno = TIPO_DECIMAL_SIN_SIGNO;
+            }
+            else
+            {
+                parser_set_error(parser, "Se esperaba SIGNO después de SIN");
+                return NULL;
+            }
+        }
+        else
+        {
+            tipo_retorno = TIPO_DECIMAL;
+        }
     }
     else if (parser_coincidir(parser, TOK_TEXTO))
     {
@@ -3625,8 +3969,25 @@ static NodoAST *parsear_funcion(Parser *parser)
     }
     else if (parser_coincidir(parser, TOK_CARACTER))
     {
-        tipo_retorno = TIPO_CARACTER;
         parser_avanzar(parser);
+        if (parser_coincidir(parser, TOK_SIN))
+        {
+            parser_avanzar(parser);
+            if (parser_coincidir(parser, TOK_SIGNO))
+            {
+                parser_avanzar(parser);
+                tipo_retorno = TIPO_CARACTER_SIN_SIGNO;
+            }
+            else
+            {
+                parser_set_error(parser, "Se esperaba SIGNO después de SIN");
+                return NULL;
+            }
+        }
+        else
+        {
+            tipo_retorno = TIPO_CARACTER;
+        }
     }
     else if (parser_coincidir(parser, TOK_LOGICA))
     {
@@ -3685,7 +4046,7 @@ static NodoAST *parsear_funcion(Parser *parser)
         parser_avanzar(parser);
     }
 
-    // ✅ Parsear cuerpo de la función con loop propio
+    // Parsear cuerpo de la función con loop propio
     // Se detiene SOLO en FIN FUNCION, no en FIN SI, FIN MIENTRAS, etc.
     NodoAST *bloque = crear_nodo_bloque(linea);
     while (!parser->hay_error && parser->token_actual.tipo != TOK_EOF)

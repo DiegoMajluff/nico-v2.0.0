@@ -1,0 +1,49 @@
+PROGRAMA sinsigno
+
+VARIABLE ENTERA SIN SIGNO $a = 100
+VARIABLE ENTERA SIN SIGNO $b = 50
+VARIABLE DECIMAL SIN SIGNO $c = 0   // ← CAMBIAR A DECIMAL
+VARIABLE DECIMAL SIN SIGNO $d = 0
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("=== TEST OPERACIONES SIN SIGNO ===") SALTO
+    
+    // Suma
+    CALCULAR EN $c = $a + $b
+    ESCRIBIR("100 + 50 = $c (Esperado: 150)") SALTO
+    
+    // Resta
+    CALCULAR EN $c = $a - $b
+    ESCRIBIR("100 - 50 = $c (Esperado: 50)") SALTO
+    
+    // Multiplicación
+    CALCULAR EN $c = $a * $b
+    ESCRIBIR("100 * 50 = $c (Esperado: 5000)") SALTO
+    
+    // División (ahora $c es DECIMAL, puede guardar 33.333...)
+    CALCULAR EN $c = $a / 3
+    ESCRIBIR("100 / 3 = $c (Esperado: 33.333...)") SALTO
+    
+    // Operación con literal (mixto sin signo + con signo)
+    CALCULAR EN $c = $a + 25
+    ESCRIBIR("100 + 25 = $c (Esperado: 125)") SALTO
+    
+    CALCULAR EN $c = $a - 30
+    ESCRIBIR("100 - 30 = $c (Esperado: 70)") SALTO
+    
+    CALCULAR EN $c = $a * 3
+    ESCRIBIR("100 * 3 = $c (Esperado: 300)") SALTO
+    
+    // División con decimal
+    CALCULAR EN $d = $a / 3
+    ESCRIBIR("100 / 3 = $d (Esperado: 33.333...)") SALTO
+    
+    // Prueba de valores grandes
+    VARIABLE ENTERA SIN SIGNO $grande = 4000000000
+    VARIABLE ENTERA SIN SIGNO $resultado = 0
+    CALCULAR EN $resultado = $grande + 1000000000
+    ESCRIBIR("4000000000 + 1000000000 = $resultado (Esperado: 5000000000)") SALTO
+    
+    ESCRIBIR("=== FIN TEST ===") SALTO
+FIN PRINCIPAL
+FINAL

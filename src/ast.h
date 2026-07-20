@@ -25,6 +25,7 @@ typedef enum
     AST_DECLARACION_CONSTANTE,
     AST_DECLARACION_LISTA,
     AST_DECLARACION_MATRIZ,
+    AST_DECLARACION_MATRIZ3D,
     AST_DECLARACION_TEXTO_EXTENSO,
     AST_DECLARACION_ARCHIVO,
 
@@ -54,10 +55,11 @@ typedef enum
     AST_VARIABLE,
     AST_ACCESO_LISTA,
     AST_ACCESO_MATRIZ,
+    AST_ACCESO_MATRIZ3D,
     AST_OPERADOR_BINARIO,
     AST_OPERADOR_UNARIO,
     AST_LLAMADA_FUNCION,
-    AST_LLAMADA_FUNCION_MODIFICADORA, 
+    AST_LLAMADA_FUNCION_MODIFICADORA,
 
     // Comandos de E/S
     AST_ESCRIBIR,
@@ -111,7 +113,6 @@ typedef enum
 
     // Comandos de teclado
     AST_LEERTECLA,
-    AST_TECLAMANTENIDA,
     AST_COLISIONRECTANGULOS,
 
     // Comandos GPIO
@@ -141,6 +142,10 @@ typedef enum
 
     // Inclusión de archivos
     AST_INCLUIR,
+
+    // Manejo de errores
+    AST_ALERTA,
+    AST_INTENTAR_ATRAPAR,
 
     // Bloque de código
     AST_BLOQUE,
@@ -264,7 +269,16 @@ typedef struct NodoAST {
             int columnas;
             struct NodoAST* valores_iniciales;
         } declaracion_matriz;
-        
+
+        struct {
+            char *nombre;
+            TipoDato tipo_elemento;
+            int dim1;
+            int dim2;
+            int dim3;
+            struct NodoAST *valores_iniciales;
+        } declaracion_matriz3d;
+
         // Declaración de texto extenso
         struct {
             char* nombre;
@@ -371,6 +385,7 @@ typedef struct NodoAST {
         
         // Literal número
         struct {
+            char *valor_str;
             double valor;
         } literal_numero;
         
@@ -406,7 +421,14 @@ typedef struct NodoAST {
             struct NodoAST* fila;
             struct NodoAST* columna;
         } acceso_matriz;
-        
+
+        struct {
+            char *nombre_matriz;
+            struct NodoAST *indice1;
+            struct NodoAST *indice2;
+            struct NodoAST *indice3;
+        } acceso_matriz3d;
+
         // Operador binario
         struct {
             OperadorBinario operador;
@@ -636,13 +658,7 @@ typedef struct NodoAST {
         struct {
             char* variable;
         } leertecla;
-        
-        // TECLAMANTENIDA
-        struct {
-            struct NodoAST* codigo;
-            char* variable_resultado;
-        } teclamantenida;
-        
+               
         // COLISIONRECTANGULOS
         struct {
             struct NodoAST* x1;
@@ -756,7 +772,19 @@ typedef struct NodoAST {
             char* ruta_archivo;
             struct NodoAST* contenido;
         } incluir;
-        
+
+        // ALERTA
+        struct
+        {
+            struct NodoAST *mensaje;
+        } alerta;
+        // INTENTAR/ATRAPAR
+        struct
+        {
+            struct NodoAST *bloque_intent;
+            struct NodoAST *bloque_atrapar;
+        } intentatrapar;
+
         // Bloque
         struct {
             struct NodoAST* primera;
@@ -842,6 +870,7 @@ NodoAST* crear_nodo_declaracion_variable(const char* nombre, TipoDato tipo, Nodo
 NodoAST* crear_nodo_declaracion_constante(const char* nombre, TipoDato tipo, NodoAST* valor, int linea);
 NodoAST* crear_nodo_declaracion_lista(const char* nombre, TipoDato tipo_elemento, int tamano, NodoAST* valores_iniciales, int linea);
 NodoAST* crear_nodo_declaracion_matriz(const char* nombre, TipoDato tipo_elemento, int filas, int columnas, NodoAST* valores_iniciales, int linea);
+NodoAST *crear_nodo_declaracion_matriz3d(const char *nombre, TipoDato tipo_elemento, int dim1, int dim2, int dim3, NodoAST *valores_iniciales, int linea);
 NodoAST* crear_nodo_declaracion_texto_extenso(const char* nombre, const char* valor_inicial, int linea);
 NodoAST* crear_nodo_declaracion_archivo(const char* nombre, const char* ruta, int modo, int linea);
 NodoAST* crear_nodo_si(NodoAST* condicion, NodoAST* bloque_si, NodoAST* sino_si, NodoAST* bloque_sino, int linea);
@@ -859,13 +888,14 @@ NodoAST *crear_nodo_llamada_funcion_modificadora(char *nombre, NodoAST *argument
 NodoAST* crear_nodo_subprograma(const char* nombre, char** parametros, int num_parametros, NodoAST* bloque, int linea);
 NodoAST* crear_nodo_llamar_a(const char* nombre, NodoAST* argumentos, int linea);
 NodoAST* crear_nodo_retornar(NodoAST* valor, int linea);
-NodoAST* crear_nodo_literal_numero(double valor, int linea);
+NodoAST *crear_nodo_literal_numero(const char *valor_str, double valor, int linea);
 NodoAST* crear_nodo_literal_texto(const char* valor, int linea);
 NodoAST *crear_nodo_literal_caracter(const char *valor, int linea);
 NodoAST* crear_nodo_literal_logico(bool valor, int linea);
 NodoAST* crear_nodo_variable(const char* nombre, int linea);
 NodoAST* crear_nodo_acceso_lista(const char* nombre_lista, NodoAST* indice, int linea);
 NodoAST* crear_nodo_acceso_matriz(const char* nombre_matriz, NodoAST* fila, NodoAST* columna, int linea);
+NodoAST *crear_nodo_acceso_matriz3d(const char *nombre_matriz, NodoAST *indice1, NodoAST *indice2, NodoAST *indice3, int linea);
 NodoAST* crear_nodo_operador_binario(OperadorBinario operador, NodoAST* izquierdo, NodoAST* derecho, int linea);
 NodoAST* crear_nodo_operador_unario(OperadorUnario operador, NodoAST* operando, int linea);
 NodoAST* crear_nodo_llamada_funcion(const char* nombre_funcion, NodoAST* argumentos, int linea);
@@ -903,7 +933,6 @@ NodoAST *crear_nodo_dibujarlinea(NodoAST *x1, NodoAST *y1, NodoAST *x2, NodoAST 
 NodoAST *crear_nodo_dibujarcirculo(NodoAST *centro_x, NodoAST *centro_y, NodoAST *radio, NodoAST *patron, int linea);
 NodoAST *crear_nodo_rellenarrectangulo(NodoAST *x1, NodoAST *y1, NodoAST *x2, NodoAST *y2, NodoAST *patron, int linea);
 NodoAST* crear_nodo_leertecla(const char* variable, int linea);
-NodoAST* crear_nodo_teclamantenida(NodoAST* codigo, const char* variable_resultado, int linea);
 NodoAST* crear_nodo_colisionrectangulos(NodoAST* x1, NodoAST* y1, NodoAST* ancho1, NodoAST* alto1, NodoAST* x2, NodoAST* y2, NodoAST* ancho2, NodoAST* alto2, const char* variable_resultado, int linea);
 NodoAST *crear_nodo_configurarpin(NodoAST *pin, int direccion, int bias, int linea);
 NodoAST *crear_nodo_estadopin(NodoAST *pin, int valor, int linea);
@@ -925,6 +954,8 @@ NodoAST* crear_nodo_cerrarserver(int linea);
 NodoAST* crear_nodo_etiqueta(const char* nombre, int linea);
 NodoAST* crear_nodo_saltar_a(const char* nombre_etiqueta, int linea);
 NodoAST* crear_nodo_incluir(const char* ruta_archivo, int linea);
+NodoAST *crear_nodo_alerta(NodoAST *mensaje, int linea);
+NodoAST *crear_nodo_intentatrapar(NodoAST *bloque_intent, NodoAST *bloque_atrapar, int linea);
 NodoAST* crear_nodo_bloque(int linea);
 NodoAST *crear_nodo_calcular_nodo(NodoAST *destino, NodoAST *expresion, int linea);
 NodoAST *crear_nodo_asignar_nodo(NodoAST *destino, NodoAST *valor, int linea);

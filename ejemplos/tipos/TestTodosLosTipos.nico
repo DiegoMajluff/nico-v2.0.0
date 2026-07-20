@@ -1,0 +1,232 @@
+PROGRAMA TestTodosLosTipos
+
+    // ===============================================
+    // DECLARACIONES DE CONSTANTES DE TODOS LOS TIPOS
+    // ===============================================
+    CONSTANTE ENTERA $C_ENTERA = 12
+    CONSTANTE ENTERA SIN SIGNO $C_ENTERA_SIN_SIGNO = 350
+    CONSTANTE DECIMAL $C_DECIMAL = 2.05248
+    CONSTANTE DECIMAL SIN SIGNO $C_DECIMAL_SIN_SIGNO = 19.60937
+    CONSTANTE CARACTER $C_CARACTER = 'J'
+    CONSTANTE CARACTER SIN SIGNO $C_CARACTER_SIN_SIGNO = 'Ñ'
+    CONSTANTE TEXTO $C_TEXTO = "Hola Nico"
+    CONSTANTE TEXTO EXTENSO $C_TEXTO_EXTENSO = "Este es un texto extenso para probar el tipo"
+    CONSTANTE LOGICA $C_LOGICA = VERDADERO
+
+    // DECLARACIONES DE VARIABLES ESCALARES
+    VARIABLE ENTERA $entera = 0
+    VARIABLE ENTERA SIN SIGNO $entera_sin_signo = 0
+    VARIABLE DECIMAL $decimal = 0.0
+    VARIABLE DECIMAL SIN SIGNO $decimal_sin_signo = 0.0
+    VARIABLE CARACTER $caracter = 'A'
+    VARIABLE CARACTER SIN SIGNO $caracter_sin_signo = 'B'
+    VARIABLE TEXTO $texto = ""
+    VARIABLE TEXTO EXTENSO $texto_extenso = ""
+    VARIABLE LOGICA $logica = FALSO
+
+    // DECLARACIONES DE LISTAS
+    LISTA ENTERA $lista_entera[3] = {10, 20, 30}
+    LISTA ENTERA SIN SIGNO $lista_entera_sin_signo[3] = {100, 200, 300}
+    LISTA DECIMAL $lista_decimal[3] = {1.5, 2.5, 3.5}
+    LISTA DECIMAL SIN SIGNO $lista_decimal_sin_signo[3] = {10.1, 20.2, 30.3}
+    LISTA CARACTER $lista_caracter[3] = {'A', 'B', 'C'}
+    LISTA CARACTER SIN SIGNO $lista_caracter_sin_signo[3] = {'X', 'Y', 'Z'}
+    LISTA TEXTO $lista_texto[3] = {"hola", "mundo", "nico"}
+    LISTA TEXTO EXTENSO $lista_texto_extenso[3] = {"texto1", "texto2", "texto3"}
+    LISTA LOGICA $lista_logica[3] = {VERDADERO, FALSO, VERDADERO}
+
+    // DECLARACIONES DE MATRICES 2D
+    MATRIZ ENTERA $matriz_entera[2][2] = {{1, 2}, {3, 4}}
+    MATRIZ ENTERA SIN SIGNO $matriz_entera_sin_signo[2][2] = {{10, 20}, {30, 40}}
+    MATRIZ DECIMAL $matriz_decimal[2][2] = {{1.1, 2.2}, {3.3, 4.4}}
+    MATRIZ DECIMAL SIN SIGNO $matriz_decimal_sin_signo[2][2] = {{10.5, 20.5}, {30.5, 40.5}}
+    MATRIZ CARACTER $matriz_caracter[2][2] = {{'A', 'B'}, {'C', 'D'}}
+    MATRIZ CARACTER SIN SIGNO $matriz_caracter_sin_signo[2][2] = {{'X', 'Y'}, {'Z', 'W'}}
+    MATRIZ TEXTO $matriz_texto[2][2] = {{"uno", "dos"}, {"tres", "cuatro"}}
+    MATRIZ TEXTO EXTENSO $matriz_texto_extenso[2][2] = {{"ext1", "ext2"}, {"ext3", "ext4"}}
+    MATRIZ LOGICA $matriz_logica[2][2] = {{VERDADERO, FALSO}, {FALSO, VERDADERO}}
+
+    // ========================================
+    // NUEVO: DECLARACIONES DE MATRICES 3D
+    // ========================================
+    MATRIZ ENTERA $matriz3d_entera[2][2][2] = {{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}}
+    MATRIZ ENTERA SIN SIGNO $matriz3d_entera_sin_signo[2][2][2] = {{{10, 20}, {30, 40}}, {{50, 60}, {70, 80}}}
+    MATRIZ DECIMAL $matriz3d_decimal[2][2][2] = {{{1.1, 2.2}, {3.3, 4.4}}, {{5.5, 6.6}, {7.7, 8.8}}}
+    MATRIZ DECIMAL SIN SIGNO $matriz3d_decimal_sin_signo[2][2][2] = {{{10.5, 20.5}, {30.5, 40.5}}, {{50.5, 60.5}, {70.5, 80.5}}}
+    MATRIZ CARACTER $matriz3d_caracter[2][2][2] = {{{'A', 'B'}, {'C', 'D'}}, {{'E', 'F'}, {'G', 'H'}}}
+    MATRIZ CARACTER SIN SIGNO $matriz3d_caracter_sin_signo[2][2][2] = {{{'X', 'Y'}, {'Z', 'W'}}, {{'V', 'U'}, {'T', 'S'}}}
+    MATRIZ TEXTO $matriz3d_texto[2][2][2] = {{{"uno", "dos"}, {"tres", "cuatro"}}, {{"cinco", "seis"}, {"siete", "ocho"}}}
+    MATRIZ TEXTO EXTENSO $matriz3d_texto_extenso[2][2][2] = {{{"ext1", "ext2"}, {"ext3", "ext4"}}, {{"ext5", "ext6"}, {"ext7", "ext8"}}}
+    MATRIZ LOGICA $matriz3d_logica[2][2][2] = {{{VERDADERO, FALSO}, {FALSO, VERDADERO}}, {{VERDADERO, VERDADERO}, {FALSO, FALSO}}}
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║     TEST COMPLETO DE TODOS LOS TIPOS               ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 1: TODOS LOS TIPOS DE CONSTANTES
+    // ========================================
+    ESCRIBIR("=== 1. PRUEBA DE CONSTANTES ===") SALTO
+    ESCRIBIR("ENTERA: $C_ENTERA (esperado: 12)") SALTO
+    ESCRIBIR("ENTERA SIN SIGNO: $C_ENTERA_SIN_SIGNO (esperado: 350)") SALTO
+    ESCRIBIR("DECIMAL: $C_DECIMAL (esperado: 2.05248)") SALTO
+    ESCRIBIR("DECIMAL SIN SIGNO: $C_DECIMAL_SIN_SIGNO (esperado: 19.60937)") SALTO
+    ESCRIBIR("CARACTER: $C_CARACTER (esperado: J)") SALTO
+    ESCRIBIR("CARACTER SIN SIGNO: $C_CARACTER_SIN_SIGNO (esperado: Ñ)") SALTO
+    ESCRIBIR("TEXTO: $C_TEXTO (esperado: Hola Nico)") SALTO
+    ESCRIBIR("TEXTO EXTENSO: $C_TEXTO_EXTENSO") SALTO
+    ESCRIBIR("LOGICA: $C_LOGICA (esperado: VERDADERO)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 2: VARIABLES ESCALARES
+    // ========================================
+    ESCRIBIR("=== 2. VARIABLES ESCALARES ===") SALTO
+    ASIGNAR EN $entera = 42
+    ESCRIBIR("ENTERA: $entera (esperado: 42)") SALTO
+    ASIGNAR EN $entera_sin_signo = 100
+    ESCRIBIR("ENTERA SIN SIGNO: $entera_sin_signo (esperado: 100)") SALTO
+    ASIGNAR EN $decimal = 3.14159
+    ESCRIBIR("DECIMAL: $decimal (esperado: 3.14159)") SALTO
+    ASIGNAR EN $decimal_sin_signo = 2.71828
+    ESCRIBIR("DECIMAL SIN SIGNO: $decimal_sin_signo (esperado: 2.71828)") SALTO
+    ASIGNAR EN $caracter = 'Z'
+    ESCRIBIR("CARACTER: $caracter (esperado: Z)") SALTO
+    ASIGNAR EN $caracter_sin_signo = 'W'
+    ESCRIBIR("CARACTER SIN SIGNO: $caracter_sin_signo (esperado: W)") SALTO
+    ASIGNAR EN $texto = "Hola Nico"
+    ESCRIBIR("TEXTO: $texto (esperado: Hola Nico)") SALTO
+    ASIGNAR EN $texto_extenso = "Este es un texto extenso para probar el tipo"
+    ESCRIBIR("TEXTO EXTENSO: $texto_extenso") SALTO
+    ASIGNAR EN $logica = VERDADERO
+    ESCRIBIR("LOGICA: $logica (esperado: VERDADERO)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 3: LISTAS
+    // ========================================
+    ESCRIBIR("=== 3. LISTAS ===") SALTO
+    ASIGNAR EN $lista_entera[0] = 99
+    ESCRIBIR("LISTA ENTERA[0]: $lista_entera[0] (esperado: 99)") SALTO
+    ASIGNAR EN $lista_entera_sin_signo[1] = 500
+    ESCRIBIR("LISTA ENTERA SIN SIGNO[1]: $lista_entera_sin_signo[1] (esperado: 500)") SALTO
+    ASIGNAR EN $lista_decimal[2] = 9.99
+    ESCRIBIR("LISTA DECIMAL[2]: $lista_decimal[2] (esperado: 9.99)") SALTO
+    ASIGNAR EN $lista_decimal_sin_signo[0] = 15.5
+    ESCRIBIR("LISTA DECIMAL SIN SIGNO[0]: $lista_decimal_sin_signo[0] (esperado: 15.5)") SALTO
+    ASIGNAR EN $lista_caracter[1] = 'M'
+    ESCRIBIR("LISTA CARACTER[1]: $lista_caracter[1] (esperado: M)") SALTO
+    ASIGNAR EN $lista_caracter_sin_signo[2] = 'K'
+    ESCRIBIR("LISTA CARACTER SIN SIGNO[2]: $lista_caracter_sin_signo[2] (esperado: K)") SALTO
+    ASIGNAR EN $lista_texto[0] = "test"
+    ESCRIBIR("LISTA TEXTO[0]: $lista_texto[0] (esperado: test)") SALTO
+    ASIGNAR EN $lista_texto_extenso[1] = "texto extenso modificado"
+    ESCRIBIR("LISTA TEXTO EXTENSO[1]: $lista_texto_extenso[1]") SALTO
+    ASIGNAR EN $lista_logica[2] = FALSO
+    ESCRIBIR("LISTA LOGICA[2]: $lista_logica[2] (esperado: FALSO)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 4: MATRICES 2D
+    // ========================================
+    ESCRIBIR("=== 4. MATRICES 2D ===") SALTO
+    ASIGNAR EN $matriz_entera[0][1] = 77
+    ESCRIBIR("MATRIZ ENTERA[0][1]: $matriz_entera[0][1] (esperado: 77)") SALTO
+    ASIGNAR EN $matriz_entera_sin_signo[1][0] = 888
+    ESCRIBIR("MATRIZ ENTERA SIN SIGNO[1][0]: $matriz_entera_sin_signo[1][0] (esperado: 888)") SALTO
+    ASIGNAR EN $matriz_decimal[1][1] = 7.77
+    ESCRIBIR("MATRIZ DECIMAL[1][1]: $matriz_decimal[1][1] (esperado: 7.77)") SALTO
+    ASIGNAR EN $matriz_decimal_sin_signo[0][0] = 25.25
+    ESCRIBIR("MATRIZ DECIMAL SIN SIGNO[0][0]: $matriz_decimal_sin_signo[0][0] (esperado: 25.25)") SALTO
+    ASIGNAR EN $matriz_caracter[1][0] = 'P'
+    ESCRIBIR("MATRIZ CARACTER[1][0]: $matriz_caracter[1][0] (esperado: P)") SALTO
+    ASIGNAR EN $matriz_caracter_sin_signo[0][1] = 'Q'
+    ESCRIBIR("MATRIZ CARACTER SIN SIGNO[0][1]: $matriz_caracter_sin_signo[0][1] (esperado: Q)") SALTO
+    ASIGNAR EN $matriz_texto[1][1] = "cinco"
+    ESCRIBIR("MATRIZ TEXTO[1][1]: $matriz_texto[1][1] (esperado: cinco)") SALTO
+    ASIGNAR EN $matriz_texto_extenso[0][1] = "extenso modificado"
+    ESCRIBIR("MATRIZ TEXTO EXTENSO[0][1]: $matriz_texto_extenso[0][1]") SALTO
+    ASIGNAR EN $matriz_logica[1][1] = FALSO
+    ESCRIBIR("MATRIZ LOGICA[1][1]: $matriz_logica[1][1] (esperado: FALSO)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 5: MATRICES 3D 
+    // ========================================
+    ESCRIBIR("=== 5. MATRICES 3D ===") SALTO
+    
+    ASIGNAR EN $matriz3d_entera[0][1][0] = 77
+    ESCRIBIR("MATRIZ 3D ENTERA[0][1][0]: $matriz3d_entera[0][1][0] (esperado: 77)") SALTO
+    
+    ASIGNAR EN $matriz3d_entera_sin_signo[1][0][1] = 888
+    ESCRIBIR("MATRIZ 3D ENTERA SIN SIGNO[1][0][1]: $matriz3d_entera_sin_signo[1][0][1] (esperado: 888)") SALTO
+    
+    ASIGNAR EN $matriz3d_decimal[1][1][1] = 7.77
+    ESCRIBIR("MATRIZ 3D DECIMAL[1][1][1]: $matriz3d_decimal[1][1][1] (esperado: 7.77)") SALTO
+    
+    ASIGNAR EN $matriz3d_decimal_sin_signo[0][0][0] = 25.25
+    ESCRIBIR("MATRIZ 3D DECIMAL SIN SIGNO[0][0][0]: $matriz3d_decimal_sin_signo[0][0][0] (esperado: 25.25)") SALTO
+    
+    ASIGNAR EN $matriz3d_caracter[1][0][1] = 'P'
+    ESCRIBIR("MATRIZ 3D CARACTER[1][0][1]: $matriz3d_caracter[1][0][1] (esperado: P)") SALTO
+    
+    ASIGNAR EN $matriz3d_caracter_sin_signo[0][1][0] = 'Q'
+    ESCRIBIR("MATRIZ 3D CARACTER SIN SIGNO[0][1][0]: $matriz3d_caracter_sin_signo[0][1][0] (esperado: Q)") SALTO
+    
+    ASIGNAR EN $matriz3d_texto[1][1][0] = "cinco"
+    ESCRIBIR("MATRIZ 3D TEXTO[1][1][0]: $matriz3d_texto[1][1][0] (esperado: cinco)") SALTO
+    
+    ASIGNAR EN $matriz3d_texto_extenso[0][1][1] = "extenso modificado"
+    ESCRIBIR("MATRIZ 3D TEXTO EXTENSO[0][1][1]: $matriz3d_texto_extenso[0][1][1]") SALTO
+    
+    ASIGNAR EN $matriz3d_logica[1][1][0] = FALSO
+    ESCRIBIR("MATRIZ 3D LOGICA[1][1][0]: $matriz3d_logica[1][1][0] (esperado: FALSO)") SALTO
+    
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 6: OPERACIONES MIXTAS
+    // ========================================
+    ESCRIBIR("=== 6. OPERACIONES MIXTAS ===") SALTO
+    VARIABLE ENTERA $suma_entera = 0
+    CALCULAR EN $suma_entera = $entera + 10
+    ESCRIBIR("ENTERA + 10 = $suma_entera (esperado: 52)") SALTO
+    
+    VARIABLE DECIMAL $suma_decimal = 0.0
+    CALCULAR EN $suma_decimal = $decimal + 1.5
+    ESCRIBIR("DECIMAL + 1.5 = $suma_decimal (esperado: 4.64159)") SALTO
+    
+    VARIABLE ENTERA SIN SIGNO $suma_sin_signo = 0
+    CALCULAR EN $suma_sin_signo = $entera_sin_signo + 50
+    ESCRIBIR("ENTERA SIN SIGNO + 50 = $suma_sin_signo (esperado: 150)") SALTO
+    
+    VARIABLE TEXTO $texto_concat = ""
+    CALCULAR EN $texto_concat = $texto + " - Concatenado"
+    ESCRIBIR("TEXTO concatenado: $texto_concat") SALTO
+    
+    VARIABLE LOGICA $logica_op = FALSO
+    CALCULAR EN $logica_op = $logica Y VERDADERO
+    ESCRIBIR("LOGICA Y VERDADERO = $logica_op (esperado: VERDADERO)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 7: VALORES GRANDES
+    // ========================================
+    ESCRIBIR("=== 7. VALORES GRANDES ===") SALTO
+    VARIABLE ENTERA SIN SIGNO $grande = 0
+    CALCULAR EN $grande = 4000000000
+    ESCRIBIR("ENTERA SIN SIGNO grande: $grande (esperado: 4000000000)") SALTO
+    
+    VARIABLE DECIMAL SIN SIGNO $grande_decimal = 0.0
+    CALCULAR EN $grande_decimal = 9999999999.99
+    ESCRIBIR("DECIMAL SIN SIGNO grande: $grande_decimal (esperado: 9999999999.99)") SALTO
+    ESCRIBIR("") SALTO
+
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║     FIN DEL TEST DE TODOS LOS TIPOS                ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+
+FIN PRINCIPAL
+FINAL

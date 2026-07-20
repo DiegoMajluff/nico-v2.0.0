@@ -1,0 +1,49 @@
+PROGRAMA TestConversionFunciones
+
+// Función ENTERA que internamente hace división decimal
+FUNCION ENTERA dividir_entera($a, $b)
+    VARIABLE ENTERA $resultado = 0
+    CALCULAR EN $resultado = $a / $b
+    RETORNAR $resultado
+FIN FUNCION
+
+// Función ENTERA que recibe parámetros y hace operaciones mixtas
+FUNCION ENTERA calcular_promedio($suma, $cantidad)
+    VARIABLE ENTERA $promedio = 0
+    CALCULAR EN $promedio = $suma / $cantidad
+    RETORNAR $promedio
+FIN FUNCION
+
+// Función que trabaja con listas ENTERAS pero recibe decimales
+FUNCION procesar_lista_entera($lista, $tamano)
+    VARIABLE ENTERA $i = 0
+    MIENTRAS ($i MENOR $tamano) HACER
+        CALCULAR EN $lista[$i] = $lista[$i] * 1.5
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+FIN FUNCION
+
+// Función que trabaja con matrices ENTERAS
+FUNCION procesar_matriz_entera($matriz, $filas, $columnas)
+    VARIABLE ENTERA $i = 0
+    VARIABLE ENTERA $j = 0
+    MIENTRAS ($i MENOR $filas) HACER
+        CALCULAR EN $j = 0
+        MIENTRAS ($j MENOR $columnas) HACER
+            CALCULAR EN $matriz[$i][$j] = $matriz[$i][$j] + 0.7
+            CALCULAR EN $j = $j + 1
+        FIN MIENTRAS
+        CALCULAR EN $i = $i + 1
+    FIN MIENTRAS
+FIN FUNCION
+
+// Función DECIMAL que recibe ENTERO
+FUNCION DECIMAL convertir_a_decimal($valor)
+    VARIABLE DECIMAL $resultado = 0.0
+    CALCULAR EN $resultado = $valor * 2.5
+    RETORNAR $resultado
+FIN FUNCION
+
+BLOQUE PRINCIPAL
+FIN PRINCIPAL
+FINAL

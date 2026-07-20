@@ -31,15 +31,28 @@ Comandos para gestionar temporización, ejecución de shell, información de ter
 
 ---
 
-## ⌨️ Entrada en Tiempo Real (Polling)
+⌨️ Entrada en Tiempo Real (No Bloqueante)
+| Comando|Sintaxis|Comportamiento|
+| ---|---|---|
+| LEERTECLA|LEERTECLA($destino)|Captura 1 tecla sin esperar  Enter . Retorna código ASCII o código especial para teclas de función. No bloquea si no hay tecla disponible (devuelve 0).|
 
-| Comando | Sintaxis | Comportamiento |
-|---------|----------|---------------|
-| `LEERTECLA` | `LEERTECLA($destino)` | Captura 1 tecla sin esperar `Enter`. Retorna código ASCII/byte. No bloquea si hay tecla disponible. |
-| `TECLAMANTENIDA` | `TECLAMANTENIDA(codigo, $destino)` | Consulta estado actual de una tecla específica. `$destino` recibe `1` si está presionada, `0` si no. |
+🎯 **Códigos de Teclas Especiales**:
+| Tecla|Código|Tecla|Código|
+| ---|---|---|---|
+| Flecha Arriba|1001|Flecha Abajo|1002|
+| Flecha Derecha|1003|Flecha Izquierda|1004|
+| Home|1005|End|1006|
+| Insert|1007|Supr (Delete)|1008|
+| Page Up|1009|Page Down|1010|
 
-> ⚠️ En Linux, flechas y F1-F12 envían secuencias multi-byte. `LEERTECLA` consume 1 byte por llamada. Para portabilidad, priorizá teclas ASCII puras (A-Z, 0-9, ESC, ENTER) en juegos y UIs reactivas.
+💡 **Uso en Juegos**: `LEERTECLA` es ideal para juegos y UIs reactivas. El buffer se limpia automáticamente al inicio de cada iteración de `MIENTRAS`, permitiendo detectar teclas presionadas en cada frame sin acumulación histórica.
 
+⚠️ **Notas Técnicas**:
+- `LEERTECLA` consume la tecla del buffer (una sola lectura por tecla presionada)
+- En bucles `MIENTRAS`, el buffer se limpia automáticamente en cada iteración
+- Para teclas ASCII (a-z, 0-9), usá el código decimal (97='a', 100='d', 113='q')
+- Para flechas y teclas especiales, usá los códigos 1001-1010
+- Ctrl+C (código 3) interrumpe el programa automáticamente
 ---
 
 ## 📝 Entrada Multilínea: LEERHASTA
@@ -103,7 +116,7 @@ FIN SI
 | `LEERTECLA($t)` | `getch()` / `_getch()` | `sys.stdin.read(1)` | `read -n1` |
 | `LEERHASTA($v, "D")` | Loop `fgets` + `strstr` | `sys.stdin.read().split("D")[0]` | `read -d 'D' var` |
 
-> 📌 **Windows/Linux:** Todos los comandos usan fallbacks nativos. `SISTEMA` ejecuta `cmd.exe` en Win y `/bin/sh` en Linux. `LEERTECLA` y `TECLAMANTENIDA` usan `conio.h` (Win) o `termios` (Linux). Comportamiento lógico idéntico.
+> 📌  Windows/Linux:  Todos los comandos usan fallbacks nativos.  `SISTEMA`  ejecuta  `cmd.exe`  en Win y  `/bin/sh`  en Linux.  `LEERTECLA`  usa  `conio.h`  (Win) o  `termios`  (Linux). Comportamiento lógico idéntico.
 
 ### 🧪 Ejemplo Mínimo Validado: Medir Duración de Código (TIEMPOMS)
 ```nico

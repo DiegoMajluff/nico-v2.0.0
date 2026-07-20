@@ -103,6 +103,18 @@ NodoAST* crear_nodo_declaracion_matriz(const char* nombre, TipoDato tipo_element
     return nodo;
 }
 
+NodoAST *crear_nodo_declaracion_matriz3d(const char *nombre, TipoDato tipo_elemento, int dim1, int dim2, int dim3, NodoAST *valores_iniciales, int linea)
+{
+    NodoAST *nodo = crear_nodo_base(AST_DECLARACION_MATRIZ3D, linea);
+    nodo->datos.declaracion_matriz3d.nombre = duplicar_string(nombre);
+    nodo->datos.declaracion_matriz3d.tipo_elemento = tipo_elemento;
+    nodo->datos.declaracion_matriz3d.dim1 = dim1;
+    nodo->datos.declaracion_matriz3d.dim2 = dim2;
+    nodo->datos.declaracion_matriz3d.dim3 = dim3;
+    nodo->datos.declaracion_matriz3d.valores_iniciales = valores_iniciales;
+    return nodo;
+}
+
 NodoAST* crear_nodo_declaracion_texto_extenso(const char* nombre, const char* valor_inicial, int linea) {
     NodoAST* nodo = crear_nodo_base(AST_DECLARACION_TEXTO_EXTENSO, linea);
     nodo->datos.declaracion_texto_extenso.nombre = duplicar_string(nombre);
@@ -235,8 +247,10 @@ NodoAST* crear_nodo_retornar(NodoAST* valor, int linea) {
     return nodo;
 }
 
-NodoAST* crear_nodo_literal_numero(double valor, int linea) {
-    NodoAST* nodo = crear_nodo_base(AST_LITERAL_NUMERO, linea);
+NodoAST *crear_nodo_literal_numero(const char *valor_str, double valor, int linea)
+{
+    NodoAST *nodo = crear_nodo_base(AST_LITERAL_NUMERO, linea);
+    nodo->datos.literal_numero.valor_str = valor_str ? strdup(valor_str) : NULL;
     nodo->datos.literal_numero.valor = valor;
     return nodo;
 }
@@ -279,6 +293,16 @@ NodoAST* crear_nodo_acceso_matriz(const char* nombre_matriz, NodoAST* fila, Nodo
     nodo->datos.acceso_matriz.nombre_matriz = duplicar_string(nombre_matriz);
     nodo->datos.acceso_matriz.fila = fila;
     nodo->datos.acceso_matriz.columna = columna;
+    return nodo;
+}
+
+NodoAST *crear_nodo_acceso_matriz3d(const char *nombre_matriz, NodoAST *indice1, NodoAST *indice2, NodoAST *indice3, int linea)
+{
+    NodoAST *nodo = crear_nodo_base(AST_ACCESO_MATRIZ3D, linea);
+    nodo->datos.acceso_matriz3d.nombre_matriz = duplicar_string(nombre_matriz);
+    nodo->datos.acceso_matriz3d.indice1 = indice1;
+    nodo->datos.acceso_matriz3d.indice2 = indice2;
+    nodo->datos.acceso_matriz3d.indice3 = indice3;
     return nodo;
 }
 
@@ -548,13 +572,6 @@ NodoAST* crear_nodo_leertecla(const char* variable, int linea) {
     return nodo;
 }
 
-NodoAST* crear_nodo_teclamantenida(NodoAST* codigo, const char* variable_resultado, int linea) {
-    NodoAST* nodo = crear_nodo_base(AST_TECLAMANTENIDA, linea);
-    nodo->datos.teclamantenida.codigo = codigo;
-    nodo->datos.teclamantenida.variable_resultado = duplicar_string(variable_resultado);
-    return nodo;
-}
-
 NodoAST* crear_nodo_colisionrectangulos(NodoAST* x1, NodoAST* y1, NodoAST* ancho1, NodoAST* alto1, 
                                          NodoAST* x2, NodoAST* y2, NodoAST* ancho2, NodoAST* alto2, 
                                          const char* variable_resultado, int linea) {
@@ -692,6 +709,22 @@ NodoAST* crear_nodo_incluir(const char* ruta_archivo, int linea) {
     NodoAST* nodo = crear_nodo_base(AST_INCLUIR, linea);
     nodo->datos.incluir.ruta_archivo = duplicar_string(ruta_archivo);
     nodo->datos.incluir.contenido = NULL;  // Se llena al procesar
+    return nodo;
+}
+
+// Manejo de errores
+NodoAST *crear_nodo_alerta(NodoAST *mensaje, int linea)
+{
+    NodoAST *nodo = crear_nodo_base(AST_ALERTA, linea);
+    nodo->datos.alerta.mensaje = mensaje;
+    return nodo;
+}
+
+NodoAST *crear_nodo_intentatrapar(NodoAST *bloque_intent, NodoAST *bloque_atrapar, int linea)
+{
+    NodoAST *nodo = crear_nodo_base(AST_INTENTAR_ATRAPAR, linea);
+    nodo->datos.intentatrapar.bloque_intent = bloque_intent;
+    nodo->datos.intentatrapar.bloque_atrapar = bloque_atrapar;
     return nodo;
 }
 
@@ -878,6 +911,12 @@ void liberar_nodo(NodoAST* nodo) {
         case AST_RETORNAR:
             liberar_nodo(nodo->datos.retornar.valor);
             break;
+        case AST_LITERAL_NUMERO:
+            if (nodo->datos.literal_numero.valor_str)
+            {
+                free(nodo->datos.literal_numero.valor_str);
+            }
+            break;
         case AST_LITERAL_TEXTO:
             free(nodo->datos.literal_texto.valor);
             break;
@@ -1019,10 +1058,6 @@ void liberar_nodo(NodoAST* nodo) {
         case AST_LEERTECLA:
             free(nodo->datos.leertecla.variable);
             break;
-        case AST_TECLAMANTENIDA:
-            liberar_nodo(nodo->datos.teclamantenida.codigo);
-            free(nodo->datos.teclamantenida.variable_resultado);
-            break;
         case AST_COLISIONRECTANGULOS:
             liberar_nodo(nodo->datos.colisionrectangulos.x1);
             liberar_nodo(nodo->datos.colisionrectangulos.y1);
@@ -1090,6 +1125,13 @@ void liberar_nodo(NodoAST* nodo) {
             free(nodo->datos.incluir.ruta_archivo);
             liberar_nodo(nodo->datos.incluir.contenido);
             break;
+        case AST_ALERTA:
+            liberar_nodo(nodo->datos.alerta.mensaje);
+            break;
+        case AST_INTENTAR_ATRAPAR:
+            liberar_nodo(nodo->datos.intentatrapar.bloque_intent);
+            liberar_nodo(nodo->datos.intentatrapar.bloque_atrapar);
+            break;
         case AST_BLOQUE:
             liberar_nodo(nodo->datos.bloque.primera);
             break;
@@ -1110,74 +1152,77 @@ void liberar_ast(NodoAST* raiz) {
 
 // Funciones de utilidad
 const char* nombre_tipo_nodo(TipoNodo tipo) {
-    static const char* nombres[] = {
+    static const char *nombres[] = {
         // Programa y bloques
         "PROGRAMA", "BLOQUE PRINCIPAL",
-        
+
         // Declaraciones
         "VARIABLE", "CONSTANTE", "LISTA",
         "MATRIZ", "TEXTO EXTENSO", "ARCHIVO",
-        
+
         // Estructuras de control
         "SI", "SINO SI", "SINO", "PARA", "MIENTRAS", "REALIZAR",
         "SEGUN CASO", "CASO", "POR DEFECTO", "CORTE",
-        
+
         // Funciones y subprogramas
         "FUNCION", "SUBPROGRAMA", "LLAMAR A", "RETORNAR",
-        
+
         // Literales (nodos internos del AST)
         "número", "cadena_texto", "caracter", "lógico",
-        
+
         // Accesos y operadores (nodos internos del AST)
         "variable", "[índice]", "[fila][col]",
         "operador", "operador_unario", "llamada_a_funcion",
-        
+
         // Comandos de E/S
         "ESCRIBIR", "LEER", "LEERCARACTER", "LEERHASTA", "LIMPIARPANTALLA",
-        
+
         // Formato de texto
         "COLORTEXTO", "COLORFONDO", "TEXTONEGRITA", "TEXTOCURSIVA", "TEXTOSUBRAYADO",
         "RESETTEXTO", "RESETCOLOR",
-        
+
         // Cursor y terminal
         "CURSOR", "POSICIONAR", "OCULTARCURSOR", "MOSTRARCURSOR",
         "ANCHOTERMINAL", "ALTOTERMINAL",
-        
+
         // Tiempo
         "ESPERAR", "TIEMPOMS", "HORAACTUAL", "FECHAACTUAL",
-        
+
         // Cálculo
         "CALCULAR EN", "RESULTADO EN", "ASIGNAR EN",
-        
+
         // Archivos
         "ABRIRARCHIVO", "CERRARARCHIVO", "ESCRIBIRARCHIVO", "LEERARCHIVO", "USARARCHIVO",
-        
+
         // Sistema
         "SISTEMA",
-        
+
         // Dibujo
         "DIBUJARLINEA", "DIBUJARCIRCULO", "RELLENARRECTANGULO",
-        
+
         // Teclado
-        "LEERTECLA", "TECLAMANTENIDA", "COLISIONRECTANGULOS",
-        
+        "LEERTECLA", "COLISIONRECTANGULOS",
+
         // GPIO
         "CONFIGURARPIN", "ESTADOPIN", "LEERPIN",
-        
+
         // Base de datos
         "CONECTARBD", "CERRARBD", "EJECUTARBD", "CONSULTARBD", "CERRARCONSULTABD",
         "INICIARTRANSACCION", "CONFIRMARTRANSACCION", "DESHACERTRANSACCION",
-        
+
         // Servidor web
         "INICIARSERVER", "CERRARSERVER",
-        
+
         // Etiquetas y saltos
         "ETIQUETA", "SALTAR A", "INCLUIR", "BLOQUE",
-        
+
         // Funciones de texto
         "COPIARTEXTO", "CONCATENARTEXTO", "MAYUSCULAS", "MINUSCULAS",
         "RECORTARTEXTO", "REEMPLAZARTEXTO", "REPETIRTEXTO", "EXTRAERTEXTO",
-        "DIVIDIRTEXTO", "ENTEROATEXTO", "DECIMALATEXTO", "CARACTERATEXTO"
+        "DIVIDIRTEXTO", "ENTEROATEXTO", "DECIMALATEXTO", "CARACTERATEXTO",
+
+        // Manejo de errores
+        "ALERTA", "INTENTAR/ATRAPAR"
     };
     if (tipo >= 0 && tipo < sizeof(nombres)/sizeof(nombres[0])) {
         return nombres[tipo];
@@ -1274,11 +1319,20 @@ static void imprimir_nodo_sin_hermanos(NodoAST* nodo, int nivel) {
                 imprimir_nodo_sin_hermanos(nodo->datos.declaracion_constante.valor, nivel + 1);
             }
             break;
-            
+
         case AST_LITERAL_NUMERO:
-            printf(" - valor: %g\n", nodo->datos.literal_numero.valor);
+            if (nodo->datos.literal_numero.valor_str)
+            {
+                printf(" - valor_str: %s (double: %g)\n",
+                       nodo->datos.literal_numero.valor_str,
+                       nodo->datos.literal_numero.valor);
+            }
+            else
+            {
+                printf(" - valor: %g\n", nodo->datos.literal_numero.valor);
+            }
             break;
-            
+
         case AST_LITERAL_TEXTO:
             printf(" - valor: \"%s\"\n", nodo->datos.literal_texto.valor ? nodo->datos.literal_texto.valor : "");
             break;

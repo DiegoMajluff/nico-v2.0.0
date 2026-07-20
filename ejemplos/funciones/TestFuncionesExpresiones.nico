@@ -1,0 +1,139 @@
+PROGRAMA TestFuncionesExpresiones
+
+    // Funciones básicas
+    FUNCION ENTERA duplicar($x)
+        RETORNAR $x * 2
+    FIN FUNCION
+
+    FUNCION ENTERA sumar($a, $b)
+        RETORNAR $a + $b
+    FIN FUNCION
+
+    FUNCION DECIMAL mitad($x)
+        RETORNAR $x / 2.0
+    FIN FUNCION
+
+    FUNCION LOGICA es_par($x)
+        VARIABLE ENTERA $resto = 0
+        CALCULAR EN $resto = $x MOD 2
+        SI ($resto IGUAL 0) ENTONCES
+            RETORNAR VERDADERO
+        FIN SI
+        RETORNAR FALSO
+    FIN FUNCION
+
+    FUNCION ENTERA factorial($n)
+        SI ($n MENOR IGUAL 1) ENTONCES
+            RETORNAR 1
+        FIN SI
+        VARIABLE ENTERA $resultado = 0
+        CALCULAR EN $resultado = $n * factorial($n - 1)
+        RETORNAR $resultado
+    FIN FUNCION
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   TEST FUNCIONES EN EXPRESIONES                    ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 1: Función simple
+    // ========================================
+    ESCRIBIR("=== 1. FUNCION SIMPLE ===") SALTO
+    VARIABLE ENTERA $r1 = 0
+    CALCULAR EN $r1 = duplicar(5)
+    ESCRIBIR("duplicar(5) = $r1 (esperado: 10)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 2: Función en expresión aritmética
+    // ========================================
+    ESCRIBIR("=== 2. FUNCION EN EXPRESION ===") SALTO
+    VARIABLE ENTERA $r2 = 0
+    CALCULAR EN $r2 = duplicar(5) + 3
+    ESCRIBIR("duplicar(5) + 3 = $r2 (esperado: 13)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 3: Dos funciones en una expresión
+    // ========================================
+    ESCRIBIR("=== 3. DOS FUNCIONES ===") SALTO
+    VARIABLE ENTERA $r3 = 0
+    CALCULAR EN $r3 = duplicar(5) + sumar(3, 4)
+    ESCRIBIR("duplicar(5) + sumar(3,4) = $r3 (esperado: 17)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 4: Función como argumento de otra función
+    // ========================================
+    ESCRIBIR("=== 4. FUNCION COMO ARGUMENTO ===") SALTO
+    VARIABLE ENTERA $r4 = 0
+    CALCULAR EN $r4 = duplicar(sumar(3, 4))
+    ESCRIBIR("duplicar(sumar(3,4)) = $r4 (esperado: 14)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 5: Función en multiplicación
+    // ========================================
+    ESCRIBIR("=== 5. FUNCION EN MULTIPLICACION ===") SALTO
+    VARIABLE ENTERA $r5 = 0
+    CALCULAR EN $r5 = duplicar(3) * sumar(2, 3)
+    ESCRIBIR("duplicar(3) * sumar(2,3) = $r5 (esperado: 30)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 6: Función DECIMAL en expresión
+    // ========================================
+    ESCRIBIR("=== 6. FUNCION DECIMAL ===") SALTO
+    VARIABLE DECIMAL $r6 = 0.0
+    CALCULAR EN $r6 = mitad(10) + 2.5
+    ESCRIBIR("mitad(10) + 2.5 = $r6 (esperado: 7.5)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 7: Función LOGICA en SI
+    // ========================================
+    ESCRIBIR("=== 7. FUNCION LOGICA EN SI ===") SALTO
+    SI(es_par(10)) ENTONCES
+        ESCRIBIR("10 es par (esperado: VERDADERO)") SALTO
+    FIN SI
+    SI(es_par(7)) ENTONCES
+        ESCRIBIR("ERROR: 7 no debería ser par") SALTO
+    SINO
+        ESCRIBIR("7 es impar (esperado: FALSO)") SALTO
+    FIN SI
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 8: Función recursiva
+    // ========================================
+    ESCRIBIR("=== 8. FUNCION RECURSIVA ===") SALTO
+    VARIABLE ENTERA $r8 = 0
+    CALCULAR EN $r8 = factorial(5)
+    ESCRIBIR("factorial(5) = $r8 (esperado: 120)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 9: Asignación directa (sin CALCULAR)
+    // ========================================
+    ESCRIBIR("=== 9. ASIGNACION DIRECTA ===") SALTO
+    VARIABLE ENTERA $r9 = duplicar(7)
+    ESCRIBIR("$r9 = duplicar(7) = $r9 (esperado: 14)") SALTO
+    ESCRIBIR("") SALTO
+
+    // ========================================
+    // TEST 10: Expresión compleja
+    // ========================================
+    ESCRIBIR("=== 10. EXPRESION COMPLEJA ===") SALTO
+    VARIABLE ENTERA $r10 = 0
+    CALCULAR EN $r10 = (duplicar(3) + sumar(2, 4)) * 2
+    ESCRIBIR("(duplicar(3) + sumar(2,4)) * 2 = $r10 (esperado: 24)") SALTO
+    ESCRIBIR("") SALTO
+
+    ESCRIBIR("╔════════════════════════════════════════════════════╗") SALTO
+    ESCRIBIR("║   FIN DEL TEST                                     ║") SALTO
+    ESCRIBIR("╚════════════════════════════════════════════════════╝") SALTO
+
+FIN PRINCIPAL
+FINAL

@@ -20,7 +20,6 @@
 #include <limits.h>
 #include <time.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <sqlite3.h>
 #include "web.h"
 
@@ -29,35 +28,16 @@
     #include <windows.h>
     #include <conio.h>
 #else
-    #include <termios.h>
     #include <sys/ioctl.h>
     #include <sys/select.h>
     #include <fcntl.h>
+    #include <poll.h>
+    #include <signal.h>
+    #include <termios.h>
+    #include <unistd.h>
 #endif
 
-// Función para verificar Ctrl+C sin bloquear
-static int verificar_ctrl_c(void) {
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-    struct timeval tv = {0, 0};
-    
-    if (select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv) > 0) {
-        unsigned char ch;
-        if (read(STDIN_FILENO, &ch, 1) == 1 && ch == 3) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-// Función para interrumpir programa
-static void interrumpir_programa(void) {
-    printf("\n> Programa interrumpido por Ctrl+C.\n");
-    fflush(stdout);
-    exit(0);
-}
-
+static bool tipo_valor_compatible(TipoDato tipo_declarado, TipoValor tipo_valor);
 // Declaraciones de funciones GPIO
 extern void procesar_gpio_configurar(int pin, int direccion, int bias);
 extern void procesar_gpio_estado_pin(int pin, int valor);
@@ -71,16 +51,13 @@ extern int pwm_detener(int pin);
 static unsigned char teclado_buffer[256];
 static int teclado_buffer_len = 0;
 static int teclado_modo_raw = 0;
-static int teclado_buffer_actualizado_esta_frame = 0;
 static struct termios teclado_config_original;
 
 void teclado_iniciar_modo_raw(void)
 {
     if (teclado_modo_raw)
         return;
-
 #ifdef _WIN32
-    // Windows: no necesita configuración especial, usamos _kbhit()/_getch()
     teclado_modo_raw = 1;
 #else
     tcgetattr(STDIN_FILENO, &teclado_config_original);
@@ -88,61 +65,65 @@ void teclado_iniciar_modo_raw(void)
     cfmakeraw(&newt);
     newt.c_cc[VMIN] = 0;
     newt.c_cc[VTIME] = 0;
-
-    // Reactivar post-procesamiento de salida para que \n se convierta a \r\n
-    // Esto evita el desplazamiento diagonal en la impresión
     newt.c_oflag |= OPOST | ONLCR;
-
     tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
     teclado_modo_raw = 1;
 #endif
 }
 
 void teclado_actualizar_buffer(void)
 {
-    // Solo actualizar una vez por frame
-    if (teclado_buffer_actualizado_esta_frame)
-        return;
-
     if (!teclado_modo_raw)
-    {
         teclado_iniciar_modo_raw();
-    }
 
     teclado_buffer_len = 0;
 
 #ifdef _WIN32
-    // Windows: usar _kbhit() y _getch()
     while (_kbhit() && teclado_buffer_len < 256)
     {
         unsigned char ch = _getch();
-        
-        // Detectar teclas especiales (flechas, etc.)
         if (ch == 0 || ch == 224)
         {
             if (_kbhit())
             {
                 unsigned char ch2 = _getch();
                 int key_code = 0;
-                
-                // Mapear códigos de Windows a códigos internos
                 switch (ch2)
                 {
-                    case 72: key_code = 1001; break; // UP
-                    case 80: key_code = 1002; break; // DOWN
-                    case 77: key_code = 1003; break; // RIGHT
-                    case 75: key_code = 1004; break; // LEFT
-                    case 71: key_code = 1005; break; // HOME
-                    case 79: key_code = 1006; break; // END
-                    case 82: key_code = 1007; break; // INSERT
-                    case 83: key_code = 1008; break; // DELETE
-                    case 73: key_code = 1009; break; // PAGE UP
-                    case 81: key_code = 1010; break; // PAGE DOWN
-                    default: key_code = ch2; break;
+                case 72:
+                    key_code = 1001;
+                    break;
+                case 80:
+                    key_code = 1002;
+                    break;
+                case 77:
+                    key_code = 1003;
+                    break;
+                case 75:
+                    key_code = 1004;
+                    break;
+                case 71:
+                    key_code = 1005;
+                    break;
+                case 79:
+                    key_code = 1006;
+                    break;
+                case 82:
+                    key_code = 1007;
+                    break;
+                case 83:
+                    key_code = 1008;
+                    break;
+                case 73:
+                    key_code = 1009;
+                    break;
+                case 81:
+                    key_code = 1010;
+                    break;
+                default:
+                    key_code = ch2;
+                    break;
                 }
-                
-                // Almacenar el código de tecla especial (2 bytes)
                 if (key_code > 255)
                 {
                     if (teclado_buffer_len < 255)
@@ -159,180 +140,117 @@ void teclado_actualizar_buffer(void)
         }
         else
         {
-            // Detectar Ctrl+C (ASCII 3)
             if (ch == 3)
             {
+                teclado_restaurar_modo();
                 printf("\n> Programa interrumpido por Ctrl+C.\n");
                 fflush(stdout);
                 exit(0);
             }
-            // Carácter normal
             teclado_buffer[teclado_buffer_len++] = ch;
         }
     }
 #else
-    // Linux/Unix: usar select() y read()
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-    struct timeval tv = {0, 5000}; // 5ms timeout
+    // Linux: lectura directa y simple
+    struct pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN};
 
-    while (select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv) > 0)
+    if (poll(&pfd, 1, 0) <= 0)
+        return;
+
+    char buf[8] = {0};
+    ssize_t n = read(STDIN_FILENO, buf, sizeof(buf) - 1);
+    if (n <= 0)
+        return;
+
+    buf[n] = '\0';
+
+    // Ctrl+C
+    if (n == 1 && buf[0] == 3)
     {
-        unsigned char buffer[16];
-        ssize_t n = read(STDIN_FILENO, buffer, sizeof(buffer));
+        teclado_restaurar_modo();
+        printf("\n> Programa interrumpido por Ctrl+C.\n");
+        fflush(stdout);
+        exit(0);
+    }
 
-        if (n > 0)
+    // Carácter simple
+    if (n == 1)
+    {
+        if (teclado_buffer_len < 256)
+            teclado_buffer[teclado_buffer_len++] = (unsigned char)buf[0];
+        return;
+    }
+
+    // Secuencia ANSI: ESC [ código
+    if (n >= 3 && buf[0] == '\x1B' && buf[1] == '[')
+    {
+        int key_code = 0;
+        switch (buf[2])
         {
-            // Procesar cada carácter leído
-            for (ssize_t i = 0; i < n && teclado_buffer_len < 256; i++)
-            {
-                unsigned char ch = buffer[i];
-
-                // Detectar secuencia de escape (CSI)
-                if (ch == 27 && i + 1 < n && buffer[i + 1] == '[')
-                {
-                    // Es una secuencia CSI: ESC [ ...
-                    i++; // Saltar ESC
-                    i++; // Saltar [
-
-                    // Leer el código de la tecla especial
-                    if (i < n)
-                    {
-                        unsigned char code = buffer[i];
-                        int key_code = 0;
-
-                        // Convertir código a número especial
-                        switch (code)
-                        {
-                        case 'A':
-                            key_code = 1001;
-                            break; // Flecha arriba
-                        case 'B':
-                            key_code = 1002;
-                            break; // Flecha abajo
-                        case 'C':
-                            key_code = 1003;
-                            break; // Flecha derecha
-                        case 'D':
-                            key_code = 1004;
-                            break; // Flecha izquierda
-                        case 'H':
-                            key_code = 1005;
-                            break; // Home
-                        case 'F':
-                            key_code = 1006;
-                            break; // End
-                        case '2':
-                            key_code = 1007;
-                            break; // Insert (necesita leer ~)
-                        case '3':
-                            key_code = 1008;
-                            break; // Delete (necesita leer ~)
-                        case '5':
-                            key_code = 1009;
-                            break; // Page Up (necesita leer ~)
-                        case '6':
-                            key_code = 1010;
-                            break; // Page Down (necesita leer ~)
-                        default:
-                            key_code = code;
-                            break;
-                        }
-
-                        // Para Insert, Delete, PageUp, PageDown, necesitamos leer el '~'
-                        if (key_code >= 1007 && key_code <= 1010)
-                        {
-                            if (i + 1 < n && buffer[i + 1] == '~')
-                            {
-                                i++; // Saltar '~'
-                            }
-                        }
-
-                        // Almacenar el código de tecla especial
-                        // Usamos 2 bytes para almacenar códigos > 255
-                        if (key_code > 255)
-                        {
-                            if (teclado_buffer_len < 255)
-                            {
-                                teclado_buffer[teclado_buffer_len++] = (key_code >> 8) & 0xFF;
-                                teclado_buffer[teclado_buffer_len++] = key_code & 0xFF;
-                            }
-                        }
-                        else
-                        {
-                            teclado_buffer[teclado_buffer_len++] = key_code;
-                        }
-                    }
-                }
-                else
-                {
-                    // Detectar Ctrl+C (ASCII 3)
-                    if (ch == 3)
-                    {
-                        // Restaurar terminal
-                        tcsetattr(STDIN_FILENO, TCSANOW, &teclado_config_original);
-                        printf("\n> Programa interrumpido por Ctrl+C.\n");
-                        fflush(stdout);
-                        exit(0);
-                    }
-                    // Carácter normal
-                    teclado_buffer[teclado_buffer_len++] = ch;
-                }
-            }
+        case 'A':
+            key_code = 1001;
+            break;
+        case 'B':
+            key_code = 1002;
+            break;
+        case 'C':
+            key_code = 1003;
+            break;
+        case 'D':
+            key_code = 1004;
+            break;
+        case 'H':
+            key_code = 1005;
+            break;
+        case 'F':
+            key_code = 1006;
+            break;
+        case '2':
+            if (n >= 4 && buf[3] == '~')
+                key_code = 1007;
+            break;
+        case '3':
+            if (n >= 4 && buf[3] == '~')
+                key_code = 1008;
+            break;
+        case '5':
+            if (n >= 4 && buf[3] == '~')
+                key_code = 1009;
+            break;
+        case '6':
+            if (n >= 4 && buf[3] == '~')
+                key_code = 1010;
+            break;
         }
 
-        FD_ZERO(&fds);
-        FD_SET(STDIN_FILENO, &fds);
-        tv.tv_sec = 0;
-        tv.tv_usec = 0;
+        if (key_code > 0 && teclado_buffer_len < 254)
+        {
+            teclado_buffer[teclado_buffer_len++] = (key_code >> 8) & 0xFF;
+            teclado_buffer[teclado_buffer_len++] = key_code & 0xFF;
+        }
+        return;
+    }
+
+    // Otros caracteres
+    for (ssize_t i = 0; i < n && teclado_buffer_len < 256; i++)
+    {
+        teclado_buffer[teclado_buffer_len++] = (unsigned char)buf[i];
     }
 #endif
-
-    teclado_buffer_actualizado_esta_frame = 1;
-}
-
-int teclado_verificar(int codigo)
-{
-    teclado_actualizar_buffer();
-
-    // Si el código es > 255, es una tecla especial (2 bytes)
-    if (codigo > 255)
-    {
-        for (int i = 0; i < teclado_buffer_len - 1; i++)
-        {
-            int buffer_code = (teclado_buffer[i] << 8) | teclado_buffer[i + 1];
-            if (buffer_code == codigo)
-            {
-                return 1;
-            }
-        }
-    }
-    else
-    {
-        // Código normal (1 byte)
-        for (int i = 0; i < teclado_buffer_len; i++)
-        {
-            if (teclado_buffer[i] == codigo)
-            {
-                return 1;
-            }
-        }
-    }
-    return 0;
 }
 
 void teclado_limpiar_buffer(void)
 {
     teclado_buffer_len = 0;
-    teclado_buffer_actualizado_esta_frame = 0; // Permitir actualización en el próximo frame
 }
 
 void teclado_restaurar_modo(void)
 {
     if (teclado_modo_raw)
     {
+#ifndef _WIN32
         tcsetattr(STDIN_FILENO, TCSANOW, &teclado_config_original);
+#endif
         teclado_modo_raw = 0;
     }
 }
@@ -504,10 +422,80 @@ static char *obtener_texto_destino(NodoAST *destino, Contexto *ctx)
     return NULL;
 }
 
-static void contexto_set_error(Contexto* ctx, const char* mensaje) {
+static bool tipo_valor_compatible(TipoDato tipo_declarado, TipoValor tipo_valor)
+{
+    switch (tipo_declarado)
+    {
+    case TIPO_ENTERO:
+        // Aceptar ENTERO, ENTERO_SIN_SIGNO, y DECIMAL (la conversión se maneja en asignar)
+        if (tipo_valor == VALOR_ENTERO || tipo_valor == VALOR_ENTERO_SIN_SIGNO)
+            return true;
+        if (tipo_valor == VALOR_DECIMAL || tipo_valor == VALOR_DECIMAL_SIN_SIGNO)
+            return true;
+        return false;
+
+    case TIPO_ENTERO_SIN_SIGNO:
+        return tipo_valor == VALOR_ENTERO_SIN_SIGNO ||
+               tipo_valor == VALOR_ENTERO ||
+               tipo_valor == VALOR_DECIMAL ||
+               tipo_valor == VALOR_DECIMAL_SIN_SIGNO;
+
+    case TIPO_DECIMAL:
+        return tipo_valor == VALOR_DECIMAL ||
+               tipo_valor == VALOR_DECIMAL_SIN_SIGNO ||
+               tipo_valor == VALOR_ENTERO ||
+               tipo_valor == VALOR_ENTERO_SIN_SIGNO;
+
+    case TIPO_DECIMAL_SIN_SIGNO:
+        return tipo_valor == VALOR_DECIMAL_SIN_SIGNO ||
+               tipo_valor == VALOR_DECIMAL ||
+               tipo_valor == VALOR_ENTERO_SIN_SIGNO ||
+               tipo_valor == VALOR_ENTERO;
+
+    case TIPO_CARACTER:
+        return tipo_valor == VALOR_CARACTER ||
+               tipo_valor == VALOR_CARACTER_SIN_SIGNO ||
+               tipo_valor == VALOR_ENTERO ||         
+               tipo_valor == VALOR_ENTERO_SIN_SIGNO; 
+
+    case TIPO_CARACTER_SIN_SIGNO:
+        return tipo_valor == VALOR_CARACTER_SIN_SIGNO ||
+               tipo_valor == VALOR_CARACTER ||
+               tipo_valor == VALOR_ENTERO ||         
+               tipo_valor == VALOR_ENTERO_SIN_SIGNO; 
+
+    case TIPO_TEXTO:
+        return tipo_valor == VALOR_TEXTO || tipo_valor == VALOR_TEXTO_EXTENSO;
+
+    case TIPO_TEXTO_EXTENSO:
+        return tipo_valor == VALOR_TEXTO_EXTENSO || tipo_valor == VALOR_TEXTO;
+
+    case TIPO_LOGICA:
+        return tipo_valor == VALOR_LOGICA;
+
+    case TIPO_ARCHIVO:
+        return tipo_valor == VALOR_ARCHIVO;
+
+    case TIPO_LISTA:
+        return tipo_valor == VALOR_LISTA;
+
+    case TIPO_MATRIZ:
+        return tipo_valor == VALOR_MATRIZ;
+
+    case TIPO_VACIO:
+        return tipo_valor == VALOR_VACIO;
+    }
+    return false;
+}
+
+static void contexto_set_error(Contexto *ctx, const char *mensaje)
+{
     ctx->hay_error = true;
+    // Truncar mensaje a 240 caracteres para asegurar que quepa en el buffer de 512 bytes
+    char msg_seguro[256];
+    snprintf(msg_seguro, sizeof(msg_seguro), "%.240s", mensaje ? mensaje : "");
     snprintf(ctx->mensaje_error, sizeof(ctx->mensaje_error),
-             "Línea %d: %s", ctx->linea_actual, mensaje);
+             "Línea %d: %s", ctx->linea_actual, msg_seguro);
 }
 
 static TablaSimbolos* tabla_simbolos_crear(TablaSimbolos* padre) {
@@ -637,7 +625,7 @@ Valor valor_crear_caracter(const char *valor)
     return v;
 }
 
-Valor valor_crear_entero_sin_signo(unsigned int valor) {
+Valor valor_crear_entero_sin_signo(unsigned long long valor) {
     Valor v;
     v.tipo = VALOR_ENTERO_SIN_SIGNO;
     v.datos.entero_sin_signo = valor;
@@ -731,7 +719,7 @@ void valor_imprimir(Valor valor)
         {
             // Usar %f pero eliminar ceros finales innecesarios
             char buffer[64];
-            snprintf(buffer, sizeof(buffer), "%.10f", val);
+            snprintf(buffer, sizeof(buffer), "%.15g", val);
 
             // Encontrar el punto decimal
             char *punto = strchr(buffer, '.');
@@ -764,7 +752,7 @@ void valor_imprimir(Valor valor)
         else
         {
             char buffer[64];
-            snprintf(buffer, sizeof(buffer), "%.10f", val);
+            snprintf(buffer, sizeof(buffer), "%.15g", val);
             char *punto = strchr(buffer, '.');
             if (punto)
             {
@@ -838,7 +826,7 @@ void tabla_simbolos_definir(TablaSimbolos *tabla, const char *nombre, Valor valo
 
     char *nombre_norm = normalizar_nombre(nombre);
 
-    // ✅ IMPORTANTE: Para DECLARACIONES, siempre crear en el scope actual
+    // IMPORTANTE: Para DECLARACIONES, siempre crear en el scope actual
     // NO buscar en scopes padres - eso es para ASIGNACIONES, no declaraciones
 
     // Verificar si ya existe en el scope ACTUAL (no en padres)
@@ -872,10 +860,10 @@ void tabla_simbolos_definir(TablaSimbolos *tabla, const char *nombre, Valor valo
     tabla->primera = nuevo;
 }
 
-void tabla_simbolos_asignar(TablaSimbolos *tabla, const char *nombre, Valor valor)
+bool tabla_simbolos_asignar(TablaSimbolos *tabla, const char *nombre, Valor valor)
 {
     if (!tabla || !nombre)
-        return;
+        return false;
     char *nombre_norm = normalizar_nombre(nombre);
 
     // Buscar en TODA la cadena de scopes (desde actual hacia arriba)
@@ -887,7 +875,7 @@ void tabla_simbolos_asignar(TablaSimbolos *tabla, const char *nombre, Valor valo
         {
             if (strcmp(sim->nombre, nombre_norm) == 0)
             {
-                // Variable encontrada, convertir valor al tipo de la variable si es necesario
+                // Variable encontrada, convertir valor al tipo declarado si es necesario
                 Valor valor_convertido = valor;
 
                 // Si la variable existente es CARACTER y el valor es ENTERO, convertir
@@ -922,20 +910,97 @@ void tabla_simbolos_asignar(TablaSimbolos *tabla, const char *nombre, Valor valo
                     }
                 }
 
+                // Convertir al tipo declarado de la variable
+                if (sim->tipo_declarado == TIPO_ENTERO_SIN_SIGNO)
+                {
+                    if (valor_convertido.tipo == VALOR_ENTERO)
+                    {
+                        unsigned long long val = (unsigned long long)valor_convertido.datos.entero;
+                        valor_convertido = valor_crear_entero_sin_signo(val);
+                    }
+                    else if (valor_convertido.tipo == VALOR_DECIMAL)
+                    {
+                        unsigned long long val = (unsigned long long)valor_convertido.datos.decimal;
+                        valor_convertido = valor_crear_entero_sin_signo(val);
+                    }
+                }
+                else if (sim->tipo_declarado == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor_convertido.tipo == VALOR_DECIMAL)
+                    {
+                        valor_convertido = valor_crear_decimal_sin_signo(valor_convertido.datos.decimal);
+                    }
+                    else if (valor_convertido.tipo == VALOR_ENTERO)
+                    {
+                        valor_convertido = valor_crear_decimal_sin_signo((double)valor_convertido.datos.entero);
+                    }
+                    else if (valor_convertido.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    {
+                        valor_convertido = valor_crear_decimal_sin_signo((double)valor_convertido.datos.entero_sin_signo);
+                    }
+                }
+                else if (sim->tipo_declarado == TIPO_ENTERO)
+                {
+                    if (valor_convertido.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    {
+                        valor_convertido = valor_crear_entero((long long)valor_convertido.datos.entero_sin_signo);
+                    }
+                }
+                else if (sim->tipo_declarado == TIPO_DECIMAL)
+                {
+                    if (valor_convertido.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    {
+                        valor_convertido = valor_crear_decimal(valor_convertido.datos.decimal_sin_signo);
+                    }
+                    else if (valor_convertido.tipo == VALOR_ENTERO)
+                    {
+                        valor_convertido = valor_crear_decimal((double)valor_convertido.datos.entero);
+                    }
+                    else if (valor_convertido.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    {
+                        valor_convertido = valor_crear_decimal((double)valor_convertido.datos.entero_sin_signo);
+                    }
+                }
+
+                // Convertir al tipo declarado de la variable
+                if (sim->tipo_declarado == TIPO_ENTERO_SIN_SIGNO && valor_convertido.tipo == VALOR_ENTERO)
+                {
+                    if (valor_convertido.datos.entero >= 0)
+                    {
+                        unsigned long long val = (unsigned long long)valor_convertido.datos.entero;
+                        valor_convertido = valor_crear_entero_sin_signo(val);
+                    }
+                }
+                else if (sim->tipo_declarado == TIPO_DECIMAL_SIN_SIGNO && valor_convertido.tipo == VALOR_DECIMAL)
+                {
+                    if (valor_convertido.datos.decimal >= 0.0)
+                    {
+                        valor_convertido = valor_crear_decimal_sin_signo(valor_convertido.datos.decimal);
+                    }
+                }
+                else if (sim->tipo_declarado == TIPO_DECIMAL && valor_convertido.tipo == VALOR_ENTERO)
+                {
+                    valor_convertido = valor_crear_decimal((double)valor_convertido.datos.entero);
+                }
+                else if (sim->tipo_declarado == TIPO_DECIMAL && valor_convertido.tipo == VALOR_ENTERO_SIN_SIGNO)
+                {
+                    valor_convertido = valor_crear_decimal((double)valor_convertido.datos.entero_sin_signo);
+                }
+
                 // Variable encontrada, actualizarla
                 valor_destruir(&sim->valor);
                 sim->valor = valor_convertido;
                 free(nombre_norm);
-                return;
+                return true;
             }
             sim = sim->siguiente;
         }
         scope_actual = scope_actual->padre;
     }
 
-    // Si no existe en ningún scope, crearla en el actual (comportamiento por defecto)
+    // Si no existe en ningún scope, NO crearla (declaración estricta)
     free(nombre_norm);
-    tabla_simbolos_definir(tabla, nombre, valor, false);
+    return false;
 }
 
 Valor* tabla_simbolos_buscar(TablaSimbolos* tabla, const char* nombre) {
@@ -1097,11 +1162,22 @@ Contexto *contexto_crear(void)
     ctx->salto_pendiente = NULL;
     ctx->etiqueta_salto = NULL;
 
-    // ✅ Inicializar campos SQLite
+    // Inicializar campos SQLite
     ctx->sqlite_db = NULL;
     ctx->sqlite_stmt = NULL;
     ctx->sqlite_columnas = 0;
     ctx->sqlite_columnas_nombre = NULL;
+
+    // Inicializar stack de INTENTAR/ATRAPAR
+    ctx->intentar_stack_top = 0;
+    for (int i = 0; i < MAX_INTENTAR_STACK; i++)
+    {
+        ctx->intentar_stack[i].activo = false;
+        ctx->intentar_stack[i].error_capturado = false;
+        ctx->intentar_stack[i].mensaje_error[0] = '\0';
+        ctx->intentar_stack[i].linea_error = 0;
+        ctx->intentar_stack[i].codigo_error = 0;
+    }
 
     return ctx;
 }
@@ -1116,7 +1192,7 @@ void contexto_destruir(Contexto *ctx)
     if (!ctx)
         return;
 
-    // ✅ Limpiar recursos SQLite
+    // Limpiar recursos SQLite
     if (ctx->sqlite_stmt)
     {
         sqlite3_finalize((sqlite3_stmt *)ctx->sqlite_stmt);
@@ -1182,158 +1258,472 @@ const char* contexto_obtener_error(const Contexto* ctx) {
     return ctx->mensaje_error;
 }
 
+static bool ambos_operandos_enteros(TipoValor a, TipoValor b)
+{
+    bool a_entero = (a == VALOR_ENTERO || a == VALOR_ENTERO_SIN_SIGNO);
+    bool b_entero = (b == VALOR_ENTERO || b == VALOR_ENTERO_SIN_SIGNO);
+    return a_entero && b_entero;
+}
+
 // ============================================================
 // EVALUACIÓN DE EXPRESIONES
 // ============================================================
 static Valor evaluar_operador_binario(OperadorBinario op, Valor izq, Valor der, Contexto* ctx) {
-    // Convertir a double para operaciones aritméticas
-    double v_izq = 0, v_der = 0;
-    
-    if (izq.tipo == VALOR_ENTERO) v_izq = izq.datos.entero;
-    else if (izq.tipo == VALOR_DECIMAL) v_izq = izq.datos.decimal;
-    else if (izq.tipo == VALOR_LOGICA) v_izq = izq.datos.logica ? 1.0 : 0.0;
-    
-    if (der.tipo == VALOR_ENTERO) v_der = der.datos.entero;
-    else if (der.tipo == VALOR_DECIMAL) v_der = der.datos.decimal;
-    else if (der.tipo == VALOR_LOGICA) v_der = der.datos.logica ? 1.0 : 0.0;
-    
     switch (op) {
-        case OP_SUMA:
-            if (izq.tipo == VALOR_TEXTO || der.tipo == VALOR_TEXTO) {
-                // Concatenación de textos
-                char buffer[4096];
-                snprintf(buffer, sizeof(buffer), "%s%s",
-                         izq.tipo == VALOR_TEXTO ? izq.datos.texto : "",
-                         der.tipo == VALOR_TEXTO ? der.datos.texto : "");
-                return valor_crear_texto(buffer);
+    case OP_SUMA:
+    {
+        // Concatenación de textos
+        if (izq.tipo == VALOR_TEXTO || der.tipo == VALOR_TEXTO)
+        {
+            char buffer[4096];
+            snprintf(buffer, sizeof(buffer), "%s%s",
+                     izq.tipo == VALOR_TEXTO ? izq.datos.texto : "",
+                     der.tipo == VALOR_TEXTO ? der.datos.texto : "");
+            return valor_crear_texto(buffer);
+        }
+        // Camino rápido: ambos operandos enteros
+        if ((izq.tipo == VALOR_ENTERO || izq.tipo == VALOR_ENTERO_SIN_SIGNO) &&
+            (der.tipo == VALOR_ENTERO || der.tipo == VALOR_ENTERO_SIN_SIGNO))
+        {
+            // Si AL MENOS UNO es SIN SIGNO, usar aritmética sin signo
+            if (izq.tipo == VALOR_ENTERO_SIN_SIGNO || der.tipo == VALOR_ENTERO_SIN_SIGNO)
+            {
+                unsigned long long a = (izq.tipo == VALOR_ENTERO_SIN_SIGNO)
+                                           ? izq.datos.entero_sin_signo
+                                           : (unsigned long long)izq.datos.entero;
+                unsigned long long b = (der.tipo == VALOR_ENTERO_SIN_SIGNO)
+                                           ? der.datos.entero_sin_signo
+                                           : (unsigned long long)der.datos.entero;
+                return valor_crear_entero_sin_signo(a + b);
             }
+            // Ambos son ENTERO con signo
+            return valor_crear_entero(izq.datos.entero + der.datos.entero);
+        }
+        // Al menos uno es decimal
+        {
+            double v_izq = (izq.tipo == VALOR_ENTERO)              ? (double)izq.datos.entero
+                           : (izq.tipo == VALOR_ENTERO_SIN_SIGNO)  ? (double)izq.datos.entero_sin_signo
+                           : (izq.tipo == VALOR_DECIMAL)           ? izq.datos.decimal
+                           : (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo
+                                                                   : 0.0;
+            double v_der = (der.tipo == VALOR_ENTERO)              ? (double)der.datos.entero
+                           : (der.tipo == VALOR_ENTERO_SIN_SIGNO)  ? (double)der.datos.entero_sin_signo
+                           : (der.tipo == VALOR_DECIMAL)           ? der.datos.decimal
+                           : (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo
+                                                                   : 0.0;
             return valor_crear_decimal(v_izq + v_der);
-            
-        case OP_RESTA:
+        }
+    }
+    break;
+    case OP_RESTA:
+    {
+        // Camino rápido: ambos operandos enteros
+        if (ambos_operandos_enteros(izq.tipo, der.tipo))
+        {
+            // Si AL MENOS UNO es SIN SIGNO, usar aritmética sin signo
+            if (izq.tipo == VALOR_ENTERO_SIN_SIGNO || der.tipo == VALOR_ENTERO_SIN_SIGNO)
+            {
+                unsigned long long a = (izq.tipo == VALOR_ENTERO_SIN_SIGNO)
+                                           ? izq.datos.entero_sin_signo
+                                           : (unsigned long long)izq.datos.entero;
+                unsigned long long b = (der.tipo == VALOR_ENTERO_SIN_SIGNO)
+                                           ? der.datos.entero_sin_signo
+                                           : (unsigned long long)der.datos.entero;
+                return valor_crear_entero_sin_signo(a - b);
+            }
+            // Ambos son ENTERO con signo
+            return valor_crear_entero(izq.datos.entero - der.datos.entero);
+        }
+        // Al menos uno es decimal
+        {
+            double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero : (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo
+                                                                               : (izq.tipo == VALOR_DECIMAL)            ? izq.datos.decimal
+                                                                               : (izq.tipo == VALOR_DECIMAL_SIN_SIGNO)  ? izq.datos.decimal_sin_signo
+                                                                                                                        : 0.0;
+            double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero : (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo
+                                                                               : (der.tipo == VALOR_DECIMAL)            ? der.datos.decimal
+                                                                               : (der.tipo == VALOR_DECIMAL_SIN_SIGNO)  ? der.datos.decimal_sin_signo
+                                                                                                                        : 0.0;
             return valor_crear_decimal(v_izq - v_der);
-            
+        }
+        }
+        break;
         case OP_MULTIPLICACION:
-            return valor_crear_decimal(v_izq * v_der);
-            
+        {
+            // Camino rápido: ambos operandos enteros
+            if ((izq.tipo == VALOR_ENTERO || izq.tipo == VALOR_ENTERO_SIN_SIGNO) &&
+                (der.tipo == VALOR_ENTERO || der.tipo == VALOR_ENTERO_SIN_SIGNO))
+            {
+                // Si AL MENOS UNO es SIN SIGNO, usar aritmética sin signo
+                if (izq.tipo == VALOR_ENTERO_SIN_SIGNO || der.tipo == VALOR_ENTERO_SIN_SIGNO)
+                {
+                    unsigned long long a = (izq.tipo == VALOR_ENTERO_SIN_SIGNO)
+                                               ? izq.datos.entero_sin_signo
+                                               : (unsigned long long)izq.datos.entero;
+                    unsigned long long b = (der.tipo == VALOR_ENTERO_SIN_SIGNO)
+                                               ? der.datos.entero_sin_signo
+                                               : (unsigned long long)der.datos.entero;
+                    return valor_crear_entero_sin_signo(a * b);
+                }
+                // Ambos son ENTERO con signo
+                return valor_crear_entero(izq.datos.entero * der.datos.entero);
+            }
+            // Al menos uno es decimal
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero : (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo
+                                                                                   : (izq.tipo == VALOR_DECIMAL)            ? izq.datos.decimal
+                                                                                   : (izq.tipo == VALOR_DECIMAL_SIN_SIGNO)  ? izq.datos.decimal_sin_signo
+                                                                                                                            : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero : (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo
+                                                                                   : (der.tipo == VALOR_DECIMAL)            ? der.datos.decimal
+                                                                                   : (der.tipo == VALOR_DECIMAL_SIN_SIGNO)  ? der.datos.decimal_sin_signo
+                                                                                                                            : 0.0;
+                return valor_crear_decimal(v_izq * v_der);
+            }
+        }
+        break;
         case OP_DIVISION:
-            if (v_der == 0) {
+        {
+            double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero : (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo
+                                                                               : (izq.tipo == VALOR_DECIMAL)            ? izq.datos.decimal
+                                                                               : (izq.tipo == VALOR_DECIMAL_SIN_SIGNO)  ? izq.datos.decimal_sin_signo
+                                                                                                                        : 0.0;
+            double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero : (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo
+                                                                               : (der.tipo == VALOR_DECIMAL)            ? der.datos.decimal
+                                                                               : (der.tipo == VALOR_DECIMAL_SIN_SIGNO)  ? der.datos.decimal_sin_signo
+                                                                                                                        : 0.0;
+            if (v_der == 0)
+            {
                 contexto_set_error(ctx, "División por cero");
                 return valor_crear_vacio();
             }
             return valor_crear_decimal(v_izq / v_der);
-            
+        }
+        break;
         case OP_MODULO:
-            if ((int)v_der == 0) {
-                contexto_set_error(ctx, "Módulo por cero");
-                return valor_crear_vacio();
+            if ((izq.tipo == VALOR_ENTERO || izq.tipo == VALOR_ENTERO_SIN_SIGNO) &&
+                (der.tipo == VALOR_ENTERO || der.tipo == VALOR_ENTERO_SIN_SIGNO))
+            {
+                long long a = (izq.tipo == VALOR_ENTERO) ? izq.datos.entero : (long long)izq.datos.entero_sin_signo;
+                long long b = (der.tipo == VALOR_ENTERO) ? der.datos.entero : (long long)der.datos.entero_sin_signo;
+                if (b == 0) {
+                    contexto_set_error(ctx, "Módulo por cero");
+                    return valor_crear_vacio();
+                }
+                return valor_crear_entero(a % b);
             }
-            return valor_crear_entero((int)v_izq % (int)v_der);
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                if ((int)v_der == 0) {
+                    contexto_set_error(ctx, "Módulo por cero");
+                    return valor_crear_vacio();
+                }
+                return valor_crear_entero((long long)v_izq % (long long)v_der);
+            }
             
         case OP_POTENCIA:
-            return valor_crear_decimal(pow(v_izq, v_der));
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                return valor_crear_decimal(pow(v_izq, v_der));
+            }
 
         case OP_IGUAL:
-            // Comparación de textos
             if (izq.tipo == VALOR_TEXTO && der.tipo == VALOR_TEXTO)
             {
                 return valor_crear_logica(strcmp(izq.datos.texto, der.datos.texto) == 0);
             }
-            // Comparación numérica
-            return valor_crear_logica(v_izq == v_der);
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                return valor_crear_logica(v_izq == v_der);
+            }
 
         case OP_DIFERENTE:
-            // Comparación de textos
             if (izq.tipo == VALOR_TEXTO && der.tipo == VALOR_TEXTO)
             {
                 return valor_crear_logica(strcmp(izq.datos.texto, der.datos.texto) != 0);
             }
-            // Comparación numérica
-            return valor_crear_logica(v_izq != v_der);
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                return valor_crear_logica(v_izq != v_der);
+            }
 
         case OP_MAYOR:
             if (izq.tipo == VALOR_TEXTO && der.tipo == VALOR_TEXTO)
             {
                 return valor_crear_logica(strcmp(izq.datos.texto, der.datos.texto) > 0);
             }
-            return valor_crear_logica(v_izq > v_der);
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                return valor_crear_logica(v_izq > v_der);
+            }
 
         case OP_MENOR:
             if (izq.tipo == VALOR_TEXTO && der.tipo == VALOR_TEXTO)
             {
                 return valor_crear_logica(strcmp(izq.datos.texto, der.datos.texto) < 0);
             }
-            return valor_crear_logica(v_izq < v_der);
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                return valor_crear_logica(v_izq < v_der);
+            }
 
         case OP_MAYOR_IGUAL:
             if (izq.tipo == VALOR_TEXTO && der.tipo == VALOR_TEXTO)
             {
                 return valor_crear_logica(strcmp(izq.datos.texto, der.datos.texto) >= 0);
             }
-            return valor_crear_logica(v_izq >= v_der);
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                return valor_crear_logica(v_izq >= v_der);
+            }
 
         case OP_MENOR_IGUAL:
             if (izq.tipo == VALOR_TEXTO && der.tipo == VALOR_TEXTO)
             {
                 return valor_crear_logica(strcmp(izq.datos.texto, der.datos.texto) <= 0);
             }
-            return valor_crear_logica(v_izq <= v_der);
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_DECIMAL_SIN_SIGNO) ? izq.datos.decimal_sin_signo : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_DECIMAL_SIN_SIGNO) ? der.datos.decimal_sin_signo : 0.0;
+                return valor_crear_logica(v_izq <= v_der);
+            }
 
         case OP_Y_LOGICO:
-            return valor_crear_logica((v_izq != 0) && (v_der != 0));
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_LOGICA) ? (izq.datos.logica ? 1.0 : 0.0) : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_LOGICA) ? (der.datos.logica ? 1.0 : 0.0) : 0.0;
+                return valor_crear_logica((v_izq != 0) && (v_der != 0));
+            }
             
         case OP_O_LOGICO:
-            return valor_crear_logica((v_izq != 0) || (v_der != 0));
+            {
+                double v_izq = (izq.tipo == VALOR_ENTERO) ? (double)izq.datos.entero :
+                               (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)izq.datos.entero_sin_signo :
+                               (izq.tipo == VALOR_DECIMAL) ? izq.datos.decimal :
+                               (izq.tipo == VALOR_LOGICA) ? (izq.datos.logica ? 1.0 : 0.0) : 0.0;
+                double v_der = (der.tipo == VALOR_ENTERO) ? (double)der.datos.entero :
+                               (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? (double)der.datos.entero_sin_signo :
+                               (der.tipo == VALOR_DECIMAL) ? der.datos.decimal :
+                               (der.tipo == VALOR_LOGICA) ? (der.datos.logica ? 1.0 : 0.0) : 0.0;
+                return valor_crear_logica((v_izq != 0) || (v_der != 0));
+            }
+
         case OP_BIT_AND:
-            return valor_crear_entero((int)v_izq & (int)v_der);
+            {
+                unsigned long long v_izq = 0;
+                if (izq.tipo == VALOR_ENTERO)
+                    v_izq = (unsigned long long)izq.datos.entero;
+                else if (izq.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    v_izq = izq.datos.entero_sin_signo;
+                else if (izq.tipo == VALOR_DECIMAL)
+                    v_izq = (unsigned long long)izq.datos.decimal;
+                else if (izq.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    v_izq = (unsigned long long)izq.datos.decimal_sin_signo;
 
+                unsigned long long v_der = 0;
+                if (der.tipo == VALOR_ENTERO)
+                    v_der = (unsigned long long)der.datos.entero;
+                else if (der.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    v_der = der.datos.entero_sin_signo;
+                else if (der.tipo == VALOR_DECIMAL)
+                    v_der = (unsigned long long)der.datos.decimal;
+                else if (der.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    v_der = (unsigned long long)der.datos.decimal_sin_signo;
+
+                return valor_crear_entero_sin_signo(v_izq & v_der);
+            }
         case OP_BIT_OR:
-            return valor_crear_entero((int)v_izq | (int)v_der);
+            {
+                unsigned long long v_izq = 0;
+                if (izq.tipo == VALOR_ENTERO)
+                    v_izq = (unsigned long long)izq.datos.entero;
+                else if (izq.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    v_izq = izq.datos.entero_sin_signo;
+                else if (izq.tipo == VALOR_DECIMAL)
+                    v_izq = (unsigned long long)izq.datos.decimal;
+                else if (izq.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    v_izq = (unsigned long long)izq.datos.decimal_sin_signo;
 
+                unsigned long long v_der = 0;
+                if (der.tipo == VALOR_ENTERO)
+                    v_der = (unsigned long long)der.datos.entero;
+                else if (der.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    v_der = der.datos.entero_sin_signo;
+                else if (der.tipo == VALOR_DECIMAL)
+                    v_der = (unsigned long long)der.datos.decimal;
+                else if (der.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    v_der = (unsigned long long)der.datos.decimal_sin_signo;
+
+                return valor_crear_entero_sin_signo(v_izq | v_der);
+            }
         case OP_BIT_XOR:
-            return valor_crear_entero((int)v_izq ^ (int)v_der);
+            {
+                unsigned long long v_izq = 0;
+                if (izq.tipo == VALOR_ENTERO)
+                    v_izq = (unsigned long long)izq.datos.entero;
+                else if (izq.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    v_izq = izq.datos.entero_sin_signo;
+                else if (izq.tipo == VALOR_DECIMAL)
+                    v_izq = (unsigned long long)izq.datos.decimal;
+                else if (izq.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    v_izq = (unsigned long long)izq.datos.decimal_sin_signo;
 
+                unsigned long long v_der = 0;
+                if (der.tipo == VALOR_ENTERO)
+                    v_der = (unsigned long long)der.datos.entero;
+                else if (der.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    v_der = der.datos.entero_sin_signo;
+                else if (der.tipo == VALOR_DECIMAL)
+                    v_der = (unsigned long long)der.datos.decimal;
+                else if (der.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    v_der = (unsigned long long)der.datos.decimal_sin_signo;
+
+                return valor_crear_entero_sin_signo(v_izq ^ v_der);
+            }
         case OP_DESPLAZAR_IZQ:
-            return valor_crear_entero((int)v_izq << (int)v_der);
-
+            {
+                unsigned long long v_izq = (izq.tipo == VALOR_ENTERO) ? (unsigned long long)izq.datos.entero : (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? izq.datos.entero_sin_signo
+                                                                                                                                                    : 0;
+                unsigned long long v_der = (der.tipo == VALOR_ENTERO) ? (unsigned long long)der.datos.entero : (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? der.datos.entero_sin_signo
+                                                                                                                                                    : 0;
+                return valor_crear_entero_sin_signo(v_izq << v_der);
+            }
         case OP_DESPLAZAR_DER:
-            return valor_crear_entero((int)v_izq >> (int)v_der);
-
+            {
+                unsigned long long v_izq = (izq.tipo == VALOR_ENTERO) ? (unsigned long long)izq.datos.entero : (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? izq.datos.entero_sin_signo
+                                                                                                                                                    : 0;
+                unsigned long long v_der = (der.tipo == VALOR_ENTERO) ? (unsigned long long)der.datos.entero : (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? der.datos.entero_sin_signo
+                                                                                                                                                    : 0;
+                return valor_crear_entero_sin_signo(v_izq >> v_der);
+            }
         case OP_ROTAR_IZQ:
-        {
-            unsigned int val = (unsigned int)v_izq;
-            int shift = (int)v_der % 32;
-            return valor_crear_entero((val << shift) | (val >> (32 - shift)));
-        }
-
+            {
+                unsigned long long val = (izq.tipo == VALOR_ENTERO) ? (unsigned long long)izq.datos.entero : (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? izq.datos.entero_sin_signo
+                                                                                                                                                  : 0;
+                unsigned long long shift = (der.tipo == VALOR_ENTERO) ? (unsigned long long)der.datos.entero : (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? der.datos.entero_sin_signo
+                                                                                                                                                    : 0;
+                shift = shift % 64;
+                return valor_crear_entero_sin_signo((val << shift) | (val >> (64 - shift)));
+            }
         case OP_ROTAR_DER:
-        {
-            unsigned int val = (unsigned int)v_izq;
-            int shift = (int)v_der % 32;
-            return valor_crear_entero((val >> shift) | (val << (32 - shift)));
-        }
+            {
+                unsigned long long val = (izq.tipo == VALOR_ENTERO) ? (unsigned long long)izq.datos.entero : (izq.tipo == VALOR_ENTERO_SIN_SIGNO) ? izq.datos.entero_sin_signo
+                                                                                                                                                  : 0;
+                unsigned long long shift = (der.tipo == VALOR_ENTERO) ? (unsigned long long)der.datos.entero : (der.tipo == VALOR_ENTERO_SIN_SIGNO) ? der.datos.entero_sin_signo
+                                                                                                                                                    : 0;
+                shift = shift % 64;
+                return valor_crear_entero_sin_signo((val >> shift) | (val << (64 - shift)));
+            }
+
         default:
             contexto_set_error(ctx, "Operador binario no soportado");
             return valor_crear_vacio();
     }
 }
 
-static Valor evaluar_operador_unario(OperadorUnario op, Valor operando, Contexto* ctx) {
-    double v = 0;
-    
-    if (operando.tipo == VALOR_ENTERO) v = operando.datos.entero;
-    else if (operando.tipo == VALOR_DECIMAL) v = operando.datos.decimal;
-    else if (operando.tipo == VALOR_LOGICA) v = operando.datos.logica ? 1.0 : 0.0;
-    
-    switch (op) {
-        case OP_NEGACION:
-            return valor_crear_decimal(-v);
-            
-        case OP_NO_LOGICO:
-            return valor_crear_logica(v == 0);
-            
-        default:
-            contexto_set_error(ctx, "Operador unario no soportado");
-            return valor_crear_vacio();
+static Valor evaluar_operador_unario(OperadorUnario op, Valor operando, Contexto *ctx)
+{
+    switch (op)
+    {
+    case OP_NEGACION:
+    {
+        double v = 0;
+        if (operando.tipo == VALOR_ENTERO)
+            v = (double)operando.datos.entero;
+        else if (operando.tipo == VALOR_DECIMAL)
+            v = operando.datos.decimal;
+        else if (operando.tipo == VALOR_LOGICA)
+            v = operando.datos.logica ? 1.0 : 0.0;
+        return valor_crear_decimal(-v);
+    }
+    case OP_NO_LOGICO:
+    {
+        double v = 0;
+        if (operando.tipo == VALOR_ENTERO)
+            v = (double)operando.datos.entero;
+        else if (operando.tipo == VALOR_DECIMAL)
+            v = operando.datos.decimal;
+        else if (operando.tipo == VALOR_LOGICA)
+            v = operando.datos.logica ? 1.0 : 0.0;
+        return valor_crear_logica(v == 0);
+    }
+    case OP_BIT_NOT:
+    {
+        unsigned long long val = 0;
+        if (operando.tipo == VALOR_ENTERO)
+            val = (unsigned long long)operando.datos.entero;
+        else if (operando.tipo == VALOR_ENTERO_SIN_SIGNO)
+            val = operando.datos.entero_sin_signo;
+        else if (operando.tipo == VALOR_DECIMAL)
+            val = (unsigned long long)operando.datos.decimal;
+        else if (operando.tipo == VALOR_DECIMAL_SIN_SIGNO)
+            val = (unsigned long long)operando.datos.decimal_sin_signo;
+        return valor_crear_entero_sin_signo(~val);
+    }
+    default:
+        contexto_set_error(ctx, "Operador unario no soportado");
+        return valor_crear_vacio();
     }
 }
 
@@ -1377,16 +1767,24 @@ static char *evaluar_expresion_completa(const char *expr, Contexto *ctx)
     case VALOR_ENTERO:
         snprintf(buffer, sizeof(buffer), "%lld", resultado.datos.entero);
         break;
+    case VALOR_ENTERO_SIN_SIGNO:
+        snprintf(buffer, sizeof(buffer), "%llu", resultado.datos.entero_sin_signo);
+        break;
     case VALOR_DECIMAL:
-        snprintf(buffer, sizeof(buffer), "%g", resultado.datos.decimal);
+        snprintf(buffer, sizeof(buffer), "%.15g", resultado.datos.decimal);
+        break;
+    case VALOR_DECIMAL_SIN_SIGNO:
+        snprintf(buffer, sizeof(buffer), "%.15g", resultado.datos.decimal_sin_signo);
         break;
     case VALOR_TEXTO:
+    case VALOR_TEXTO_EXTENSO:
         snprintf(buffer, sizeof(buffer), "%s", resultado.datos.texto ? resultado.datos.texto : "");
         break;
     case VALOR_LOGICA:
         snprintf(buffer, sizeof(buffer), "%s", resultado.datos.logica ? "VERDADERO" : "FALSO");
         break;
     case VALOR_CARACTER:
+    case VALOR_CARACTER_SIN_SIGNO:
         snprintf(buffer, sizeof(buffer), "%s", resultado.datos.texto ? resultado.datos.texto : "");
         break;
     default:
@@ -1412,27 +1810,71 @@ static void evaluar_sentencia(NodoAST* nodo, Contexto* ctx);
 Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
     if (!nodo || ctx->hay_error) return valor_crear_vacio();
 
-    // Verificar Ctrl+C en cada nodo
-    if (verificar_ctrl_c()) {
-        interrumpir_programa();
-    }
-    
-    
     ctx->linea_actual = nodo->linea;
     
     switch (nodo->tipo) {
         // --------------------------------------------------------
         // LITERALES
         // --------------------------------------------------------
-        case AST_LITERAL_NUMERO: {
-            double val = nodo->datos.literal_numero.valor;
-            // Si es entero exacto, devolver como entero
-            if (val == (int)val && val >= INT_MIN && val <= INT_MAX) {
-                return valor_crear_entero((int)val);
+        case AST_LITERAL_NUMERO:
+        {
+        // 1. Intentar usar el string original (el camino más seguro)
+        if (nodo->datos.literal_numero.valor_str)
+        {
+            const char *str = nodo->datos.literal_numero.valor_str;
+            if (strchr(str, '.') == NULL && strchr(str, 'e') == NULL && strchr(str, 'E') == NULL)
+            {
+                char *endptr;
+                unsigned long long ull_val = strtoull(str, &endptr, 10);
+
+                // Ignorar espacios en blanco o saltos de línea finales (crucial para evitar el fallback)
+                while (*endptr == ' ' || *endptr == '\t' || *endptr == '\n' || *endptr == '\r')
+                {
+                    endptr++;
+                }
+
+                if (endptr > str && *endptr == '\0')
+                {
+                    if (ull_val <= LLONG_MAX)
+                    {
+                        return valor_crear_entero((long long)ull_val);
+                    }
+                    else
+                    {
+                        // Es un entero grande (> 2^63-1), usar sin signo directamente
+                        return valor_crear_entero_sin_signo(ull_val);
+                    }
+                }
             }
-            return valor_crear_decimal(val);
         }
-        
+
+        // 2. Fallback seguro cuando el string está corrupto o no se pudo parsear
+        double val = nodo->datos.literal_numero.valor;
+
+        // Interceptamos los valores que caen en la "zona de desbordamiento"
+        // de la conversión double -> long long, antes de que la comparación (double)LLONG_MAX falle.
+        if (val >= 9223372036854775808.0)
+        {
+            if (val == 9223372036854775808.0)
+            {
+                return valor_crear_entero_sin_signo(9223372036854775808ULL);
+            }
+            if (val >= 18446744073709551615.0)
+            {
+                return valor_crear_entero_sin_signo(18446744073709551615ULL);
+            }
+            // Para cualquier otro valor grande en este rango, convertir directamente a unsigned
+            return valor_crear_entero_sin_signo((unsigned long long)val);
+        }
+
+        // Fallback estándar para números normales
+        if (val >= 0.0 && val <= (double)LLONG_MAX && val == floor(val))
+        {
+            return valor_crear_entero((long long)val);
+        }
+
+        return valor_crear_decimal(val);
+        }
         case AST_LITERAL_TEXTO:
             return valor_crear_texto(nodo->datos.literal_texto.valor);
 
@@ -1604,6 +2046,98 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             }
             return elemento;
         }
+
+        case AST_ACCESO_MATRIZ3D:
+        {
+            const char *nombre_matriz = nodo->datos.acceso_matriz3d.nombre_matriz;
+            NodoAST *indice1_nodo = nodo->datos.acceso_matriz3d.indice1;
+            NodoAST *indice2_nodo = nodo->datos.acceso_matriz3d.indice2;
+            NodoAST *indice3_nodo = nodo->datos.acceso_matriz3d.indice3;
+
+            // Buscar la matriz 3D en la tabla de símbolos
+            Valor *matriz3d = tabla_simbolos_buscar(ctx->tabla_actual, nombre_matriz);
+            if (!matriz3d || matriz3d->tipo != VALOR_MATRIZ3D)
+            {
+                contexto_set_error(ctx, "Matriz 3D no encontrada o no es una matriz 3D");
+                return valor_crear_vacio();
+            }
+
+            // Evaluar índice 1
+            Valor indice1_v = evaluar_nodo(indice1_nodo, ctx);
+            if (ctx->hay_error)
+                return valor_crear_vacio();
+
+            // Evaluar índice 2
+            Valor indice2_v = evaluar_nodo(indice2_nodo, ctx);
+            if (ctx->hay_error)
+            {
+                valor_destruir(&indice1_v);
+                return valor_crear_vacio();
+            }
+
+            // Evaluar índice 3
+            Valor indice3_v = evaluar_nodo(indice3_nodo, ctx);
+            if (ctx->hay_error)
+            {
+                valor_destruir(&indice1_v);
+                valor_destruir(&indice2_v);
+                return valor_crear_vacio();
+            }
+
+            // Convertir a int (aceptando cualquier tipo numérico)
+            int idx1 = 0, idx2 = 0, idx3 = 0;
+
+            if (indice1_v.tipo == VALOR_ENTERO)
+                idx1 = indice1_v.datos.entero;
+            else if (indice1_v.tipo == VALOR_ENTERO_SIN_SIGNO)
+                idx1 = (int)indice1_v.datos.entero_sin_signo;
+            else if (indice1_v.tipo == VALOR_DECIMAL)
+                idx1 = (int)indice1_v.datos.decimal;
+            else if (indice1_v.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                idx1 = (int)indice1_v.datos.decimal_sin_signo;
+
+            if (indice2_v.tipo == VALOR_ENTERO)
+                idx2 = indice2_v.datos.entero;
+            else if (indice2_v.tipo == VALOR_ENTERO_SIN_SIGNO)
+                idx2 = (int)indice2_v.datos.entero_sin_signo;
+            else if (indice2_v.tipo == VALOR_DECIMAL)
+                idx2 = (int)indice2_v.datos.decimal;
+            else if (indice2_v.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                idx2 = (int)indice2_v.datos.decimal_sin_signo;
+
+            if (indice3_v.tipo == VALOR_ENTERO)
+                idx3 = indice3_v.datos.entero;
+            else if (indice3_v.tipo == VALOR_ENTERO_SIN_SIGNO)
+                idx3 = (int)indice3_v.datos.entero_sin_signo;
+            else if (indice3_v.tipo == VALOR_DECIMAL)
+                idx3 = (int)indice3_v.datos.decimal;
+            else if (indice3_v.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                idx3 = (int)indice3_v.datos.decimal_sin_signo;
+
+            valor_destruir(&indice1_v);
+            valor_destruir(&indice2_v);
+            valor_destruir(&indice3_v);
+
+            // Verificar bounds
+            if (idx1 < 0 || idx1 >= matriz3d->filas ||
+                idx2 < 0 || idx2 >= matriz3d->columnas ||
+                idx3 < 0 || idx3 >= matriz3d->profundidad)
+            {
+                char msg[128];
+                snprintf(msg, sizeof(msg), "Índice [%d][%d][%d] fuera de rango", idx1, idx2, idx3);
+                contexto_set_error(ctx, msg);
+                return valor_crear_vacio();
+            }
+
+            // Devolver una copia del valor
+            Valor elemento = matriz3d->datos.matriz3d[idx1][idx2][idx3];
+            if (elemento.tipo == VALOR_TEXTO || elemento.tipo == VALOR_TEXTO_EXTENSO)
+            {
+                return valor_crear_texto(elemento.datos.texto ? elemento.datos.texto : "");
+            }
+            return elemento;
+        }
+
         // --------------------------------------------------------
         // OPERADORES
         // --------------------------------------------------------
@@ -1882,104 +2416,39 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             return valor_crear_vacio();
         }
 
-        case AST_TECLAMANTENIDA:
-        {
-            Valor codigo_val = evaluar_nodo(nodo->datos.teclamantenida.codigo, ctx);
-            if (ctx->hay_error)
-                return valor_crear_vacio();
-
-            int codigo_tecla = 0;
-            if (codigo_val.tipo == VALOR_ENTERO)
-                codigo_tecla = (int)codigo_val.datos.entero;
-            else if (codigo_val.tipo == VALOR_DECIMAL)
-                codigo_tecla = (int)codigo_val.datos.decimal;
-            valor_destruir(&codigo_val);
-
-            const char *variable = nodo->datos.teclamantenida.variable_resultado;
-            int resultado = 0;
-
-#ifdef _WIN32
-            resultado = (GetAsyncKeyState(codigo_tecla) & 0x8000) ? 1 : 0;
-#else
-            resultado = teclado_verificar(codigo_tecla);
-#endif
-
-            tabla_simbolos_definir(ctx->tabla_actual, variable,
-                                   valor_crear_entero(resultado), false);
-
-            return valor_crear_vacio();
-        }
-
         case AST_LEERTECLA:
         {
             const char *variable = nodo->datos.leertecla.variable;
             int resultado = 0;
 
-#ifdef _WIN32
-            if (_kbhit())
-            {
-                resultado = _getch();
-
-                if (resultado == 0 || resultado == 224)
-                {
-                    int code = _getch();
-                    
-                    // Mapear códigos de Windows a códigos internos de Nico
-                    switch (code)
-                    {
-                        case 72: resultado = 1001; break; // Arriba
-                        case 80: resultado = 1002; break; // Abajo
-                        case 77: resultado = 1003; break; // Derecha
-                        case 75: resultado = 1004; break; // Izquierda
-                        case 71: resultado = 1005; break; // Home
-                        case 79: resultado = 1006; break; // End
-                        case 82: resultado = 1007; break; // Insert
-                        case 83: resultado = 1008; break; // Delete
-                        case 73: resultado = 1009; break; // Page Up
-                        case 81: resultado = 1010; break; // Page Down
-                        default: resultado = 1000 + code; break;
-                    }
-                }
-            }
-            // Usar el buffer global de teclado
             teclado_actualizar_buffer();
 
             if (teclado_buffer_len > 0)
             {
-                // Leer el primer carácter del buffer
-                unsigned char ch = teclado_buffer[0];
-
-                // Si es el primer byte de una tecla especial (2 bytes)
-                if (ch >= 3 && ch <= 4) // Códigos 1001-1010 en 2 bytes
+                // Buscar teclas especiales primero (codificadas en 2 bytes)
+                for (int i = 0; i < teclado_buffer_len - 1; i++)
                 {
-                    if (teclado_buffer_len >= 2)
+                    if (teclado_buffer[i] >= 3 && teclado_buffer[i] <= 4)
                     {
-                        resultado = (ch << 8) | teclado_buffer[1];
+                        resultado = (teclado_buffer[i] << 8) | teclado_buffer[i + 1];
                         // Remover los 2 bytes del buffer
-                        for (int i = 0; i < teclado_buffer_len - 2; i++)
-                        {
-                            teclado_buffer[i] = teclado_buffer[i + 2];
-                        }
+                        for (int j = i; j < teclado_buffer_len - 2; j++)
+                            teclado_buffer[j] = teclado_buffer[j + 2];
                         teclado_buffer_len -= 2;
+                        goto leertecla_asignar;
                     }
                 }
-                else
-                {
-                    // Carácter normal
-                    resultado = ch;
-                    // Remover el byte del buffer
-                    for (int i = 0; i < teclado_buffer_len - 1; i++)
-                    {
-                        teclado_buffer[i] = teclado_buffer[i + 1];
-                    }
-                    teclado_buffer_len--;
-                }
-            }
-#endif
 
+                // Si no hay tecla especial, tomar el primer byte normal
+                resultado = teclado_buffer[0];
+                for (int i = 0; i < teclado_buffer_len - 1; i++)
+                    teclado_buffer[i] = teclado_buffer[i + 1];
+                teclado_buffer_len--;
+            }
+
+        leertecla_asignar:
             tabla_simbolos_definir(ctx->tabla_actual, variable,
                                    valor_crear_entero(resultado), false);
-
             return valor_crear_vacio();
         }
 
@@ -2311,12 +2780,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 #else
                     // Esperar en intervalos cortos para verificar Ctrl+C
                     long long restante = microsegundos;
-                    while (restante > 0) {
-                        // Verificar Ctrl+C
-                        if (verificar_ctrl_c()) {
-                            interrumpir_programa();
-                        }
-                        
+                    while (restante > 0) {                       
                         // Dormir 10ms o lo que reste
                         useconds_t dormir = (restante > 10000) ? 10000 : (useconds_t)restante;
                         usleep(dormir);
@@ -2482,7 +2946,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
         {
             const char *nombre = nodo->datos.llamada_funcion.nombre_funcion;
 
-            // Recolectar argumentos
             Valor args[20];
             int num_args = 0;
             NodoAST *arg = nodo->datos.llamada_funcion.argumentos ? nodo->datos.llamada_funcion.argumentos->datos.bloque.primera : NULL;
@@ -2495,84 +2958,163 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 arg = arg->siguiente;
             }
 
-            // Buscar función definida por usuario
             DefinicionFuncion *func = contexto_buscar_funcion(ctx, nombre);
 
             if (func)
             {
-                // Verificar número de parámetros
+                // 1. INICIALIZAR TODO AL PRINCIPIO para evitar warnings y corrupción por goto
+                Valor resultado = valor_crear_vacio();
+                TablaSimbolos *tabla_anterior = ctx->tabla_actual;
+                EstadoFlujo estado_anterior = ctx->estado_flujo;
+                Valor retorno_anterior = ctx->valor_retorno;
+                TablaSimbolos *tabla_local = NULL; // <--- CLAVE: Inicializar en NULL
+
                 if (func->num_parametros != num_args)
                 {
                     char msg[256];
-                    snprintf(msg, sizeof(msg),
-                             "Función '%s' espera %d parámetros, se pasaron %d",
-                             nombre, func->num_parametros, num_args);
+                    snprintf(msg, sizeof(msg), "Función '%s' espera %d parámetros, se pasaron %d", nombre, func->num_parametros, num_args);
                     contexto_set_error(ctx, msg);
-                    return valor_crear_vacio();
+                    goto limpiar_funcion_usuario;
                 }
 
                 if (ctx->profundidad_llamada > 7500)
                 {
-                    printf("Check profundidad: %d\n", ctx->profundidad_llamada);                                                                                                                            contexto_set_error(ctx, "Recursión demasiado profunda (posible bucle infinito)");
-                    return valor_crear_vacio();
+                    contexto_set_error(ctx, "Recursión demasiado profunda (posible bucle infinito)");
+                    goto limpiar_funcion_usuario;
                 }
 
-                // Guardar contexto anterior
-                TablaSimbolos *tabla_anterior = ctx->tabla_actual;
-                EstadoFlujo estado_anterior = ctx->estado_flujo;
-                Valor retorno_anterior = ctx->valor_retorno;
-
-                // Usar tabla del pool o crear nueva
-                TablaSimbolos *tabla_local;
-                if (ctx->pool_index < 1000 && ctx->pool_tablas[ctx->pool_index])
-                {
-                    // Reutilizar tabla del pool
-                    tabla_local = ctx->pool_tablas[ctx->pool_index];
-                    tabla_local->primera = NULL;
-                }
-                else
-                {
-                    // Crear nueva tabla
-                    tabla_local = malloc(sizeof(TablaSimbolos));
-                    tabla_local->primera = NULL;
-                    if (ctx->pool_index < 1000)
-                    {
-                        ctx->pool_tablas[ctx->pool_index] = tabla_local;
-                    }
-                }
+                // 2. AHORA SÍ, es seguro crear la tabla local
+                tabla_local = malloc(sizeof(TablaSimbolos));
+                tabla_local->primera = NULL;
                 tabla_local->padre = ctx->tabla_global;
+
                 ctx->tabla_actual = tabla_local;
-                ctx->pool_index++;
                 ctx->estado_flujo = FLUJO_NORMAL;
                 ctx->valor_retorno = valor_crear_vacio();
                 ctx->profundidad_llamada++;
 
-                // Asignar argumentos a parámetros
                 for (int i = 0; i < num_args; i++)
                 {
                     tabla_simbolos_definir(ctx->tabla_actual, func->parametros[i].nombre, args[i], false);
                 }
 
-                // Ejecutar el cuerpo de la función
                 if (func->bloque)
                 {
                     evaluar_bloque(func->bloque, ctx);
                 }
 
-                // Capturar valor de retorno antes de restaurar
-                Valor resultado = ctx->valor_retorno;
+                resultado = ctx->valor_retorno;
 
-                // Restaurar contexto
+                if (ctx->hay_error)
+                {
+                    goto limpiar_funcion_usuario;
+                }
+
+                // ===== VALIDACIÓN DE TIPO DE RETORNO =====
+                if (func->tipo_retorno != TIPO_VACIO && resultado.tipo == VALOR_VACIO)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg), "La función '%s' debe retornar un valor pero no se ejecutó RETORNAR.", nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&resultado);
+                    goto limpiar_funcion_usuario;
+                }
+
+                if (func->tipo_retorno == TIPO_VACIO && resultado.tipo != VALOR_VACIO)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg), "La función '%s' no debe retornar un valor pero se ejecutó RETORNAR con un valor.", nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&resultado);
+                    goto limpiar_funcion_usuario;
+                }
+
+                if (func->tipo_retorno != TIPO_VACIO && resultado.tipo != VALOR_VACIO)
+                {
+                    if (!tipo_valor_compatible(func->tipo_retorno, resultado.tipo))
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg), "La función '%s' retornó un valor de tipo incompatible.", nombre);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&resultado);
+                        goto limpiar_funcion_usuario;
+                    }
+
+                    if (func->tipo_retorno == TIPO_ENTERO_SIN_SIGNO)
+                    {
+                        if ((resultado.tipo == VALOR_ENTERO && resultado.datos.entero < 0) ||
+                            (resultado.tipo == VALOR_DECIMAL && resultado.datos.decimal < 0.0))
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg), "La función '%s' retorna ENTERA SIN SIGNO pero se retornó un valor negativo.", nombre);
+                            contexto_set_error(ctx, msg);
+                            valor_destruir(&resultado);
+                            goto limpiar_funcion_usuario;
+                        }
+                    }
+                    else if (func->tipo_retorno == TIPO_DECIMAL_SIN_SIGNO)
+                    {
+                        if ((resultado.tipo == VALOR_DECIMAL && resultado.datos.decimal < 0.0) ||
+                            (resultado.tipo == VALOR_ENTERO && resultado.datos.entero < 0))
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg), "La función '%s' retorna DECIMAL SIN SIGNO pero se retornó un valor negativo.", nombre);
+                            contexto_set_error(ctx, msg);
+                            valor_destruir(&resultado);
+                            goto limpiar_funcion_usuario;
+                        }
+                    }
+
+                    if (func->tipo_retorno == TIPO_ENTERO || func->tipo_retorno == TIPO_ENTERO_SIN_SIGNO)
+                    {
+                        if (resultado.tipo == VALOR_DECIMAL || resultado.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg), "La función '%s' retorna ENTERA pero se retornó un valor decimal.", nombre);
+                            contexto_set_error(ctx, msg);
+                            valor_destruir(&resultado);
+                            goto limpiar_funcion_usuario;
+                        }
+                    }
+                }
+
+            limpiar_funcion_usuario:
+                // 3. RESTAURAR CONTEXTO (Ahora es 100% seguro, las variables están inicializadas)
                 ctx->profundidad_llamada--;
-                ctx->pool_index--;
                 ctx->tabla_actual = tabla_anterior;
                 ctx->estado_flujo = estado_anterior;
                 ctx->valor_retorno = retorno_anterior;
 
+                // 4. LIMPIEZA SEGURA: Solo liberamos si la tabla fue creada
+                if (tabla_local != NULL)
+                {
+                    Simbolo *sim = tabla_local->primera;
+                    while (sim != NULL)
+                    {
+                        Simbolo *siguiente = sim->siguiente;
+                        if (sim->nombre)
+                            free((void *)sim->nombre);
+
+                        if (sim->valor.tipo == VALOR_TEXTO || sim->valor.tipo == VALOR_TEXTO_EXTENSO)
+                        {
+                            if (sim->valor.datos.texto)
+                                free((void *)sim->valor.datos.texto);
+                        }
+                        // Nota: No liberamos LISTA/MATRIZ aquí porque son compartidas (shallow copy)
+                        // y el bloque principal es el dueño de esa memoria.
+
+                        free(sim);
+                        sim = siguiente;
+                    }
+                    free(tabla_local);
+                }
+
                 return resultado;
             }
 
-            // Funciones matemáticas built-in
+            // ========================================================================
+            // FUNCIONES BUILT-IN (Se mantiene exactamente igual a tu versión anterior)
+            // ========================================================================
             if (num_args == 1)
             {
                 double v = 0;
@@ -2626,12 +3168,10 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         val = (unsigned long long)args[0].datos.entero;
                     else if (args[0].tipo == VALOR_ENTERO_SIN_SIGNO)
                         val = args[0].datos.entero_sin_signo;
-                    else if (args[0].datos.decimal)
+                    else if (args[0].tipo == VALOR_DECIMAL)
                         val = (unsigned long long)args[0].datos.decimal;
                     else if (args[0].tipo == VALOR_DECIMAL_SIN_SIGNO)
                         val = (unsigned long long)args[0].datos.decimal_sin_signo;
-
-                    // ✅ Devolver como ENTERO_SIN_SIGNO para preservar todos los bits
                     return valor_crear_entero_sin_signo(~val);
                 }
             }
@@ -2669,6 +3209,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     return valor_crear_decimal(log(v1) / log(v2));
                 if (strcmp(nombre, "DOSALAX") == 0)
                     return valor_crear_decimal(pow(2.0, v2));
+
                 if (strcmp(nombre, "REDONDEAR") == 0)
                 {
                     if (args[0].tipo == VALOR_TEXTO)
@@ -2680,17 +3221,11 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                             v = args[1].datos.decimal;
 
                         if (strcmp(args[0].datos.texto, "ARRIBA") == 0)
-                        {
                             return valor_crear_decimal(ceil(v));
-                        }
                         else if (strcmp(args[0].datos.texto, "ABAJO") == 0)
-                        {
                             return valor_crear_decimal(floor(v));
-                        }
                         else if (strcmp(args[0].datos.texto, "ENTERO") == 0)
-                        {
                             return valor_crear_decimal(round(v));
-                        }
                     }
                     contexto_set_error(ctx, "REDONDEAR requiere modo (ARRIBA, ABAJO, ENTERO) y número");
                     return valor_crear_vacio();
@@ -2723,8 +3258,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
 
                 if (strcmp(nombre, "ACTIVARBIT") == 0)
                 {
-                    unsigned long long val = 0;
-                    int pos = 0;
+                    unsigned long long val = 0, pos = 0;
                     if (args[0].tipo == VALOR_ENTERO)
                         val = (unsigned long long)args[0].datos.entero;
                     else if (args[0].tipo == VALOR_ENTERO_SIN_SIGNO)
@@ -2735,21 +3269,20 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         val = (unsigned long long)args[0].datos.decimal_sin_signo;
 
                     if (args[1].tipo == VALOR_ENTERO)
-                        pos = args[1].datos.entero;
+                        pos = (unsigned long long)args[1].datos.entero;
                     else if (args[1].tipo == VALOR_ENTERO_SIN_SIGNO)
-                        pos = (int)args[1].datos.entero_sin_signo;
+                        pos = args[1].datos.entero_sin_signo;
                     else if (args[1].tipo == VALOR_DECIMAL)
-                        pos = (int)args[1].datos.decimal;
+                        pos = (unsigned long long)args[1].datos.decimal;
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                        pos = (int)args[1].datos.decimal_sin_signo;
+                        pos = args[1].datos.decimal_sin_signo;
 
-                    return valor_crear_entero((long long)(val | (1ULL << pos)));
+                    return valor_crear_entero_sin_signo(val | (1ULL << pos));
                 }
 
                 if (strcmp(nombre, "DESACTIVARBIT") == 0)
                 {
-                    unsigned long long val = 0;
-                    int pos = 0;
+                    unsigned long long val = 0, pos = 0;
                     if (args[0].tipo == VALOR_ENTERO)
                         val = (unsigned long long)args[0].datos.entero;
                     else if (args[0].tipo == VALOR_ENTERO_SIN_SIGNO)
@@ -2760,21 +3293,20 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         val = (unsigned long long)args[0].datos.decimal_sin_signo;
 
                     if (args[1].tipo == VALOR_ENTERO)
-                        pos = args[1].datos.entero;
+                        pos = (unsigned long long)args[1].datos.entero;
                     else if (args[1].tipo == VALOR_ENTERO_SIN_SIGNO)
-                        pos = (int)args[1].datos.entero_sin_signo;
+                        pos = args[1].datos.entero_sin_signo;
                     else if (args[1].tipo == VALOR_DECIMAL)
-                        pos = (int)args[1].datos.decimal;
+                        pos = (unsigned long long)args[1].datos.decimal;
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                        pos = (int)args[1].datos.decimal_sin_signo;
+                        pos = args[1].datos.decimal_sin_signo;
 
-                    return valor_crear_entero((long long)(val & ~(1ULL << pos)));
+                    return valor_crear_entero_sin_signo(val & ~(1ULL << pos));
                 }
 
                 if (strcmp(nombre, "ROTARIZQUIERDA") == 0)
                 {
-                    unsigned long long val = 0;
-                    int shift = 0;
+                    unsigned long long val = 0, shift = 0;
                     if (args[0].tipo == VALOR_ENTERO)
                         val = (unsigned long long)args[0].datos.entero;
                     else if (args[0].tipo == VALOR_ENTERO_SIN_SIGNO)
@@ -2785,48 +3317,46 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         val = (unsigned long long)args[0].datos.decimal_sin_signo;
 
                     if (args[1].tipo == VALOR_ENTERO)
-                        shift = args[1].datos.entero;
+                        shift = (unsigned long long)args[1].datos.entero;
                     else if (args[1].tipo == VALOR_ENTERO_SIN_SIGNO)
-                        shift = (int)args[1].datos.entero_sin_signo;
+                        shift = args[1].datos.entero_sin_signo;
                     else if (args[1].tipo == VALOR_DECIMAL)
-                        shift = (int)args[1].datos.decimal;
+                        shift = (unsigned long long)args[1].datos.decimal;
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                        shift = (int)args[1].datos.decimal_sin_signo;
+                        shift = args[1].datos.decimal_sin_signo;
 
                     shift = shift % 64;
-                    return valor_crear_entero((long long)((val << shift) | (val >> (64 - shift))));
+                    return valor_crear_entero_sin_signo((val << shift) | (val >> (64 - shift)));
                 }
 
                 if (strcmp(nombre, "ROTARDERECHA") == 0)
                 {
-                    unsigned int val = 0;
-                    int shift = 0;
+                    unsigned long long val = 0, shift = 0;
                     if (args[0].tipo == VALOR_ENTERO)
-                        val = (unsigned int)args[0].datos.entero;
+                        val = (unsigned long long)args[0].datos.entero;
                     else if (args[0].tipo == VALOR_ENTERO_SIN_SIGNO)
-                        val = (unsigned int)args[0].datos.entero_sin_signo;
+                        val = args[0].datos.entero_sin_signo;
                     else if (args[0].tipo == VALOR_DECIMAL)
-                        val = (unsigned int)args[0].datos.decimal;
+                        val = (unsigned long long)args[0].datos.decimal;
                     else if (args[0].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                        val = (unsigned int)args[0].datos.decimal_sin_signo;
+                        val = (unsigned long long)args[0].datos.decimal_sin_signo;
 
                     if (args[1].tipo == VALOR_ENTERO)
-                        shift = args[1].datos.entero;
+                        shift = (unsigned long long)args[1].datos.entero;
                     else if (args[1].tipo == VALOR_ENTERO_SIN_SIGNO)
-                        shift = (int)args[1].datos.entero_sin_signo;
+                        shift = args[1].datos.entero_sin_signo;
                     else if (args[1].tipo == VALOR_DECIMAL)
-                        shift = (int)args[1].datos.decimal;
+                        shift = (unsigned long long)args[1].datos.decimal;
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                        shift = (int)args[1].datos.decimal_sin_signo;
+                        shift = args[1].datos.decimal_sin_signo;
 
-                    shift = shift % 32;
-                    return valor_crear_entero((long long)((val >> shift) | (val << (32 - shift))));
+                    shift = shift % 64;
+                    return valor_crear_entero_sin_signo((val >> shift) | (val << (64 - shift)));
                 }
 
                 if (strcmp(nombre, "DESPLAZARIZQUIERDA") == 0)
                 {
-                    unsigned long long val = 0;
-                    int shift = 0;
+                    unsigned long long val = 0, shift = 0;
                     if (args[0].tipo == VALOR_ENTERO)
                         val = (unsigned long long)args[0].datos.entero;
                     else if (args[0].tipo == VALOR_ENTERO_SIN_SIGNO)
@@ -2837,21 +3367,20 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         val = (unsigned long long)args[0].datos.decimal_sin_signo;
 
                     if (args[1].tipo == VALOR_ENTERO)
-                        shift = args[1].datos.entero;
+                        shift = (unsigned long long)args[1].datos.entero;
                     else if (args[1].tipo == VALOR_ENTERO_SIN_SIGNO)
-                        shift = (int)args[1].datos.entero_sin_signo;
+                        shift = args[1].datos.entero_sin_signo;
                     else if (args[1].tipo == VALOR_DECIMAL)
-                        shift = (int)args[1].datos.decimal;
+                        shift = (unsigned long long)args[1].datos.decimal;
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                        shift = (int)args[1].datos.decimal_sin_signo;
+                        shift = args[1].datos.decimal_sin_signo;
 
-                    return valor_crear_entero((long long)(val << shift));
+                    return valor_crear_entero_sin_signo(val << shift);
                 }
 
                 if (strcmp(nombre, "DESPLAZARDERECHA") == 0)
                 {
-                    unsigned long long val = 0;
-                    int shift = 0;
+                    unsigned long long val = 0, shift = 0;
                     if (args[0].tipo == VALOR_ENTERO)
                         val = (unsigned long long)args[0].datos.entero;
                     else if (args[0].tipo == VALOR_ENTERO_SIN_SIGNO)
@@ -2862,15 +3391,15 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         val = (unsigned long long)args[0].datos.decimal_sin_signo;
 
                     if (args[1].tipo == VALOR_ENTERO)
-                        shift = args[1].datos.entero;
+                        shift = (unsigned long long)args[1].datos.entero;
                     else if (args[1].tipo == VALOR_ENTERO_SIN_SIGNO)
-                        shift = (int)args[1].datos.entero_sin_signo;
+                        shift = args[1].datos.entero_sin_signo;
                     else if (args[1].tipo == VALOR_DECIMAL)
-                        shift = (int)args[1].datos.decimal;
+                        shift = (unsigned long long)args[1].datos.decimal;
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                        shift = (int)args[1].datos.decimal_sin_signo;
+                        shift = args[1].datos.decimal_sin_signo;
 
-                    return valor_crear_entero((long long)(val >> shift));
+                    return valor_crear_entero_sin_signo(val >> shift);
                 }
 
                 if (strcmp(nombre, "BITY") == 0)
@@ -2894,7 +3423,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
                         val2 = (unsigned long long)args[1].datos.decimal_sin_signo;
 
-                    return valor_crear_entero((long long)(val1 & val2));
+                    return valor_crear_entero_sin_signo(val1 & val2);
                 }
 
                 if (strcmp(nombre, "BITO") == 0)
@@ -2918,7 +3447,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
                         val2 = (unsigned long long)args[1].datos.decimal_sin_signo;
 
-                    return valor_crear_entero((long long)(val1 | val2));
+                    return valor_crear_entero_sin_signo(val1 | val2);
                 }
 
                 if (strcmp(nombre, "BITXOR") == 0)
@@ -2942,11 +3471,10 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
                         val2 = (unsigned long long)args[1].datos.decimal_sin_signo;
 
-                    return valor_crear_entero((long long)(val1 ^ val2));
+                    return valor_crear_entero_sin_signo(val1 ^ val2);
                 }
             }
-            
-            // Constantes matemáticas (sin argumentos)
+
             if (num_args == 0)
             {
                 if (strcmp(nombre, "NUMEROPI") == 0)
@@ -2960,7 +3488,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 if (strcmp(nombre, "LOGNATURALDE10") == 0)
                     return valor_crear_decimal(2.302585092994046);
             }
-            // Funciones de texto con 1 argumento
+
             if (num_args == 1)
             {
                 if (strcmp(nombre, "LONGITUDTEXTO") == 0)
@@ -3028,9 +3556,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     size_t len = strlen(texto);
                     char *resultado = malloc(len + 1);
                     for (size_t i = 0; i < len; i++)
-                    {
                         resultado[i] = toupper((unsigned char)texto[i]);
-                    }
                     resultado[len] = '\0';
                     return valor_crear_texto(resultado);
                 }
@@ -3045,9 +3571,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     size_t len = strlen(texto);
                     char *resultado = malloc(len + 1);
                     for (size_t i = 0; i < len; i++)
-                    {
                         resultado[i] = tolower((unsigned char)texto[i]);
-                    }
                     resultado[len] = '\0';
                     return valor_crear_texto(resultado);
                 }
@@ -3073,7 +3597,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 }
             }
 
-            // Funciones de texto con 2 argumentos
             if (num_args == 2)
             {
                 if (strcmp(nombre, "BUSCARTEXTO") == 0)
@@ -3091,14 +3614,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     char *haystack = args[0].datos.texto ? args[0].datos.texto : "";
                     char *needle = args[1].datos.texto ? args[1].datos.texto : "";
                     char *encontrado = strstr(haystack, needle);
-                    if (encontrado)
-                    {
-                        return valor_crear_entero(encontrado - haystack);
-                    }
-                    else
-                    {
-                        return valor_crear_entero(-1);
-                    }
+                    return valor_crear_entero(encontrado ? (encontrado - haystack) : -1);
                 }
                 if (strcmp(nombre, "BUSCARCARACTER") == 0)
                 {
@@ -3108,29 +3624,18 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         return valor_crear_vacio();
                     }
                     char *texto = args[0].datos.texto ? args[0].datos.texto : "";
-                    char c;
-                    if (args[1].tipo == VALOR_CARACTER)
-                    {
-                        c = args[1].datos.texto ? args[1].datos.texto[0] : '\0';
-                    }
-                    else if (args[1].tipo == VALOR_TEXTO && args[1].datos.texto)
-                    {
+                    char c = '\0';
+                    if (args[1].tipo == VALOR_CARACTER && args[1].datos.texto)
                         c = args[1].datos.texto[0];
-                    }
+                    else if (args[1].tipo == VALOR_TEXTO && args[1].datos.texto)
+                        c = args[1].datos.texto[0];
                     else
                     {
                         contexto_set_error(ctx, "BUSCARCARACTER requiere carácter como segundo argumento");
                         return valor_crear_vacio();
                     }
                     char *encontrado = strchr(texto, c);
-                    if (encontrado)
-                    {
-                        return valor_crear_entero(encontrado - texto);
-                    }
-                    else
-                    {
-                        return valor_crear_entero(-1);
-                    }
+                    return valor_crear_entero(encontrado ? (encontrado - texto) : -1);
                 }
                 if (strcmp(nombre, "COMPARARTEXTO") == 0)
                 {
@@ -3144,13 +3649,10 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         contexto_set_error(ctx, "COMPARARTEXTO requiere texto como segundo argumento");
                         return valor_crear_vacio();
                     }
-                    return valor_crear_entero(strcmp(
-                        args[0].datos.texto ? args[0].datos.texto : "",
-                        args[1].datos.texto ? args[1].datos.texto : ""));
+                    return valor_crear_entero(strcmp(args[0].datos.texto ? args[0].datos.texto : "", args[1].datos.texto ? args[1].datos.texto : ""));
                 }
             }
 
-            // Funciones de texto con 3 argumentos
             if (num_args == 3)
             {
                 if (strcmp(nombre, "REPETIRTEXTO") == 0)
@@ -3170,15 +3672,14 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         contexto_set_error(ctx, "REPETIRTEXTO requiere número como segundo argumento");
                         return valor_crear_vacio();
                     }
+
                     char *texto = args[0].datos.texto ? args[0].datos.texto : "";
                     size_t len = strlen(texto);
                     size_t total_len = len * veces;
                     char *resultado = malloc(total_len + 1);
                     resultado[0] = '\0';
                     for (int i = 0; i < veces; i++)
-                    {
                         strcat(resultado, texto);
-                    }
                     return valor_crear_texto(resultado);
                 }
                 if (strcmp(nombre, "EXTRAERTEXTO") == 0)
@@ -3203,162 +3704,89 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     if (inicio < 0)
                         inicio = 0;
                     if (inicio >= (int)len)
-                    {
                         return valor_crear_texto("");
-                    }
                     if (inicio + longitud > (int)len)
-                    {
                         longitud = (int)len - inicio;
-                    }
+
                     char *resultado = malloc(longitud + 1);
                     strncpy(resultado, texto + inicio, longitud);
                     resultado[longitud] = '\0';
                     return valor_crear_texto(resultado);
                 }
-                // Función ALEATORIO(tipo, min, max)
-                if (strcmp(nombre, "ALEATORIO") == 0 && num_args == 3)
+                if (strcmp(nombre, "ALEATORIO") == 0)
                 {
-                    char *tipo = NULL;
-                    if (args[0].tipo == VALOR_TEXTO || args[0].tipo == VALOR_TEXTO_EXTENSO)
+                    char *tipo = (args[0].tipo == VALOR_TEXTO || args[0].tipo == VALOR_TEXTO_EXTENSO) ? args[0].datos.texto : NULL;
+                    if (!tipo)
                     {
-                        tipo = args[0].datos.texto;
-                    }
-                    else
-                    {
-                        contexto_set_error(ctx, "ALEATORIO: primer argumento debe ser ENTERO o DECIMAL");
+                        contexto_set_error(ctx, "ALEATORIO: primer argumento debe ser texto");
                         return valor_crear_vacio();
                     }
 
                     if (strcmp(tipo, "ENTERO") == 0)
                     {
-                        long long min = 0, max = 0;
-                        if (args[1].tipo == VALOR_ENTERO)
-                            min = args[1].datos.entero;
-                        else if (args[1].tipo == VALOR_DECIMAL)
-                            min = (long long)args[1].datos.decimal;
-
-                        if (args[2].tipo == VALOR_ENTERO)
-                            max = args[2].datos.entero;
-                        else if (args[2].tipo == VALOR_DECIMAL)
-                            max = (long long)args[2].datos.decimal;
-
+                        long long min = (args[1].tipo == VALOR_ENTERO) ? args[1].datos.entero : (long long)args[1].datos.decimal;
+                        long long max = (args[2].tipo == VALOR_ENTERO) ? args[2].datos.entero : (long long)args[2].datos.decimal;
                         if (min > max)
                         {
                             long long temp = min;
                             min = max;
                             max = temp;
                         }
-
-                        long long resultado = min + (rand() % (max - min + 1));
-                        return valor_crear_entero(resultado);
+                        return valor_crear_entero(min + (rand() % (max - min + 1)));
                     }
                     else if (strcmp(tipo, "DECIMAL") == 0)
                     {
-                        double min = 0.0, max = 0.0;
-                        if (args[1].tipo == VALOR_DECIMAL)
-                            min = args[1].datos.decimal;
-                        else if (args[1].tipo == VALOR_ENTERO)
-                            min = (double)args[1].datos.entero;
-
-                        if (args[2].tipo == VALOR_DECIMAL)
-                            max = args[2].datos.decimal;
-                        else if (args[2].tipo == VALOR_ENTERO)
-                            max = (double)args[2].datos.entero;
-
+                        double min = (args[1].tipo == VALOR_DECIMAL) ? args[1].datos.decimal : (double)args[1].datos.entero;
+                        double max = (args[2].tipo == VALOR_DECIMAL) ? args[2].datos.decimal : (double)args[2].datos.entero;
                         if (min > max)
                         {
                             double temp = min;
                             min = max;
                             max = temp;
                         }
-
-                        double resultado = min + ((double)rand() / RAND_MAX) * (max - min);
-                        return valor_crear_decimal(resultado);
+                        return valor_crear_decimal(min + ((double)rand() / RAND_MAX) * (max - min));
                     }
-                    else
-                    {
-                        contexto_set_error(ctx, "ALEATORIO: tipo debe ser ENTERO o DECIMAL");
-                        return valor_crear_vacio();
-                    }
+                    contexto_set_error(ctx, "ALEATORIO: tipo debe ser ENTERO o DECIMAL");
+                    return valor_crear_vacio();
                 }
-
-                // Función ALEATORIOSINSIGNO(tipo, min, max)
-                if (strcmp(nombre, "ALEATORIOSINSIGNO") == 0 && num_args == 3)
+                if (strcmp(nombre, "ALEATORIOSINSIGNO") == 0)
                 {
-                    char *tipo = NULL;
-                    if (args[0].tipo == VALOR_TEXTO || args[0].tipo == VALOR_TEXTO_EXTENSO)
+                    char *tipo = (args[0].tipo == VALOR_TEXTO || args[0].tipo == VALOR_TEXTO_EXTENSO) ? args[0].datos.texto : NULL;
+                    if (!tipo)
                     {
-                        tipo = args[0].datos.texto;
-                    }
-                    else
-                    {
-                        contexto_set_error(ctx, "ALEATORIOSINSIGNO: primer argumento debe ser ENTERO o DECIMAL");
+                        contexto_set_error(ctx, "ALEATORIOSINSIGNO: primer argumento debe ser texto");
                         return valor_crear_vacio();
                     }
 
                     if (strcmp(tipo, "ENTERO") == 0)
                     {
-                        unsigned long long min = 0, max = 0;
-                        if (args[1].tipo == VALOR_ENTERO)
-                            min = (unsigned long long)args[1].datos.entero;
-                        else if (args[1].tipo == VALOR_DECIMAL)
-                            min = (unsigned long long)args[1].datos.decimal;
-                        else if (args[1].tipo == VALOR_ENTERO_SIN_SIGNO)
-                            min = args[1].datos.entero_sin_signo;
-
-                        if (args[2].tipo == VALOR_ENTERO)
-                            max = (unsigned long long)args[2].datos.entero;
-                        else if (args[2].tipo == VALOR_DECIMAL)
-                            max = (unsigned long long)args[2].datos.decimal;
-                        else if (args[2].tipo == VALOR_ENTERO_SIN_SIGNO)
-                            max = args[2].datos.entero_sin_signo;
-
+                        unsigned long long min = (args[1].tipo == VALOR_ENTERO) ? (unsigned long long)args[1].datos.entero : (unsigned long long)args[1].datos.decimal;
+                        unsigned long long max = (args[2].tipo == VALOR_ENTERO) ? (unsigned long long)args[2].datos.entero : (unsigned long long)args[2].datos.decimal;
                         if (min > max)
                         {
                             unsigned long long temp = min;
                             min = max;
                             max = temp;
                         }
-
-                        unsigned long long resultado = min + (rand() % (max - min + 1));
-                        return valor_crear_entero((long long)resultado);
+                        return valor_crear_entero((long long)(min + (rand() % (max - min + 1))));
                     }
                     else if (strcmp(tipo, "DECIMAL") == 0)
                     {
-                        double min = 0.0, max = 0.0;
-                        if (args[1].tipo == VALOR_DECIMAL)
-                            min = args[1].datos.decimal;
-                        else if (args[1].tipo == VALOR_ENTERO)
-                            min = (double)args[1].datos.entero;
-                        else if (args[1].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                            min = args[1].datos.decimal_sin_signo;
-
-                        if (args[2].tipo == VALOR_DECIMAL)
-                            max = args[2].datos.decimal;
-                        else if (args[2].tipo == VALOR_ENTERO)
-                            max = (double)args[2].datos.entero;
-                        else if (args[2].tipo == VALOR_DECIMAL_SIN_SIGNO)
-                            max = args[2].datos.decimal_sin_signo;
-
+                        double min = (args[1].tipo == VALOR_DECIMAL) ? args[1].datos.decimal : (double)args[1].datos.entero;
+                        double max = (args[2].tipo == VALOR_DECIMAL) ? args[2].datos.decimal : (double)args[2].datos.entero;
                         if (min > max)
                         {
                             double temp = min;
                             min = max;
                             max = temp;
                         }
-
-                        double resultado = min + ((double)rand() / RAND_MAX) * (max - min);
-                        return valor_crear_decimal(resultado);
+                        return valor_crear_decimal(min + ((double)rand() / RAND_MAX) * (max - min));
                     }
-                    else
-                    {
-                        contexto_set_error(ctx, "ALEATORIOSINSIGNO: tipo debe ser ENTERO o DECIMAL");
-                        return valor_crear_vacio();
-                    }
+                    contexto_set_error(ctx, "ALEATORIOSINSIGNO: tipo debe ser ENTERO o DECIMAL");
+                    return valor_crear_vacio();
                 }
             }
 
-            // ✅ Comandos de base de datos
             if (strcmp(nombre, "CONECTARBD") == 0)
             {
                 if (num_args != 1 || args[0].tipo != VALOR_TEXTO)
@@ -3366,18 +3794,14 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     contexto_set_error(ctx, "CONECTARBD requiere un argumento de tipo texto");
                     return valor_crear_vacio();
                 }
-
-                const char *ruta = args[0].datos.texto;
                 sqlite3 *db = NULL;
-                int rc = sqlite3_open(ruta, &db);
-
+                int rc = sqlite3_open(args[0].datos.texto, &db);
                 if (rc != SQLITE_OK)
                 {
                     contexto_set_error(ctx, sqlite3_errmsg(db));
                     sqlite3_close(db);
                     return valor_crear_vacio();
                 }
-
                 ctx->sqlite_db = db;
                 return valor_crear_entero(1);
             }
@@ -3389,78 +3813,53 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     contexto_set_error(ctx, "EJECUTARBD requiere al menos un argumento de tipo texto");
                     return valor_crear_vacio();
                 }
-
                 if (!ctx->sqlite_db)
                 {
                     contexto_set_error(ctx, "No hay conexión activa a base de datos");
                     return valor_crear_vacio();
                 }
 
-                const char *sql = args[0].datos.texto;
-
-                // Si solo hay SQL, usar sqlite3_exec (más simple)
                 if (num_args == 1)
                 {
                     char *err_msg = NULL;
-                    int rc = sqlite3_exec((sqlite3 *)ctx->sqlite_db, sql, NULL, NULL, &err_msg);
-
+                    int rc = sqlite3_exec((sqlite3 *)ctx->sqlite_db, args[0].datos.texto, NULL, NULL, &err_msg);
                     if (rc != SQLITE_OK)
                     {
                         contexto_set_error(ctx, err_msg);
                         sqlite3_free(err_msg);
                         return valor_crear_vacio();
                     }
-
                     return valor_crear_entero(1);
                 }
                 else
                 {
-                    // Hay parámetros para bind, usar prepared statement
                     sqlite3_stmt *stmt = NULL;
-                    int rc = sqlite3_prepare_v2((sqlite3 *)ctx->sqlite_db, sql, -1, &stmt, NULL);
-
+                    int rc = sqlite3_prepare_v2((sqlite3 *)ctx->sqlite_db, args[0].datos.texto, -1, &stmt, NULL);
                     if (rc != SQLITE_OK)
                     {
                         contexto_set_error(ctx, sqlite3_errmsg((sqlite3 *)ctx->sqlite_db));
                         return valor_crear_vacio();
                     }
-
-                    // Bind de parámetros (args[1], args[2], etc.)
                     for (int i = 1; i < num_args; i++)
                     {
-                        int param_idx = i; // Los parámetros en SQLite son 1-indexed
-
-                        switch (args[i].tipo)
-                        {
-                        case VALOR_TEXTO:
-                        case VALOR_TEXTO_EXTENSO:
-                            sqlite3_bind_text(stmt, param_idx, args[i].datos.texto, -1, SQLITE_TRANSIENT);
-                            break;
-                        case VALOR_ENTERO:
-                            sqlite3_bind_int64(stmt, param_idx, args[i].datos.entero);
-                            break;
-                        case VALOR_DECIMAL:
-                            sqlite3_bind_double(stmt, param_idx, args[i].datos.decimal);
-                            break;
-                        case VALOR_LOGICA:
-                            sqlite3_bind_int(stmt, param_idx, args[i].datos.logica ? 1 : 0);
-                            break;
-                        default:
-                            sqlite3_bind_null(stmt, param_idx);
-                            break;
-                        }
+                        if (args[i].tipo == VALOR_TEXTO || args[i].tipo == VALOR_TEXTO_EXTENSO)
+                            sqlite3_bind_text(stmt, i, args[i].datos.texto, -1, SQLITE_TRANSIENT);
+                        else if (args[i].tipo == VALOR_ENTERO)
+                            sqlite3_bind_int64(stmt, i, args[i].datos.entero);
+                        else if (args[i].tipo == VALOR_DECIMAL)
+                            sqlite3_bind_double(stmt, i, args[i].datos.decimal);
+                        else if (args[i].tipo == VALOR_LOGICA)
+                            sqlite3_bind_int(stmt, i, args[i].datos.logica ? 1 : 0);
+                        else
+                            sqlite3_bind_null(stmt, i);
                     }
-
-                    // Ejecutar
                     rc = sqlite3_step(stmt);
                     sqlite3_finalize(stmt);
-
                     if (rc != SQLITE_DONE)
                     {
                         contexto_set_error(ctx, sqlite3_errmsg((sqlite3 *)ctx->sqlite_db));
                         return valor_crear_vacio();
                     }
-
                     return valor_crear_entero(1);
                 }
             }
@@ -3472,73 +3871,48 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     contexto_set_error(ctx, "CONSULTARBD requiere al menos un argumento de tipo texto");
                     return valor_crear_vacio();
                 }
-
                 if (!ctx->sqlite_db)
                 {
                     contexto_set_error(ctx, "No hay conexión activa a base de datos");
                     return valor_crear_vacio();
                 }
-
-                // Limpiar consulta anterior si existe
                 if (ctx->sqlite_stmt)
                 {
                     sqlite3_finalize((sqlite3_stmt *)ctx->sqlite_stmt);
                     ctx->sqlite_stmt = NULL;
                 }
 
-                const char *sql = args[0].datos.texto;
                 sqlite3_stmt *stmt = NULL;
-                int rc = sqlite3_prepare_v2((sqlite3 *)ctx->sqlite_db, sql, -1, &stmt, NULL);
-
+                int rc = sqlite3_prepare_v2((sqlite3 *)ctx->sqlite_db, args[0].datos.texto, -1, &stmt, NULL);
                 if (rc != SQLITE_OK)
                 {
                     contexto_set_error(ctx, sqlite3_errmsg((sqlite3 *)ctx->sqlite_db));
                     return valor_crear_vacio();
                 }
 
-                // Bind de parámetros si hay más de 1 argumento
                 if (num_args > 1)
                 {
                     for (int i = 1; i < num_args; i++)
                     {
-                        int param_idx = i; // Los parámetros en SQLite son 1-indexed
-
-                        switch (args[i].tipo)
-                        {
-                        case VALOR_TEXTO:
-                        case VALOR_TEXTO_EXTENSO:
-                            sqlite3_bind_text(stmt, param_idx, args[i].datos.texto, -1, SQLITE_TRANSIENT);
-                            break;
-                        case VALOR_ENTERO:
-                            sqlite3_bind_int64(stmt, param_idx, args[i].datos.entero);
-                            break;
-                        case VALOR_DECIMAL:
-                            sqlite3_bind_double(stmt, param_idx, args[i].datos.decimal);
-                            break;
-                        case VALOR_LOGICA:
-                            sqlite3_bind_int(stmt, param_idx, args[i].datos.logica ? 1 : 0);
-                            break;
-                        default:
-                            sqlite3_bind_null(stmt, param_idx);
-                            break;
-                        }
+                        if (args[i].tipo == VALOR_TEXTO || args[i].tipo == VALOR_TEXTO_EXTENSO)
+                            sqlite3_bind_text(stmt, i, args[i].datos.texto, -1, SQLITE_TRANSIENT);
+                        else if (args[i].tipo == VALOR_ENTERO)
+                            sqlite3_bind_int64(stmt, i, args[i].datos.entero);
+                        else if (args[i].tipo == VALOR_DECIMAL)
+                            sqlite3_bind_double(stmt, i, args[i].datos.decimal);
+                        else if (args[i].tipo == VALOR_LOGICA)
+                            sqlite3_bind_int(stmt, i, args[i].datos.logica ? 1 : 0);
+                        else
+                            sqlite3_bind_null(stmt, i);
                     }
                 }
-
                 ctx->sqlite_stmt = stmt;
                 ctx->sqlite_columnas = sqlite3_column_count(stmt);
-
-                // Almacenar nombres de columnas
                 if (ctx->sqlite_columnas_nombre)
-                {
                     free(ctx->sqlite_columnas_nombre);
-                }
                 ctx->sqlite_columnas_nombre = malloc(sizeof(char *) * ctx->sqlite_columnas);
                 for (int i = 0; i < ctx->sqlite_columnas; i++)
-                {
                     ctx->sqlite_columnas_nombre[i] = strdup(sqlite3_column_name(stmt, i));
-                }
-
                 return valor_crear_entero(1);
             }
 
@@ -3582,49 +3956,29 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             if (strcmp(nombre, "SIGUIENTEFILABD") == 0)
             {
                 if (!ctx->sqlite_stmt)
-                {
                     return valor_crear_logica(false);
-                }
-
                 int rc = sqlite3_step((sqlite3_stmt *)ctx->sqlite_stmt);
-
                 if (rc == SQLITE_ROW)
                 {
-                    // Cargar valores en variables $BDCOL1, $BDCOL2, etc.
                     for (int i = 0; i < ctx->sqlite_columnas; i++)
                     {
                         char var_name[32];
                         snprintf(var_name, sizeof(var_name), "BDCOL%d", i + 1);
-
                         int tipo = sqlite3_column_type((sqlite3_stmt *)ctx->sqlite_stmt, i);
                         Valor valor;
-
-                        switch (tipo)
-                        {
-                        case SQLITE_INTEGER:
+                        if (tipo == SQLITE_INTEGER)
                             valor = valor_crear_entero(sqlite3_column_int64((sqlite3_stmt *)ctx->sqlite_stmt, i));
-                            break;
-                        case SQLITE_FLOAT:
+                        else if (tipo == SQLITE_FLOAT)
                             valor = valor_crear_decimal(sqlite3_column_double((sqlite3_stmt *)ctx->sqlite_stmt, i));
-                            break;
-                        case SQLITE_TEXT:
+                        else if (tipo == SQLITE_TEXT)
                             valor = valor_crear_texto(strdup((const char *)sqlite3_column_text((sqlite3_stmt *)ctx->sqlite_stmt, i)));
-                            break;
-                        case SQLITE_NULL:
-                        default:
+                        else
                             valor = valor_crear_texto(strdup(""));
-                            break;
-                        }
-
-                        tabla_simbolos_asignar(ctx->tabla_actual, var_name, valor);
+                        tabla_simbolos_definir(ctx->tabla_actual, var_name, valor, false);
                     }
-
                     return valor_crear_logica(true);
                 }
-                else
-                {
-                    return valor_crear_logica(false);
-                }
+                return valor_crear_logica(false);
             }
 
             if (strcmp(nombre, "INICIARTRANSACCION") == 0)
@@ -3634,14 +3988,12 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     contexto_set_error(ctx, "No hay conexión activa a base de datos");
                     return valor_crear_vacio();
                 }
-
                 int rc = sqlite3_exec((sqlite3 *)ctx->sqlite_db, "BEGIN TRANSACTION", NULL, NULL, NULL);
                 if (rc != SQLITE_OK)
                 {
                     contexto_set_error(ctx, "Error al iniciar transacción");
                     return valor_crear_vacio();
                 }
-
                 return valor_crear_entero(1);
             }
 
@@ -3652,14 +4004,12 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     contexto_set_error(ctx, "No hay conexión activa a base de datos");
                     return valor_crear_vacio();
                 }
-
                 int rc = sqlite3_exec((sqlite3 *)ctx->sqlite_db, "COMMIT", NULL, NULL, NULL);
                 if (rc != SQLITE_OK)
                 {
                     contexto_set_error(ctx, "Error al confirmar transacción");
                     return valor_crear_vacio();
                 }
-
                 return valor_crear_entero(1);
             }
 
@@ -3670,18 +4020,15 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     contexto_set_error(ctx, "No hay conexión activa a base de datos");
                     return valor_crear_vacio();
                 }
-
                 int rc = sqlite3_exec((sqlite3 *)ctx->sqlite_db, "ROLLBACK", NULL, NULL, NULL);
                 if (rc != SQLITE_OK)
                 {
                     contexto_set_error(ctx, "Error al deshacer transacción");
                     return valor_crear_vacio();
                 }
-
                 return valor_crear_entero(1);
             }
 
-            // Servidor web
             if (strcmp(nombre, "INICIARSERVER") == 0)
             {
                 int puerto = 8080;
@@ -3692,7 +4039,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     else if (args[0].tipo == VALOR_DECIMAL)
                         puerto = (int)args[0].datos.decimal;
                 }
-
                 cmd_iniciarserver(ctx, puerto);
                 return valor_crear_entero(1);
             }
@@ -3706,7 +4052,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             contexto_set_error(ctx, "Función no reconocida");
             return valor_crear_vacio();
         }
-
         case AST_LLAMADA_FUNCION_MODIFICADORA:
         {
             const char *nombre = nodo->datos.llamada_funcion_modificadora.nombre_funcion;
@@ -4329,45 +4674,79 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
         {
             const char *nombre = nodo->datos.declaracion_variable.nombre;
             Valor valor_inicial;
-
             if (nodo->datos.declaracion_variable.valor_inicial)
             {
                 valor_inicial = evaluar_nodo(nodo->datos.declaracion_variable.valor_inicial, ctx);
                 if (ctx->hay_error)
                     return valor_crear_vacio();
 
-                // Convertir el valor al tipo declarado de la variable
+                // Procesar interpolación si es un texto
+                if (valor_inicial.tipo == VALOR_TEXTO || valor_inicial.tipo == VALOR_TEXTO_EXTENSO)
+                {
+                    // Simplemente copiar el texto sin interpolación por ahora
+                    char *texto_copia = strdup(valor_inicial.datos.texto ? valor_inicial.datos.texto : "");
+                    valor_destruir(&valor_inicial);
+                    valor_inicial = valor_crear_texto(texto_copia);
+                    free(texto_copia);
+                }
+
+                // VALIDACIÓN INLINE PARA TIPOS SIN SIGNO
                 TipoDato tipo_declarado = nodo->datos.declaracion_variable.tipo_dato;
 
-                if (tipo_declarado == TIPO_CARACTER || tipo_declarado == TIPO_CARACTER_SIN_SIGNO)
+                if (tipo_declarado == TIPO_ENTERO_SIN_SIGNO)
                 {
-                    // Si la variable es CARACTER y el valor es numérico, convertir a carácter
-                    if (valor_inicial.tipo == VALOR_ENTERO || valor_inicial.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    if (valor_inicial.tipo == VALOR_ENTERO && valor_inicial.datos.entero < 0)
                     {
-                        long long val_entero = (valor_inicial.tipo == VALOR_ENTERO) ? valor_inicial.datos.entero : (long long)valor_inicial.datos.entero_sin_signo;
-                        char buffer[2] = {(char)val_entero, '\0'};
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "No se puede asignar el valor negativo %lld a la variable ENTERA SIN SIGNO '$%s'",
+                                 valor_inicial.datos.entero, nombre);
+                        contexto_set_error(ctx, msg);
                         valor_destruir(&valor_inicial);
-                        valor_inicial = valor_crear_caracter(buffer);
+                        return valor_crear_vacio();
                     }
-                    else if (valor_inicial.tipo == VALOR_DECIMAL || valor_inicial.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    // Convertir a ENTERO_SIN_SIGNO si es ENTERO positivo
+                    if (valor_inicial.tipo == VALOR_ENTERO)
                     {
-                        double val_decimal = (valor_inicial.tipo == VALOR_DECIMAL) ? valor_inicial.datos.decimal : valor_inicial.datos.decimal_sin_signo;
-                        char buffer[2] = {(char)val_decimal, '\0'};
+                        unsigned long long val = (unsigned long long)valor_inicial.datos.entero;
                         valor_destruir(&valor_inicial);
-                        valor_inicial = valor_crear_caracter(buffer);
+                        valor_inicial = valor_crear_entero_sin_signo(val);
                     }
                 }
-                else if (tipo_declarado == TIPO_ENTERO || tipo_declarado == TIPO_ENTERO_SIN_SIGNO)
+                else if (tipo_declarado == TIPO_DECIMAL_SIN_SIGNO)
                 {
-                    // Si la variable es ENTERO y el valor es carácter, convertir a entero
-                    if (valor_inicial.tipo == VALOR_CARACTER || valor_inicial.tipo == VALOR_CARACTER_SIN_SIGNO)
+                    if (valor_inicial.tipo == VALOR_DECIMAL && valor_inicial.datos.decimal < 0.0)
                     {
-                        if (valor_inicial.datos.texto && strlen(valor_inicial.datos.texto) > 0)
-                        {
-                            long long val_num = (long long)valor_inicial.datos.texto[0];
-                            valor_destruir(&valor_inicial);
-                            valor_inicial = valor_crear_entero(val_num);
-                        }
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "No se puede asignar el valor negativo %g a la variable DECIMAL SIN SIGNO '$%s'",
+                                 valor_inicial.datos.decimal, nombre);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor_inicial);
+                        return valor_crear_vacio();
+                    }
+                    if (valor_inicial.tipo == VALOR_ENTERO && valor_inicial.datos.entero < 0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "No se puede asignar el valor negativo %lld a la variable DECIMAL SIN SIGNO '$%s'",
+                                 valor_inicial.datos.entero, nombre);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor_inicial);
+                        return valor_crear_vacio();
+                    }
+                    // Convertir a DECIMAL_SIN_SIGNO
+                    if (valor_inicial.tipo == VALOR_DECIMAL)
+                    {
+                        double val = valor_inicial.datos.decimal;
+                        valor_destruir(&valor_inicial);
+                        valor_inicial = valor_crear_decimal_sin_signo(val);
+                    }
+                    else if (valor_inicial.tipo == VALOR_ENTERO)
+                    {
+                        double val = (double)valor_inicial.datos.entero;
+                        valor_destruir(&valor_inicial);
+                        valor_inicial = valor_crear_decimal_sin_signo(val);
                     }
                 }
             }
@@ -4377,12 +4756,16 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 switch (nodo->datos.declaracion_variable.tipo_dato)
                 {
                 case TIPO_ENTERO:
-                case TIPO_ENTERO_SIN_SIGNO:
                     valor_inicial = valor_crear_entero(0);
                     break;
+                case TIPO_ENTERO_SIN_SIGNO:
+                    valor_inicial = valor_crear_entero_sin_signo(0);
+                    break;
                 case TIPO_DECIMAL:
-                case TIPO_DECIMAL_SIN_SIGNO:
                     valor_inicial = valor_crear_decimal(0.0);
+                    break;
+                case TIPO_DECIMAL_SIN_SIGNO:
+                    valor_inicial = valor_crear_decimal_sin_signo(0.0);
                     break;
                 case TIPO_CARACTER:
                 case TIPO_CARACTER_SIN_SIGNO:
@@ -4410,14 +4793,98 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             }
 
             tabla_simbolos_definir(ctx->tabla_actual, nombre, valor_inicial, false);
+            // Registrar el tipo declarado de la variable
+            Simbolo *sim = tabla_simbolos_buscar_simbolo(ctx->tabla_actual, nombre);
+            if (sim)
+            {
+                sim->tipo_declarado = nodo->datos.declaracion_variable.tipo_dato;
+            }
             return valor_crear_vacio();
         }
 
-        case AST_DECLARACION_CONSTANTE: {
-            const char* nombre = nodo->datos.declaracion_constante.nombre;
+        case AST_DECLARACION_CONSTANTE:
+        {
+            const char *nombre = nodo->datos.declaracion_constante.nombre;
+            TipoDato tipo_declarado = nodo->datos.declaracion_constante.tipo_dato;
             Valor valor = evaluar_nodo(nodo->datos.declaracion_constante.valor, ctx);
-            if (ctx->hay_error) return valor_crear_vacio();
-            
+            if (ctx->hay_error)
+                return valor_crear_vacio();
+
+            // VALIDAR COMPATIBILIDAD DE TIPOS
+            if (!tipo_valor_compatible(tipo_declarado, valor.tipo))
+            {
+                char msg[256];
+                snprintf(msg, sizeof(msg),
+                         "No puede asignarse un valor de tipo incompatible a la constante '$%s'.",
+                         nombre);
+                contexto_set_error(ctx, msg);
+                valor_destruir(&valor);
+                return valor_crear_vacio();
+            }
+
+            // VALIDAR SIGNO NEGATIVO PARA TIPOS SIN SIGNO
+            if (tipo_declarado == TIPO_ENTERO_SIN_SIGNO)
+            {
+                if (valor.tipo == VALOR_ENTERO && valor.datos.entero < 0)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg),
+                             "La constante '$%s' es ENTERA SIN SIGNO y no admite valores negativos.",
+                             nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+                if (valor.tipo == VALOR_DECIMAL && valor.datos.decimal < 0.0)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg),
+                             "La constante '$%s' es ENTERA SIN SIGNO y no admite valores negativos.",
+                             nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+            }
+            else if (tipo_declarado == TIPO_DECIMAL_SIN_SIGNO)
+            {
+                if (valor.tipo == VALOR_DECIMAL && valor.datos.decimal < 0.0)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg),
+                             "La constante '$%s' es DECIMAL SIN SIGNO y no admite valores negativos.",
+                             nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+                if (valor.tipo == VALOR_ENTERO && valor.datos.entero < 0)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg),
+                             "La constante '$%s' es DECIMAL SIN SIGNO y no admite valores negativos.",
+                             nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+            }
+
+            // VALIDAR COMPATIBILIDAD ENTERO/DECIMAL
+            if (tipo_declarado == TIPO_ENTERO || tipo_declarado == TIPO_ENTERO_SIN_SIGNO)
+            {
+                if (valor.tipo == VALOR_DECIMAL || valor.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg),
+                             "La constante '$%s' es ENTERA y no admite valores decimales.",
+                             nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+            }
+
             tabla_simbolos_definir(ctx->tabla_actual, nombre, valor, true);
             return valor_crear_vacio();
         }
@@ -4435,6 +4902,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             lista.tamano = tamano;
             lista.filas = 0;
             lista.columnas = 0;
+            lista.tipo_elemento = tipo;
 
             // Asignar array de valores
             lista.datos.lista = malloc(sizeof(Valor) * tamano);
@@ -4503,6 +4971,70 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         free(lista.datos.lista);
                         return valor_crear_vacio();
                     }
+
+                    // VALIDAR SIGNO NEGATIVO PARA TIPOS SIN SIGNO
+                    if (tipo == TIPO_ENTERO_SIN_SIGNO)
+                    {
+                        if (val.tipo == VALOR_ENTERO && val.datos.entero < 0)
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg),
+                                     "La lista '%s' es ENTERA SIN SIGNO y no admite valores negativos en la posición %d.",
+                                     nombre, idx);
+                            contexto_set_error(ctx, msg);
+                            free(lista.datos.lista);
+                            return valor_crear_vacio();
+                        }
+                        if (val.tipo == VALOR_DECIMAL && val.datos.decimal < 0.0)
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg),
+                                     "La lista '%s' es ENTERA SIN SIGNO y no admite valores negativos en la posición %d.",
+                                     nombre, idx);
+                            contexto_set_error(ctx, msg);
+                            free(lista.datos.lista);
+                            return valor_crear_vacio();
+                        }
+                    }
+                    else if (tipo == TIPO_DECIMAL_SIN_SIGNO)
+                    {
+                        if (val.tipo == VALOR_DECIMAL && val.datos.decimal < 0.0)
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg),
+                                     "La lista '%s' es DECIMAL SIN SIGNO y no admite valores negativos en la posición %d.",
+                                     nombre, idx);
+                            contexto_set_error(ctx, msg);
+                            free(lista.datos.lista);
+                            return valor_crear_vacio();
+                        }
+                        if (val.tipo == VALOR_ENTERO && val.datos.entero < 0)
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg),
+                                     "La lista '%s' es DECIMAL SIN SIGNO y no admite valores negativos en la posición %d.",
+                                     nombre, idx);
+                            contexto_set_error(ctx, msg);
+                            free(lista.datos.lista);
+                            return valor_crear_vacio();
+                        }
+                    }
+
+                    // VALIDAR COMPATIBILIDAD DE TIPOS
+                    if (tipo == TIPO_ENTERO || tipo == TIPO_ENTERO_SIN_SIGNO)
+                    {
+                        if (val.tipo == VALOR_DECIMAL || val.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                        {
+                            char msg[256];
+                            snprintf(msg, sizeof(msg),
+                                     "La lista '%s' es ENTERA y no admite valores decimales en la posición %d.",
+                                     nombre, idx);
+                            contexto_set_error(ctx, msg);
+                            free(lista.datos.lista);
+                            return valor_crear_vacio();
+                        }
+                    }
+
                     // Destruir el valor anterior y asignar el nuevo
                     valor_destruir(&lista.datos.lista[idx]);
                     lista.datos.lista[idx] = val;
@@ -4530,6 +5062,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             matriz.tamano = 0;
             matriz.filas = filas;
             matriz.columnas = columnas;
+            matriz.tipo_elemento = tipo;
 
             // Asignar array 2D
             matriz.datos.matriz = malloc(sizeof(Valor *) * filas);
@@ -4622,6 +5155,90 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                                 free(matriz.datos.matriz);
                                 return valor_crear_vacio();
                             }
+
+                            // VALIDAR SIGNO NEGATIVO PARA TIPOS SIN SIGNO
+                            if (tipo == TIPO_ENTERO_SIN_SIGNO)
+                            {
+                                if (val.tipo == VALOR_ENTERO && val.datos.entero < 0)
+                                {
+                                    char msg[256];
+                                    snprintf(msg, sizeof(msg),
+                                             "La matriz '%s' es ENTERA SIN SIGNO y no admite valores negativos en [%d][%d].",
+                                             nombre, fila_idx, col_idx);
+                                    contexto_set_error(ctx, msg);
+                                    for (int i = 0; i < filas; i++)
+                                    {
+                                        free(matriz.datos.matriz[i]);
+                                    }
+                                    free(matriz.datos.matriz);
+                                    return valor_crear_vacio();
+                                }
+                                if (val.tipo == VALOR_DECIMAL && val.datos.decimal < 0.0)
+                                {
+                                    char msg[256];
+                                    snprintf(msg, sizeof(msg),
+                                             "La matriz '%s' es ENTERA SIN SIGNO y no admite valores negativos en [%d][%d].",
+                                             nombre, fila_idx, col_idx);
+                                    contexto_set_error(ctx, msg);
+                                    for (int i = 0; i < filas; i++)
+                                    {
+                                        free(matriz.datos.matriz[i]);
+                                    }
+                                    free(matriz.datos.matriz);
+                                    return valor_crear_vacio();
+                                }
+                            }
+                            else if (tipo == TIPO_DECIMAL_SIN_SIGNO)
+                            {
+                                if (val.tipo == VALOR_DECIMAL && val.datos.decimal < 0.0)
+                                {
+                                    char msg[256];
+                                    snprintf(msg, sizeof(msg),
+                                             "La matriz '%s' es DECIMAL SIN SIGNO y no admite valores negativos en [%d][%d].",
+                                             nombre, fila_idx, col_idx);
+                                    contexto_set_error(ctx, msg);
+                                    for (int i = 0; i < filas; i++)
+                                    {
+                                        free(matriz.datos.matriz[i]);
+                                    }
+                                    free(matriz.datos.matriz);
+                                    return valor_crear_vacio();
+                                }
+                                if (val.tipo == VALOR_ENTERO && val.datos.entero < 0)
+                                {
+                                    char msg[256];
+                                    snprintf(msg, sizeof(msg),
+                                             "La matriz '%s' es DECIMAL SIN SIGNO y no admite valores negativos en [%d][%d].",
+                                             nombre, fila_idx, col_idx);
+                                    contexto_set_error(ctx, msg);
+                                    for (int i = 0; i < filas; i++)
+                                    {
+                                        free(matriz.datos.matriz[i]);
+                                    }
+                                    free(matriz.datos.matriz);
+                                    return valor_crear_vacio();
+                                }
+                            }
+
+                            // VALIDAR COMPATIBILIDAD DE TIPOS
+                            if (tipo == TIPO_ENTERO || tipo == TIPO_ENTERO_SIN_SIGNO)
+                            {
+                                if (val.tipo == VALOR_DECIMAL || val.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                                {
+                                    char msg[256];
+                                    snprintf(msg, sizeof(msg),
+                                             "La matriz '%s' es ENTERA y no admite valores decimales en [%d][%d].",
+                                             nombre, fila_idx, col_idx);
+                                    contexto_set_error(ctx, msg);
+                                    for (int i = 0; i < filas; i++)
+                                    {
+                                        free(matriz.datos.matriz[i]);
+                                    }
+                                    free(matriz.datos.matriz);
+                                    return valor_crear_vacio();
+                                }
+                            }
+
                             valor_destruir(&matriz.datos.matriz[fila_idx][col_idx]);
                             matriz.datos.matriz[fila_idx][col_idx] = val;
                             col_nodo = col_nodo->siguiente;
@@ -4635,6 +5252,275 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
 
             // Registrar en la tabla de símbolos
             tabla_simbolos_definir(ctx->tabla_actual, nombre, matriz, false);
+            return valor_crear_vacio();
+        }
+
+        case AST_DECLARACION_MATRIZ3D:
+        {
+            const char *nombre = nodo->datos.declaracion_matriz3d.nombre;
+            TipoDato tipo = nodo->datos.declaracion_matriz3d.tipo_elemento;
+            int dim1 = nodo->datos.declaracion_matriz3d.dim1;
+            int dim2 = nodo->datos.declaracion_matriz3d.dim2;
+            int dim3 = nodo->datos.declaracion_matriz3d.dim3;
+            NodoAST *valores_iniciales = nodo->datos.declaracion_matriz3d.valores_iniciales;
+
+            // Crear valor de tipo matriz 3D
+            Valor matriz3d;
+            matriz3d.tipo = VALOR_MATRIZ3D;
+            matriz3d.tamano = 0;
+            matriz3d.filas = dim1;
+            matriz3d.columnas = dim2;
+            matriz3d.profundidad = dim3;
+            matriz3d.tipo_elemento = tipo;
+
+            // Asignar array 3D
+            matriz3d.datos.matriz3d = malloc(sizeof(Valor **) * dim1);
+            if (!matriz3d.datos.matriz3d)
+            {
+                contexto_set_error(ctx, "No se pudo asignar memoria para la matriz 3D");
+                return valor_crear_vacio();
+            }
+
+            for (int i = 0; i < dim1; i++)
+            {
+                matriz3d.datos.matriz3d[i] = malloc(sizeof(Valor *) * dim2);
+                if (!matriz3d.datos.matriz3d[i])
+                {
+                    for (int j = 0; j < i; j++)
+                    {
+                        for (int k = 0; k < dim2; k++)
+                        {
+                            free(matriz3d.datos.matriz3d[j][k]);
+                        }
+                        free(matriz3d.datos.matriz3d[j]);
+                    }
+                    free(matriz3d.datos.matriz3d);
+                    contexto_set_error(ctx, "No se pudo asignar memoria para la matriz 3D");
+                    return valor_crear_vacio();
+                }
+
+                for (int j = 0; j < dim2; j++)
+                {
+                    matriz3d.datos.matriz3d[i][j] = malloc(sizeof(Valor) * dim3);
+                    if (!matriz3d.datos.matriz3d[i][j])
+                    {
+                        for (int ii = 0; ii < dim1; ii++)
+                        {
+                            for (int jj = 0; jj < dim2; jj++)
+                            {
+                                if (matriz3d.datos.matriz3d[ii][jj])
+                                {
+                                    free(matriz3d.datos.matriz3d[ii][jj]);
+                                }
+                            }
+                            free(matriz3d.datos.matriz3d[ii]);
+                        }
+                        free(matriz3d.datos.matriz3d);
+                        contexto_set_error(ctx, "No se pudo asignar memoria para la matriz 3D");
+                        return valor_crear_vacio();
+                    }
+
+                    // Inicializar elementos según el tipo
+                    for (int k = 0; k < dim3; k++)
+                    {
+                        switch (tipo)
+                        {
+                        case TIPO_ENTERO:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_entero(0);
+                            break;
+                        case TIPO_ENTERO_SIN_SIGNO:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_entero_sin_signo(0);
+                            break;
+                        case TIPO_DECIMAL:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_decimal(0.0);
+                            break;
+                        case TIPO_DECIMAL_SIN_SIGNO:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_decimal_sin_signo(0.0);
+                            break;
+                        case TIPO_CARACTER:
+                        {
+                            char buffer[2] = {' ', '\0'};
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_caracter(buffer);
+                            break;
+                        }
+                        case TIPO_CARACTER_SIN_SIGNO:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_caracter_sin_signo(0);
+                            break;
+                        case TIPO_TEXTO:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_texto("");
+                            break;
+                        case TIPO_TEXTO_EXTENSO:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_texto("");
+                            break;
+                        case TIPO_LOGICA:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_logica(0);
+                            break;
+                        default:
+                            matriz3d.datos.matriz3d[i][j][k] = valor_crear_entero(0);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Si hay valores iniciales, asignarlos
+            if (valores_iniciales && valores_iniciales->tipo == AST_BLOQUE)
+            {
+                NodoAST *plano_nodo = valores_iniciales->datos.bloque.primera;
+                int plano_idx = 0;
+
+                while (plano_nodo && plano_idx < dim1)
+                {
+                    if (plano_nodo->tipo == AST_BLOQUE)
+                    {
+                        NodoAST *fila_nodo = plano_nodo->datos.bloque.primera;
+                        int fila_idx = 0;
+
+                        while (fila_nodo && fila_idx < dim2)
+                        {
+                            if (fila_nodo->tipo == AST_BLOQUE)
+                            {
+                                NodoAST *col_nodo = fila_nodo->datos.bloque.primera;
+                                int col_idx = 0;
+
+                                while (col_nodo && col_idx < dim3)
+                                {
+                                    Valor val = evaluar_nodo(col_nodo, ctx);
+                                    if (ctx->hay_error)
+                                    {
+                                        // Liberar todo
+                                        for (int i = 0; i < dim1; i++)
+                                        {
+                                            for (int j = 0; j < dim2; j++)
+                                            {
+                                                free(matriz3d.datos.matriz3d[i][j]);
+                                            }
+                                            free(matriz3d.datos.matriz3d[i]);
+                                        }
+                                        free(matriz3d.datos.matriz3d);
+                                        return valor_crear_vacio();
+                                    }
+
+                                    // VALIDAR SIGNO NEGATIVO PARA TIPOS SIN SIGNO
+                                    if (tipo == TIPO_ENTERO_SIN_SIGNO)
+                                    {
+                                        if (val.tipo == VALOR_ENTERO && val.datos.entero < 0)
+                                        {
+                                            char msg[256];
+                                            snprintf(msg, sizeof(msg),
+                                                     "La matriz 3D '%s' es ENTERA SIN SIGNO y no admite valores negativos en [%d][%d][%d].",
+                                                     nombre, plano_idx, fila_idx, col_idx);
+                                            contexto_set_error(ctx, msg);
+                                            for (int i = 0; i < dim1; i++)
+                                            {
+                                                for (int j = 0; j < dim2; j++)
+                                                {
+                                                    free(matriz3d.datos.matriz3d[i][j]);
+                                                }
+                                                free(matriz3d.datos.matriz3d[i]);
+                                            }
+                                            free(matriz3d.datos.matriz3d);
+                                            return valor_crear_vacio();
+                                        }
+                                        if (val.tipo == VALOR_DECIMAL && val.datos.decimal < 0.0)
+                                        {
+                                            char msg[256];
+                                            snprintf(msg, sizeof(msg),
+                                                     "La matriz 3D '%s' es ENTERA SIN SIGNO y no admite valores negativos en [%d][%d][%d].",
+                                                     nombre, plano_idx, fila_idx, col_idx);
+                                            contexto_set_error(ctx, msg);
+                                            for (int i = 0; i < dim1; i++)
+                                            {
+                                                for (int j = 0; j < dim2; j++)
+                                                {
+                                                    free(matriz3d.datos.matriz3d[i][j]);
+                                                }
+                                                free(matriz3d.datos.matriz3d[i]);
+                                            }
+                                            free(matriz3d.datos.matriz3d);
+                                            return valor_crear_vacio();
+                                        }
+                                    }
+                                    else if (tipo == TIPO_DECIMAL_SIN_SIGNO)
+                                    {
+                                        if (val.tipo == VALOR_DECIMAL && val.datos.decimal < 0.0)
+                                        {
+                                            char msg[256];
+                                            snprintf(msg, sizeof(msg),
+                                                     "La matriz 3D '%s' es DECIMAL SIN SIGNO y no admite valores negativos en [%d][%d][%d].",
+                                                     nombre, plano_idx, fila_idx, col_idx);
+                                            contexto_set_error(ctx, msg);
+                                            for (int i = 0; i < dim1; i++)
+                                            {
+                                                for (int j = 0; j < dim2; j++)
+                                                {
+                                                    free(matriz3d.datos.matriz3d[i][j]);
+                                                }
+                                                free(matriz3d.datos.matriz3d[i]);
+                                            }
+                                            free(matriz3d.datos.matriz3d);
+                                            return valor_crear_vacio();
+                                        }
+                                        if (val.tipo == VALOR_ENTERO && val.datos.entero < 0)
+                                        {
+                                            char msg[256];
+                                            snprintf(msg, sizeof(msg),
+                                                     "La matriz 3D '%s' es DECIMAL SIN SIGNO y no admite valores negativos en [%d][%d][%d].",
+                                                     nombre, plano_idx, fila_idx, col_idx);
+                                            contexto_set_error(ctx, msg);
+                                            for (int i = 0; i < dim1; i++)
+                                            {
+                                                for (int j = 0; j < dim2; j++)
+                                                {
+                                                    free(matriz3d.datos.matriz3d[i][j]);
+                                                }
+                                                free(matriz3d.datos.matriz3d[i]);
+                                            }
+                                            free(matriz3d.datos.matriz3d);
+                                            return valor_crear_vacio();
+                                        }
+                                    }
+
+                                    // VALIDAR COMPATIBILIDAD DE TIPOS
+                                    if (tipo == TIPO_ENTERO || tipo == TIPO_ENTERO_SIN_SIGNO)
+                                    {
+                                        if (val.tipo == VALOR_DECIMAL || val.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                                        {
+                                            char msg[256];
+                                            snprintf(msg, sizeof(msg),
+                                                     "La matriz 3D '%s' es ENTERA y no admite valores decimales en [%d][%d][%d].",
+                                                     nombre, plano_idx, fila_idx, col_idx);
+                                            contexto_set_error(ctx, msg);
+                                            for (int i = 0; i < dim1; i++)
+                                            {
+                                                for (int j = 0; j < dim2; j++)
+                                                {
+                                                    free(matriz3d.datos.matriz3d[i][j]);
+                                                }
+                                                free(matriz3d.datos.matriz3d[i]);
+                                            }
+                                            free(matriz3d.datos.matriz3d);
+                                            return valor_crear_vacio();
+                                        }
+                                    }
+
+                                    valor_destruir(&matriz3d.datos.matriz3d[plano_idx][fila_idx][col_idx]);
+                                    matriz3d.datos.matriz3d[plano_idx][fila_idx][col_idx] = val;
+                                    col_nodo = col_nodo->siguiente;
+                                    col_idx++;
+                                }
+                            }
+                            fila_nodo = fila_nodo->siguiente;
+                            fila_idx++;
+                        }
+                    }
+                    plano_nodo = plano_nodo->siguiente;
+                    plano_idx++;
+                }
+            }
+
+            // Registrar en la tabla de símbolos
+            tabla_simbolos_definir(ctx->tabla_actual, nombre, matriz3d, false);
             return valor_crear_vacio();
         }
 
@@ -4772,6 +5658,9 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
         {
             while (ctx->estado_flujo == FLUJO_NORMAL)
             {
+
+                teclado_limpiar_buffer();
+
                 Valor condicion = evaluar_nodo(nodo->datos.mientras.condicion, ctx);
                 if (ctx->hay_error)
                     return valor_crear_vacio();
@@ -4813,8 +5702,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 {
                     break; // Salir y dejar que el bloque padre maneje el salto
                 }
-                // Limpiar buffer de teclado al final de cada iteración
-                teclado_limpiar_buffer();
             }
             return valor_crear_vacio();
         }
@@ -4939,10 +5826,10 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         nombre_var[j] = '\0';
                         i--; // Retroceder uno
 
-                        // Verificar si hay acceso a lista/matriz: [$expresion]
+                        // Verificar si hay acceso directo a lista/matriz/matriz3D: $var[indice] o $var[i][j] o $var[i][j][k]
                         if (i + 1 < len && texto[i + 1] == '[')
                         {
-                            // Encontrar el primer corchete de cierre
+                            // Primer índice
                             size_t inicio_corchete1 = i + 2;
                             size_t fin_corchete1 = inicio_corchete1;
                             int nivel = 1;
@@ -4959,7 +5846,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
 
                             if (nivel == 0 && fin_corchete1 < len)
                             {
-                                // Extraer la expresión del primer índice
                                 char expr_indice1[256];
                                 size_t expr_len1 = fin_corchete1 - inicio_corchete1;
                                 if (expr_len1 < sizeof(expr_indice1))
@@ -4967,10 +5853,9 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                                     strncpy(expr_indice1, texto + inicio_corchete1, expr_len1);
                                     expr_indice1[expr_len1] = '\0';
 
-                                    // Verificar si hay un segundo corchete (matriz)
+                                    // Verificar segundo índice (matriz 2D)
                                     if (fin_corchete1 + 1 < len && texto[fin_corchete1 + 1] == '[')
                                     {
-                                        // Es acceso a matriz [fila][columna]
                                         size_t inicio_corchete2 = fin_corchete1 + 2;
                                         size_t fin_corchete2 = inicio_corchete2;
                                         nivel = 1;
@@ -4987,7 +5872,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
 
                                         if (nivel == 0 && fin_corchete2 < len)
                                         {
-                                            // Extraer la expresión del segundo índice
                                             char expr_indice2[256];
                                             size_t expr_len2 = fin_corchete2 - inicio_corchete2;
                                             if (expr_len2 < sizeof(expr_indice2))
@@ -4995,72 +5879,173 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                                                 strncpy(expr_indice2, texto + inicio_corchete2, expr_len2);
                                                 expr_indice2[expr_len2] = '\0';
 
-                                                // Evaluar ambos índices
-                                                char *indice1_str = evaluar_expresion_completa(expr_indice1, ctx);
-                                                char *indice2_str = evaluar_expresion_completa(expr_indice2, ctx);
-                                                long long idx1 = atoll(indice1_str);
-                                                long long idx2 = atoll(indice2_str);
-                                                free(indice1_str);
-                                                free(indice2_str);
-
-                                                // Buscar la matriz
-                                                Valor *matriz = tabla_simbolos_buscar(ctx->tabla_actual, nombre_var);
-                                                if (matriz && matriz->tipo == VALOR_MATRIZ &&
-                                                    idx1 >= 0 && idx1 < matriz->filas &&
-                                                    idx2 >= 0 && idx2 < matriz->columnas)
+                                                // Verificar tercer índice (matriz 3D)
+                                                if (fin_corchete2 + 1 < len && texto[fin_corchete2 + 1] == '[')
                                                 {
-                                                    Valor elemento = matriz->datos.matriz[idx1][idx2];
+                                                    size_t inicio_corchete3 = fin_corchete2 + 2;
+                                                    size_t fin_corchete3 = inicio_corchete3;
+                                                    nivel = 1;
 
-                                                    // Verificar si hay formato
-                                                    int decimales = -1;
-                                                    if (indice_formato < nodo->datos.escribir.num_formatos)
+                                                    while (fin_corchete3 < len && nivel > 0)
                                                     {
-                                                        decimales = nodo->datos.escribir.formatos_decimales[indice_formato];
-                                                        indice_formato++;
+                                                        if (texto[fin_corchete3] == '[')
+                                                            nivel++;
+                                                        else if (texto[fin_corchete3] == ']')
+                                                            nivel--;
+                                                        if (nivel > 0)
+                                                            fin_corchete3++;
                                                     }
 
-                                                    // Imprimir con formato si es decimal
-                                                    if (decimales >= 0 && (elemento.tipo == VALOR_DECIMAL || elemento.tipo == VALOR_DECIMAL_SIN_SIGNO))
+                                                    if (nivel == 0 && fin_corchete3 < len)
                                                     {
-                                                        printf("%.*f", decimales, elemento.datos.decimal);
+                                                        char expr_indice3[256];
+                                                        size_t expr_len3 = fin_corchete3 - inicio_corchete3;
+                                                        if (expr_len3 < sizeof(expr_indice3))
+                                                        {
+                                                            strncpy(expr_indice3, texto + inicio_corchete3, expr_len3);
+                                                            expr_indice3[expr_len3] = '\0';
+
+                                                            // Evaluar los tres índices
+                                                            char *indice1_str = evaluar_expresion_completa(expr_indice1, ctx);
+                                                            char *indice2_str = evaluar_expresion_completa(expr_indice2, ctx);
+                                                            char *indice3_str = evaluar_expresion_completa(expr_indice3, ctx);
+                                                            long long idx1 = atoll(indice1_str);
+                                                            long long idx2 = atoll(indice2_str);
+                                                            long long idx3 = atoll(indice3_str);
+                                                            free(indice1_str);
+                                                            free(indice2_str);
+                                                            free(indice3_str);
+
+                                                            // Buscar matriz 3D
+                                                            Valor *matriz3d = tabla_simbolos_buscar(ctx->tabla_actual, nombre_var);
+                                                            if (matriz3d && matriz3d->tipo == VALOR_MATRIZ3D &&
+                                                                idx1 >= 0 && idx1 < matriz3d->filas &&
+                                                                idx2 >= 0 && idx2 < matriz3d->columnas &&
+                                                                idx3 >= 0 && idx3 < matriz3d->profundidad)
+                                                            {
+                                                                Valor elemento = matriz3d->datos.matriz3d[idx1][idx2][idx3];
+                                                                int decimales = -1;
+                                                                if (indice_formato < nodo->datos.escribir.num_formatos)
+                                                                {
+                                                                    decimales = nodo->datos.escribir.formatos_decimales[indice_formato];
+                                                                    indice_formato++;
+                                                                }
+                                                                if (decimales >= 0 && (elemento.tipo == VALOR_DECIMAL || elemento.tipo == VALOR_DECIMAL_SIN_SIGNO))
+                                                                {
+                                                                    printf("%.*f", decimales, elemento.datos.decimal);
+                                                                }
+                                                                else
+                                                                {
+                                                                    valor_imprimir(elemento);
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                printf("$%s[%s][%s][%s]", nombre_var, expr_indice1, expr_indice2, expr_indice3);
+                                                            }
+                                                            i = fin_corchete3;
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                /*else
+                                                {
+                                                    // Matriz 2D
+                                                    char *indice1_str = evaluar_expresion_completa(expr_indice1, ctx);
+                                                    char *indice2_str = evaluar_expresion_completa(expr_indice2, ctx);
+                                                    long long idx1 = atoll(indice1_str);
+                                                    long long idx2 = atoll(indice2_str);
+                                                    free(indice1_str);
+                                                    free(indice2_str);
+
+                                                    Valor *matriz = tabla_simbolos_buscar(ctx->tabla_actual, nombre_var);
+                                                    if (matriz && matriz->tipo == VALOR_MATRIZ &&
+                                                        idx1 >= 0 && idx1 < matriz->filas &&
+                                                        idx2 >= 0 && idx2 < matriz->columnas)
+                                                    {
+                                                        Valor elemento = matriz->datos.matriz[idx1][idx2];
+                                                        int decimales = -1;
+                                                        if (indice_formato < nodo->datos.escribir.num_formatos)
+                                                        {
+                                                            decimales = nodo->datos.escribir.formatos_decimales[indice_formato];
+                                                            indice_formato++;
+                                                        }
+                                                        if (decimales >= 0 && (elemento.tipo == VALOR_DECIMAL || elemento.tipo == VALOR_DECIMAL_SIN_SIGNO))
+                                                        {
+                                                            printf("%.*f", decimales, elemento.datos.decimal);
+                                                        }
+                                                        else
+                                                        {
+                                                            valor_imprimir(elemento);
+                                                        }
                                                     }
                                                     else
                                                     {
-                                                        valor_imprimir(elemento);
+                                                        printf("$%s[%s][%s]", nombre_var, expr_indice1, expr_indice2);
                                                     }
-                                                }
+                                                    i = fin_corchete2;
+                                                    continue;
+                                                }*/
+
                                                 else
                                                 {
-                                                    printf("$%s[%s][%s]", nombre_var, expr_indice1, expr_indice2);
-                                                }
+                                                    // Matriz 2D
+                                                    char *indice1_str = evaluar_expresion_completa(expr_indice1, ctx);
+                                                    char *indice2_str = evaluar_expresion_completa(expr_indice2, ctx);
+                                                    long long idx1 = atoll(indice1_str);
+                                                    long long idx2 = atoll(indice2_str);
+                                                    free(indice1_str);
+                                                    free(indice2_str);
 
-                                                i = fin_corchete2;
-                                                continue;
+                                                    Valor *matriz = tabla_simbolos_buscar(ctx->tabla_actual, nombre_var);
+
+                                                    if (matriz && matriz->tipo == VALOR_MATRIZ &&
+                                                        idx1 >= 0 && idx1 < matriz->filas &&
+                                                        idx2 >= 0 && idx2 < matriz->columnas)
+                                                    {
+                                                        Valor elemento = matriz->datos.matriz[idx1][idx2];
+                                                        int decimales = -1;
+                                                        if (indice_formato < nodo->datos.escribir.num_formatos)
+                                                        {
+                                                            decimales = nodo->datos.escribir.formatos_decimales[indice_formato];
+                                                            indice_formato++;
+                                                        }
+                                                        if (decimales >= 0 && (elemento.tipo == VALOR_DECIMAL || elemento.tipo == VALOR_DECIMAL_SIN_SIGNO))
+                                                        {
+                                                            printf("%.*f", decimales, elemento.datos.decimal);
+                                                        }
+                                                        else
+                                                        {
+                                                            valor_imprimir(elemento);
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        printf("$%s[%s][%s]", nombre_var, expr_indice1, expr_indice2);
+                                                    }
+                                                    i = fin_corchete2;
+                                                    continue;
+                                                }
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        // Es acceso a lista [indice]
+                                        // Lista (un solo índice)
                                         char *indice_str = evaluar_expresion_completa(expr_indice1, ctx);
                                         long long idx = atoll(indice_str);
                                         free(indice_str);
 
-                                        // Buscar la lista
                                         Valor *lista = tabla_simbolos_buscar(ctx->tabla_actual, nombre_var);
                                         if (lista && lista->tipo == VALOR_LISTA && idx >= 0 && idx < lista->tamano)
                                         {
                                             Valor elemento = lista->datos.lista[idx];
-
-                                            // Verificar si hay formato
                                             int decimales = -1;
                                             if (indice_formato < nodo->datos.escribir.num_formatos)
                                             {
                                                 decimales = nodo->datos.escribir.formatos_decimales[indice_formato];
                                                 indice_formato++;
                                             }
-
-                                            // Imprimir con formato si es decimal
                                             if (decimales >= 0 && (elemento.tipo == VALOR_DECIMAL || elemento.tipo == VALOR_DECIMAL_SIN_SIGNO))
                                             {
                                                 printf("%.*f", decimales, elemento.datos.decimal);
@@ -5074,7 +6059,6 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                                         {
                                             printf("$%s[%s]", nombre_var, expr_indice1);
                                         }
-
                                         i = fin_corchete1;
                                         continue;
                                     }
@@ -5086,15 +6070,12 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                         Valor *valor_var = tabla_simbolos_buscar(ctx->tabla_actual, nombre_var);
                         if (valor_var)
                         {
-                            // Verificar si hay formato para esta variable
                             int decimales = -1;
                             if (indice_formato < nodo->datos.escribir.num_formatos)
                             {
                                 decimales = nodo->datos.escribir.formatos_decimales[indice_formato];
                                 indice_formato++;
                             }
-
-                            // Imprimir con o sin formato
                             if (decimales >= 0 && (valor_var->tipo == VALOR_DECIMAL || valor_var->tipo == VALOR_DECIMAL_SIN_SIGNO))
                             {
                                 printf("%.*f", decimales, valor_var->datos.decimal);
@@ -5287,6 +6268,105 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             {
                 // Asignación a variable simple
                 const char *nombre = destino->datos.variable.nombre;
+                Simbolo *sim = tabla_simbolos_buscar_simbolo(ctx->tabla_actual, nombre);
+                if (!sim)
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg),
+                             "Variable '$%s' no declarada. Debe declararse antes de usarla",
+                             nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+                if (!tipo_valor_compatible(sim->tipo_declarado, valor.tipo))
+                {
+                    char msg[256];
+                    snprintf(msg, sizeof(msg),
+                             "No puede asignarse un valor de tipo incompatible a la variable '$%s'.",
+                             nombre);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+                // VALIDAR QUE NO SE ASIGNEN VALORES NEGATIVOS A VARIABLES SIN SIGNO
+                if (sim->tipo_declarado == TIPO_ENTERO_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO && valor.datos.entero < 0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La variable '$%s' es ENTERA SIN SIGNO y no admite valores negativos.",
+                                 nombre);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                    if (valor.tipo == VALOR_DECIMAL && valor.datos.decimal < 0.0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La variable '$%s' es ENTERA SIN SIGNO y no admite valores negativos.",
+                                 nombre);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                }
+                else if (sim->tipo_declarado == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_DECIMAL && valor.datos.decimal < 0.0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La variable '$%s' es DECIMAL SIN SIGNO y no admite valores negativos.",
+                                 nombre);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                    if (valor.tipo == VALOR_ENTERO && valor.datos.entero < 0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La variable '$%s' es DECIMAL SIN SIGNO y no admite valores negativos.",
+                                 nombre);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                }
+
+                // ==========================================
+                // CONVERSIÓN EXPLÍCITA DE TIPOS
+                // ==========================================
+                if (sim->tipo_declarado == TIPO_ENTERO || sim->tipo_declarado == TIPO_ENTERO_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_DECIMAL)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                    else if (valor.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal_sin_signo;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                }
+                else if (sim->tipo_declarado == TIPO_DECIMAL || sim->tipo_declarado == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                    else if (valor.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero_sin_signo;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                }
+
                 tabla_simbolos_asignar(ctx->tabla_actual, nombre, valor);
             }
             else if (destino->tipo == AST_ACCESO_LISTA)
@@ -5302,7 +6382,7 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     return valor_crear_vacio();
                 }
 
-                // Aceptar ENTERO, ENTERO_SIN_SIGNO, DECIMAL y DECIMAL_SIN_SIGNO como índice    
+                // Aceptar ENTERO, ENTERO_SIN_SIGNO, DECIMAL y DECIMAL_SIN_SIGNO como índice
                 long long idx = 0;
                 if (indice.tipo == VALOR_ENTERO)
                 {
@@ -5345,7 +6425,64 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     return valor_crear_vacio();
                 }
 
+                // VALIDAR COMPATIBILIDAD DE TIPOS
+                TipoDato tipo_elem = lista->tipo_elemento;
+
+                // Validar signo negativo para tipos SIN SIGNO
+                if (tipo_elem == TIPO_ENTERO_SIN_SIGNO || tipo_elem == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO && valor.datos.entero < 0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La lista '%s' es SIN SIGNO y no admite valores negativos en la posición %lld.",
+                                 nombre_lista, idx);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                    if (valor.tipo == VALOR_DECIMAL && valor.datos.decimal < 0.0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La lista '%s' es SIN SIGNO y no admite valores negativos en la posición %lld.",
+                                 nombre_lista, idx);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                }
+
+                // CONVERSIÓN EXPLÍCITA DE TIPOS
+                if (tipo_elem == TIPO_ENTERO || tipo_elem == TIPO_ENTERO_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_DECIMAL)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                    else if (valor.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal_sin_signo;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                }
+                else if (tipo_elem == TIPO_DECIMAL || tipo_elem == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                    else if (valor.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero_sin_signo;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                }
+
                 // Asignar el valor a la lista
+                valor_destruir(&lista->datos.lista[idx]);
                 lista->datos.lista[idx] = valor;
 
                 valor_destruir(&indice);
@@ -5416,14 +6553,218 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                     return valor_crear_vacio();
                 }
 
+                // VALIDAR COMPATIBILIDAD DE TIPOS
+                TipoDato tipo_elem = matriz->tipo_elemento;
+
+                // Validar signo negativo para tipos SIN SIGNO
+                if (tipo_elem == TIPO_ENTERO_SIN_SIGNO || tipo_elem == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO && valor.datos.entero < 0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La matriz '%s' es SIN SIGNO y no admite valores negativos en [%d][%d].",
+                                 nombre_matriz, fila, col);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                    if (valor.tipo == VALOR_DECIMAL && valor.datos.decimal < 0.0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La matriz '%s' es SIN SIGNO y no admite valores negativos en [%d][%d].",
+                                 nombre_matriz, fila, col);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                }
+
+                // CONVERSIÓN EXPLÍCITA DE TIPOS
+                if (tipo_elem == TIPO_ENTERO || tipo_elem == TIPO_ENTERO_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_DECIMAL)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                    else if (valor.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal_sin_signo;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                }
+                else if (tipo_elem == TIPO_DECIMAL || tipo_elem == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                    else if (valor.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero_sin_signo;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                }
+
                 // Asignar el valor
                 valor_destruir(&matriz->datos.matriz[fila][col]);
                 matriz->datos.matriz[fila][col] = valor;
             }
 
+            else if (destino->tipo == AST_ACCESO_MATRIZ3D)
+            {
+                // Asignación a elemento de matriz 3D
+                const char *nombre_matriz = destino->datos.acceso_matriz3d.nombre_matriz;
+                NodoAST *indice1_nodo = destino->datos.acceso_matriz3d.indice1;
+                NodoAST *indice2_nodo = destino->datos.acceso_matriz3d.indice2;
+                NodoAST *indice3_nodo = destino->datos.acceso_matriz3d.indice3;
+
+                // Evaluar índices
+                Valor indice1_v = evaluar_nodo(indice1_nodo, ctx);
+                if (ctx->hay_error)
+                {
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+
+                Valor indice2_v = evaluar_nodo(indice2_nodo, ctx);
+                if (ctx->hay_error)
+                {
+                    valor_destruir(&indice1_v);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+
+                Valor indice3_v = evaluar_nodo(indice3_nodo, ctx);
+                if (ctx->hay_error)
+                {
+                    valor_destruir(&indice1_v);
+                    valor_destruir(&indice2_v);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+
+                // Convertir a int
+                int idx1 = 0, idx2 = 0, idx3 = 0;
+
+                if (indice1_v.tipo == VALOR_ENTERO)
+                    idx1 = indice1_v.datos.entero;
+                else if (indice1_v.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    idx1 = (int)indice1_v.datos.entero_sin_signo;
+                else if (indice1_v.tipo == VALOR_DECIMAL)
+                    idx1 = (int)indice1_v.datos.decimal;
+                else if (indice1_v.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    idx1 = (int)indice1_v.datos.decimal_sin_signo;
+
+                if (indice2_v.tipo == VALOR_ENTERO)
+                    idx2 = indice2_v.datos.entero;
+                else if (indice2_v.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    idx2 = (int)indice2_v.datos.entero_sin_signo;
+                else if (indice2_v.tipo == VALOR_DECIMAL)
+                    idx2 = (int)indice2_v.datos.decimal;
+                else if (indice2_v.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    idx2 = (int)indice2_v.datos.decimal_sin_signo;
+
+                if (indice3_v.tipo == VALOR_ENTERO)
+                    idx3 = indice3_v.datos.entero;
+                else if (indice3_v.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    idx3 = (int)indice3_v.datos.entero_sin_signo;
+                else if (indice3_v.tipo == VALOR_DECIMAL)
+                    idx3 = (int)indice3_v.datos.decimal;
+                else if (indice3_v.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    idx3 = (int)indice3_v.datos.decimal_sin_signo;
+
+                valor_destruir(&indice1_v);
+                valor_destruir(&indice2_v);
+                valor_destruir(&indice3_v);
+
+                // Buscar la matriz 3D
+                Valor *matriz3d = tabla_simbolos_buscar(ctx->tabla_actual, nombre_matriz);
+                if (!matriz3d || matriz3d->tipo != VALOR_MATRIZ3D)
+                {
+                    contexto_set_error(ctx, "Matriz 3D no encontrada");
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+
+                // Verificar bounds
+                if (idx1 < 0 || idx1 >= matriz3d->filas ||
+                    idx2 < 0 || idx2 >= matriz3d->columnas ||
+                    idx3 < 0 || idx3 >= matriz3d->profundidad)
+                {
+                    char msg[128];
+                    snprintf(msg, sizeof(msg), "Índice [%d][%d][%d] fuera de rango", idx1, idx2, idx3);
+                    contexto_set_error(ctx, msg);
+                    valor_destruir(&valor);
+                    return valor_crear_vacio();
+                }
+
+                // VALIDAR COMPATIBILIDAD DE TIPOS
+                TipoDato tipo_elem = matriz3d->tipo_elemento;
+
+                // Validar signo negativo para tipos SIN SIGNO
+                if (tipo_elem == TIPO_ENTERO_SIN_SIGNO || tipo_elem == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO && valor.datos.entero < 0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La matriz 3D '%s' es SIN SIGNO y no admite valores negativos en [%d][%d][%d].",
+                                 nombre_matriz, idx1, idx2, idx3);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                    if (valor.tipo == VALOR_DECIMAL && valor.datos.decimal < 0.0)
+                    {
+                        char msg[256];
+                        snprintf(msg, sizeof(msg),
+                                 "La matriz 3D '%s' es SIN SIGNO y no admite valores negativos en [%d][%d][%d].",
+                                 nombre_matriz, idx1, idx2, idx3);
+                        contexto_set_error(ctx, msg);
+                        valor_destruir(&valor);
+                        return valor_crear_vacio();
+                    }
+                }
+
+                // CONVERSIÓN EXPLÍCITA DE TIPOS
+                if (tipo_elem == TIPO_ENTERO || tipo_elem == TIPO_ENTERO_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_DECIMAL)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                    else if (valor.tipo == VALOR_DECIMAL_SIN_SIGNO)
+                    {
+                        valor.datos.entero = (long long)valor.datos.decimal_sin_signo;
+                        valor.tipo = VALOR_ENTERO;
+                    }
+                }
+                else if (tipo_elem == TIPO_DECIMAL || tipo_elem == TIPO_DECIMAL_SIN_SIGNO)
+                {
+                    if (valor.tipo == VALOR_ENTERO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                    else if (valor.tipo == VALOR_ENTERO_SIN_SIGNO)
+                    {
+                        valor.datos.decimal = (double)valor.datos.entero_sin_signo;
+                        valor.tipo = VALOR_DECIMAL;
+                    }
+                }
+
+                // Asignar el valor
+                valor_destruir(&matriz3d->datos.matriz3d[idx1][idx2][idx3]);
+                matriz3d->datos.matriz3d[idx1][idx2][idx3] = valor;
+            }
+
             return valor_crear_vacio();
         }
-
         case AST_RESULTADO: {
             Valor valor = evaluar_nodo(nodo->datos.resultado.expresion, ctx);
             if (ctx->hay_error) return valor_crear_vacio();
@@ -5624,12 +6965,21 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
                 evaluar_bloque(sub->bloque, ctx);
             }
 
-            // Restaurar contexto
-            ctx->profundidad_llamada--;
-            tabla_simbolos_destruir(tabla_local);
-            ctx->tabla_actual = tabla_anterior;
-            ctx->estado_flujo = estado_anterior;
-            ctx->valor_retorno = retorno_anterior;
+            // Validar que subprogramas no retornen valores
+            if (sub->es_subprograma && ctx->valor_retorno.tipo != VALOR_VACIO)
+            {
+                char msg[256];
+                snprintf(msg, sizeof(msg),
+                         "El subprograma '%s' no debe retornar un valor pero se ejecutó RETORNAR con un valor.",
+                         nombre);
+                contexto_set_error(ctx, msg);
+                ctx->profundidad_llamada--;
+                tabla_simbolos_destruir(tabla_local);
+                ctx->tabla_actual = tabla_anterior;
+                ctx->estado_flujo = estado_anterior;
+                ctx->valor_retorno = retorno_anterior;
+                return valor_crear_vacio();
+            }
 
             // Destruir argumentos
             for (int i = 0; i < num_args; i++)
@@ -5792,6 +7142,135 @@ Valor evaluar_nodo(NodoAST* nodo, Contexto* ctx) {
             lexer_destruir(lexer_inc);
             parser_destruir(parser_inc);
             free(contenido);
+
+            return valor_crear_vacio();
+        }
+
+        // --------------------------------------------------------
+        // MANEJO DE ERRORES: ALERTA
+        // --------------------------------------------------------
+        case AST_ALERTA:
+        {
+            // Evaluar el mensaje (puede ser cualquier expresión)
+            Valor mensaje = evaluar_nodo(nodo->datos.alerta.mensaje, ctx);
+            if (ctx->hay_error)
+                return valor_crear_vacio();
+            // Convertir a string (reducido a 256 bytes para evitar warnings de truncamiento)
+            char buffer[256];
+            switch (mensaje.tipo)
+            {
+            case VALOR_TEXTO:
+            case VALOR_TEXTO_EXTENSO:
+                snprintf(buffer, sizeof(buffer), "%.240s", mensaje.datos.texto ? mensaje.datos.texto : "");
+                break;
+            case VALOR_ENTERO:
+                snprintf(buffer, sizeof(buffer), "%lld", mensaje.datos.entero);
+                break;
+            case VALOR_DECIMAL:
+                snprintf(buffer, sizeof(buffer), "%g", mensaje.datos.decimal);
+                break;
+            case VALOR_LOGICA:
+                snprintf(buffer, sizeof(buffer), "%s", mensaje.datos.logica ? "VERDADERO" : "FALSO");
+                break;
+            case VALOR_CARACTER:
+                snprintf(buffer, sizeof(buffer), "%.10s", mensaje.datos.texto ? mensaje.datos.texto : "");
+                break;
+            default:
+                snprintf(buffer, sizeof(buffer), "(error)");
+                break;
+            }
+            valor_destruir(&mensaje);
+            // Si estamos dentro de un INTENTAR, capturar el error
+            if (ctx->intentar_stack_top > 0 &&
+                ctx->intentar_stack[ctx->intentar_stack_top - 1].activo)
+            {
+                // Guardar el error en el tope del stack (truncado a 240 caracteres)
+                ctx->intentar_stack[ctx->intentar_stack_top - 1].error_capturado = true;
+                snprintf(ctx->intentar_stack[ctx->intentar_stack_top - 1].mensaje_error,
+                         sizeof(ctx->intentar_stack[ctx->intentar_stack_top - 1].mensaje_error),
+                         "%.240s", buffer);
+                ctx->intentar_stack[ctx->intentar_stack_top - 1].linea_error = nodo->linea;
+                ctx->intentar_stack[ctx->intentar_stack_top - 1].codigo_error = 1;
+                ctx->estado_flujo = FLUJO_BREAK;
+                return valor_crear_vacio();
+            }
+            // Si no estamos en INTENTAR, es un error fatal
+            contexto_set_error(ctx, buffer);
+            return valor_crear_vacio();
+        }
+
+        // --------------------------------------------------------
+        // MANEJO DE ERRORES: INTENTAR/ATRAPAR
+        // --------------------------------------------------------
+        case AST_INTENTAR_ATRAPAR:
+        {
+            // Verificar que haya espacio en el stack
+            if (ctx->intentar_stack_top >= MAX_INTENTAR_STACK)
+            {
+                contexto_set_error(ctx, "Demasiados bloques INTENTAR anidados (máximo 50)");
+                return valor_crear_vacio();
+            }
+
+            // Push al stack
+            int top = ctx->intentar_stack_top;
+            ctx->intentar_stack[top].activo = true;
+            ctx->intentar_stack[top].error_capturado = false;
+            ctx->intentar_stack[top].mensaje_error[0] = '\0';
+            ctx->intentar_stack[top].linea_error = 0;
+            ctx->intentar_stack[top].codigo_error = 0;
+            ctx->intentar_stack_top++;
+
+            // Guardar estado de flujo anterior
+            EstadoFlujo estado_anterior = ctx->estado_flujo;
+            ctx->estado_flujo = FLUJO_NORMAL;
+
+            // Ejecutar bloque INTENTAR
+            evaluar_bloque(nodo->datos.intentatrapar.bloque_intent, ctx);
+
+            // Restaurar estado de flujo (por si quedó en BREAK por ALERTA)
+            ctx->estado_flujo = estado_anterior;
+
+            // Pop del stack
+            ctx->intentar_stack_top--;
+            bool hubo_error = ctx->intentar_stack[top].error_capturado || ctx->hay_error;
+            char mensaje_error[512];
+            int linea_error = 0;
+            int codigo_error = 0;
+
+            if (ctx->intentar_stack[top].error_capturado)
+            {
+                // Error capturado por ALERTA
+                snprintf(mensaje_error, sizeof(mensaje_error), "%s",
+                         ctx->intentar_stack[top].mensaje_error);
+                linea_error = ctx->intentar_stack[top].linea_error;
+                codigo_error = ctx->intentar_stack[top].codigo_error;
+            }
+            else if (ctx->hay_error)
+            {
+                // Error del sistema (división por cero, índice fuera de rango, etc.)
+                snprintf(mensaje_error, sizeof(mensaje_error), "%s", ctx->mensaje_error);
+                linea_error = ctx->linea_actual;
+                codigo_error = 1; // Código genérico
+
+                // Limpiar el error del contexto para que ATRAPAR pueda ejecutarse
+                ctx->hay_error = false;
+                ctx->mensaje_error[0] = '\0';
+            }
+
+            // Si hubo error, ejecutar bloque ATRAPAR
+            if (hubo_error)
+            {
+                // Crear variables automáticas en el scope actual
+                tabla_simbolos_definir(ctx->tabla_actual, "ERROR",
+                                       valor_crear_texto(mensaje_error), false);
+                tabla_simbolos_definir(ctx->tabla_actual, "LINEA_ERROR",
+                                       valor_crear_entero(linea_error), false);
+                tabla_simbolos_definir(ctx->tabla_actual, "CODIGO_ERROR",
+                                       valor_crear_entero(codigo_error), false);
+
+                // Ejecutar bloque ATRAPAR
+                evaluar_bloque(nodo->datos.intentatrapar.bloque_atrapar, ctx);
+            }
 
             return valor_crear_vacio();
         }

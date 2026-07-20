@@ -1,0 +1,72 @@
+PROGRAMA TestComandosAsignacion
+
+BLOQUE PRINCIPAL
+    ESCRIBIR("=== TEST DE COMANDOS DE ASIGNACIÓN ===") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 1: ASIGNAR EN con valor literal
+    ESCRIBIR("Test 1: ASIGNAR EN con valor literal") SALTO
+    VARIABLE ENTERA $a = 0
+    ASIGNAR EN $a = 10
+    ESCRIBIR("$a = $a (esperado: 10)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 2: ASIGNAR EN con expresión
+    ESCRIBIR("Test 2: ASIGNAR EN con expresión") SALTO
+    VARIABLE ENTERA $b = 0
+    ASIGNAR EN $b = 5 + 3
+    ESCRIBIR("$b = $b (esperado: 8)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 3: CALCULAR EN con expresión
+    ESCRIBIR("Test 3: CALCULAR EN con expresión") SALTO
+    VARIABLE ENTERA $c = 0
+    CALCULAR EN $c = 10 * 2 + 5
+    ESCRIBIR("$c = $c (esperado: 25)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 4: RESULTADO EN con expresión
+    ESCRIBIR("Test 4: RESULTADO EN con expresión") SALTO
+    VARIABLE ENTERA $d = 0
+    RESULTADO EN $d = 100 / 4
+    ESCRIBIR("$d = $d (esperado: 25)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 5: Los tres con función
+    ESCRIBIR("Test 5: Los tres comandos con función") SALTO
+    
+    FUNCION ENTERA duplicar($x)
+        RETORNAR $x * 2
+    FIN FUNCION
+    
+    VARIABLE ENTERA $e1 = 0
+    VARIABLE ENTERA $e2 = 0
+    VARIABLE ENTERA $e3 = 0
+    
+    ASIGNAR EN $e1 = duplicar(5)
+    CALCULAR EN $e2 = duplicar(5)
+    RESULTADO EN $e3 = duplicar(5)
+    
+    ESCRIBIR("ASIGNAR EN: $e1 = $e1 (esperado: 10)") SALTO
+    ESCRIBIR("CALCULAR EN: $e2 = $e2 (esperado: 10)") SALTO
+    ESCRIBIR("RESULTADO EN: $e3 = $e3 (esperado: 10)") SALTO
+    ESCRIBIR("") SALTO
+
+    // TEST 6: Asignación a elementos de lista
+    ESCRIBIR("Test 6: Asignación a elementos de lista") SALTO
+    LISTA ENTERA $lista[3] = {0, 0, 0}
+    
+    ASIGNAR EN $lista[0] = 100
+    CALCULAR EN $lista[1] = 200
+    RESULTADO EN $lista[2] = 300
+    
+    ESCRIBIR("lista[0] = $lista[0] (esperado: 100)") SALTO
+    ESCRIBIR("lista[1] = $lista[1] (esperado: 200)") SALTO
+    ESCRIBIR("lista[2] = $lista[2] (esperado: 300)") SALTO
+    ESCRIBIR("") SALTO
+    VARIABLE TEXTO $txt = "Hola Mundo"
+    ESCRIBIR("[LONGITUDTEXTO(\"Hola Mundo\")]")
+    ESCRIBIR("=== FIN DEL TEST ===") SALTO
+
+FIN PRINCIPAL
+FINAL

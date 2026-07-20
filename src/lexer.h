@@ -277,7 +277,6 @@ typedef enum
     // COMANDOS DE TECLADO
     // --------------------------------------------------------
     TOK_LEERTECLA,
-    TOK_TECLAMANTENIDA,
     TOK_COLISIONRECTANGULOS,
 
     // --------------------------------------------------------
@@ -292,8 +291,8 @@ typedef enum
     TOK_PULLDOWN,
     // Comandos PWM
     TOK_GENERARPWM,
-    TOK_DETENERPWM, 
-    
+    TOK_DETENERPWM,
+
     // --------------------------------------------------------
     // COMANDOS BASE DE DATOS
     // --------------------------------------------------------
@@ -311,6 +310,13 @@ typedef enum
     // --------------------------------------------------------
     TOK_INICIARSERVER,
     TOK_DETENERSERVER,
+
+    // --------------------------------------------------------
+    // MANEJO DE ERRORES
+    // --------------------------------------------------------
+    TOK_ALERTA,
+    TOK_INTENTAR,
+    TOK_ATRAPAR,
 
     // --------------------------------------------------------
     // MODOS DE REDONDEO
